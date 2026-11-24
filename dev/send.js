@@ -3,13 +3,17 @@
 import { createBus } from '../src/core/events.js';
 import { createSendFlow } from '../src/core/send.js';
 import { mountScene, setKeyDown } from '../src/ui/scene.js';
+import { mountMorseChart } from '../src/ui/morse-chart.js';
 import { createAudioEngine } from '../src/audio/engine.js';
 import { playTone } from '../src/audio/voices.js';
 import { createPressReader, attachKeyboard } from '../src/input/keyboard.js';
 
 const WORDS = ['E', 'SOS', 'TRAIN LATE', 'DEAD AIR'];
-const app = document.getElementById('app');
+const root = document.getElementById('app');
+root.innerHTML = '<div class="play"><div class="stage"></div></div>';
+const app = root.querySelector('.stage');
 mountScene(app, window.location.search);
+mountMorseChart(root.querySelector('.play'));
 
 const panel = document.createElement('div');
 panel.style.cssText = 'padding:1rem;font-size:1.4rem;text-align:center';

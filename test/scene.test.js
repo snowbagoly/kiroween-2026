@@ -20,3 +20,12 @@ test('scene: URL flag picks the palette', () => {
   assert.equal(getMode('?mode=day'), 'day');
   assert.equal(getMode('?mode=junk'), 'night');
 });
+
+import { morseChartHtml } from '../src/ui/morse-chart.js';
+
+test('morse chart: lists all 26 letters with their dots and dashes', () => {
+  const html = morseChartHtml();
+  assert.equal((html.match(/<li /g) ?? []).length, 26);
+  assert.ok(html.includes('aria-label="A: dot dash"'));
+  assert.ok(html.includes('aria-label="Q: dash dash dot dash"'));
+});
