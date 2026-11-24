@@ -4,7 +4,6 @@ import { dirname, resolve, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = dirname(fileURLToPath(import.meta.url));
-const entry = resolve(root, 'src/main.js');
 
 // Minimal ES module bundler: follows relative imports, puts dependencies first,
 // strips import lines and the `export` keyword. Top-level names must be unique across modules.
@@ -29,9 +28,15 @@ export function findExternalLinks(text) {
   return found.filter((u) => !/^https?:\/\/www\.w3\.org\//.test(u));
 }
 
-export function build() {
-  let html = readFileSync(resolve(root, 'index.html'), 'utf8');
-  const js = bundle(entry).join('\n\n').replace(/<\/script/gi, '<\\/script');
+// Pages to build: [html template, entry script, output file]. Dev pages are for manual checks.
+export const PAGES = [
+  ['index.html', 'src/main.js', 'index.html'],
+  ['dev/audio.html', 'dev/audio.js', 'dev-audio.html'],
+];
+
+export function buildPage(htmlFile, entryFile, outFile) {
+  let html = readFileSync(resolve(root, htmlFile), 'utf8');
+  const js = bundle(resolve(root, entryFile)).join('\n\n').replace(/<\/script/gi, '<\\/script');
   html = html
     .replace(/<!-- build:js -->[\s\S]*?<!-- \/build:js -->/, () => `<script type="module">\n${js}\n</script>`)
     .replace(/<!-- build:css -->\n?/, '')
@@ -40,14 +45,23 @@ export function build() {
   if (bad.length) throw new Error(`Build output links to other sites: ${bad.join(', ')}`);
   const dist = resolve(root, 'dist');
   if (!existsSync(dist)) mkdirSync(dist, { recursive: true });
-  writeFileSync(resolve(dist, 'index.html'), html);
+  writeFileSync(resolve(dist, outFile), html);
   return html;
+}
+
+export function build() {
+  let main = '';
+  for (const [h, e, o] of PAGES) {
+    const html = buildPage(h, e, o);
+    if (o === 'index.html') main = html;
+  }
+  return main;
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   try {
     build();
-    console.log('Wrote dist/index.html');
+    console.log(`Wrote ${PAGES.map((p) => 'dist/' + p[2]).join(', ')}`);
   } catch (e) {
     console.error(e.message);
     process.exit(1);

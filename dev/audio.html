@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dead Air: audio test</title>
+<!-- build:css -->
+<style>
+  body { margin: 2rem; background: #141c19; color: #e3d8bc; font: 18px Georgia, serif; }
+  button { font: inherit; padding: .6rem 1.2rem; margin: .3rem .3rem .3rem 0; }
+  label { display: block; margin: 1rem 0; }
+  input[type=range] { width: 16rem; vertical-align: middle; }
+  #status { margin-top: 1.5rem; opacity: .8; }
+</style>
+<!-- /build:css -->
+</head>
+<body>
+<h1>Audio test</h1>
+<p>No sound plays before you click. Then use the buttons.</p>
+<button id="tone">Play 600 Hz tone</button>
+<button id="hold">Hold for tone</button>
+<button id="burst">Play 12 tones at once</button>
+<label><input id="mute" type="checkbox"> Mute</label>
+<label>Effects volume <input id="sfx" type="range" min="0" max="1" step="0.01" value="0.8"></label>
+<label>Music volume <input id="music" type="range" min="0" max="1" step="0.01" value="0.8"> (a low hum plays on the music bus)</label>
+<div id="status">Audio: not started</div>
+<!-- build:js -->
+<script type="module" src="./audio.js"></script>
+<!-- /build:js -->
+</body>
+</html>
