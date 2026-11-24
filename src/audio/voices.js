@@ -36,3 +36,27 @@ export function playTone(engine, { freq = 600, duration, level = 0.4 } = {}) {
     return { source: osc, nodes: [env], stop };
   });
 }
+
+// Galvanometer tick: a very short high band-pass noise [design 9, R5.2].
+export function playTick(engine, { level = 0.5 } = {}) {
+  return engine.voice((ctx, out) => {
+    const t = ctx.currentTime;
+    const len = Math.ceil(ctx.sampleRate * 0.03);
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / len) ** 3;
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.value = 3800;
+    bp.Q.value = 4;
+    const g = ctx.createGain();
+    g.gain.value = level;
+    src.connect(bp);
+    bp.connect(g);
+    g.connect(out);
+    src.start(t);
+    return { source: src, nodes: [bp, g] };
+  });
+}

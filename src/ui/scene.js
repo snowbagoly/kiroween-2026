@@ -25,7 +25,7 @@ function rain() {
 }
 
 export function deskSvg() {
-  return `<svg class="desk" viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Telegraph desk">
+  return `<svg class="desk" viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg" role="group" aria-label="Telegraph desk">
   <defs>
     <linearGradient id="g-wall" x1="0" y1="0" x2="0" y2="1">${stop(0, '--wall2')}${stop(1, '--wall')}</linearGradient>
     <linearGradient id="g-desk" x1="0" y1="0" x2="0" y2="1">${stop(0, '--desk')}${stop(1, '--desk2')}</linearGradient>
