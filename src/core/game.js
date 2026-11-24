@@ -91,8 +91,8 @@ export function createGame({ data = defaultData(), save = () => {}, seed = 1, bu
     const expected = m.letters[s.pos];
     if (e.letter.toUpperCase() === expected) {
       s.stats.letterOk(t);
-      emit('LETTER_OK', { index: s.pos, letter: expected });
-      s.pos += 1;
+      s.pos += 1; // move on first, so listeners see the new position
+      emit('LETTER_OK', { index: s.pos - 1, next: s.pos, letter: expected });
       if (s.pos >= m.letters.length) finishMessage();
       return;
     }
