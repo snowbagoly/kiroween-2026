@@ -42,6 +42,17 @@ export function cleanData(raw) {
   return d;
 }
 
+export const SETTING_KEYS = ['musicVol', 'sfxVol', 'mute', 'reduceFlashing', 'captions', 'showLivesNumber', 'tutorial'];
+
+// Returns new data with one setting changed. Bad values fall back to the old value.
+export function setSetting(data, key, value) {
+  if (!SETTING_KEYS.includes(key)) return data;
+  const base = cleanData({ ...data, version: SAVE_VERSION });
+  const next = cleanData({ ...base, settings: { ...base.settings, [key]: value } });
+  if (next.settings[key] !== value) next.settings[key] = base.settings[key];
+  return next;
+}
+
 // Reading `localStorage` itself can throw (blocked cookies, sandboxed frames).
 export function browserStorage() {
   try {
