@@ -53,7 +53,7 @@ function renderRun(st) {
   view.innerHTML = '<div class="play"><div class="stage"></div></div>';
   const stage = view.querySelector('.stage');
   mountScene(stage, st.mode === 'day' ? '?mode=day' : '');
-  if (st.mode !== 'deadair') mountMorseChart(view.querySelector('.play'));
+  mountMorseChart(view.querySelector('.play'), st.mode);
   gauge = st.maxLives ? mountGalvanometer(stage, { max: st.maxLives, lives: st.lives ?? st.maxLives }) : null;
   stage.insertAdjacentHTML('beforeend', `<p class="placeholder" role="status">${st.day ? `Day ${st.day}` : 'Tutorial'}: the day screens come in T13. Use Options, then End game, to go back.</p>`);
   applySettings();

@@ -18,8 +18,8 @@ export function createSendFlow(text, bus) {
       if (index >= letters.length) return null;
       const expected = letters[index];
       if (result.letter === expected) {
-        bus.emit('LETTER_OK', { index, letter: expected, pattern: result.pattern });
-        index += 1;
+        index += 1; // move on first, so listeners see the new position
+        bus.emit('LETTER_OK', { index: index - 1, next: index, letter: expected, pattern: result.pattern });
         if (index >= letters.length) bus.emit('MESSAGE_SENT', { text: letters.join(''), mistakes });
         return true;
       }

@@ -82,6 +82,15 @@ test('send: keyboard can be switched off', () => {
   assert.equal(h.reader.pressing, false);
 });
 
+test('send flow: listeners see the new position on LETTER_OK', () => {
+  const bus = createBus();
+  const flow = createSendFlow('AB', bus);
+  let seen = null;
+  bus.on('LETTER_OK', (p) => { seen = [p.index, p.next, flow.index]; });
+  flow.letter({ pattern: '.-', letter: 'A' });
+  assert.deepEqual(seen, [0, 1, 1]);
+});
+
 test('send flow: right letters move on, wrong ones stay, message sent at the end', () => {
   const bus = createBus(); const ev = [];
   for (const n of ['LETTER_OK', 'LETTER_WRONG', 'MESSAGE_SENT']) bus.on(n, (p) => ev.push([n, p]));
