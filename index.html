@@ -61,6 +61,42 @@
   .desk .show-num .lives-num { display: inline; }
   @media (prefers-reduced-motion: reduce) { .desk .tremble { animation: none; } .desk .needle { transition-duration: .1s; } }
   .play { display: flex; align-items: flex-start; gap: clamp(.4rem, 1vw, 1rem); }
+  .placeholder { text-align: center; padding: 1rem; }
+  button, input, select { font: inherit; }
+  :focus-visible { outline: 3px solid var(--brass); outline-offset: 2px; }
+  .start-screen { min-height: 100vh; box-sizing: border-box; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 1rem; padding: 2rem 1rem; text-align: center;
+    background: radial-gradient(ellipse at 50% 35%, var(--wall) 0%, var(--bg) 70%); }
+  .start-screen h1 { margin: 0; font-size: clamp(2.6rem, 8vw, 5.5rem); letter-spacing: .12em; color: var(--paper);
+    text-transform: uppercase; text-shadow: 0 0 18px rgba(0,0,0,.8); }
+  .start-screen .subtitle { margin: 0 0 1rem; font-style: italic; color: var(--thought); }
+  .mode-list { display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; }
+  .mode-btn { display: flex; flex-direction: column; gap: .35rem; width: 15rem; padding: 1rem 1.2rem; cursor: pointer;
+    background: var(--paper); color: var(--ink); border: 2px solid var(--brass2); border-radius: 3px;
+    box-shadow: 0 4px 14px var(--shadow); }
+  .mode-btn:hover:not([disabled]) { transform: translateY(-2px); }
+  .mode-btn[disabled] { cursor: not-allowed; background: var(--frame); color: var(--face); border-color: var(--frame); }
+  .mode-name { font-size: 1.35rem; font-weight: bold; letter-spacing: .06em; }
+  .mode-line { font-size: .95rem; font-style: italic; }
+  .judge-btn { margin-top: 1.2rem; padding: .5rem 1rem; cursor: pointer; background: transparent; color: var(--text);
+    border: 1px dashed var(--text); border-radius: 3px; }
+  .options-btn { position: fixed; top: .6rem; right: .6rem; z-index: 20; padding: .4rem .9rem; cursor: pointer;
+    background: var(--paper); color: var(--ink); border: 2px solid var(--brass2); border-radius: 3px; }
+  .options-backdrop { position: fixed; inset: 0; z-index: 30; background: rgba(0,0,0,.6); }
+  .options-dialog { position: fixed; z-index: 31; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: min(26rem, calc(100vw - 2rem)); max-height: calc(100vh - 2rem); overflow: auto; box-sizing: border-box;
+    padding: 1.2rem 1.4rem; background: var(--paper); color: var(--ink); border: 2px solid var(--brass2);
+    border-radius: 4px; box-shadow: 0 10px 40px rgba(0,0,0,.6); }
+  .options-dialog h2 { margin: 0 0 .8rem; letter-spacing: .2em; text-transform: uppercase; font-size: 1.1rem; text-align: center; }
+  .opt-row { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin: .55rem 0; }
+  .opt-check { justify-content: flex-start; gap: .6rem; }
+  .opt-row input[type=range] { width: 11rem; accent-color: var(--ink); }
+  .opt-row input[type=checkbox] { width: 1.1rem; height: 1.1rem; accent-color: var(--ink); }
+  .opt-buttons { display: flex; justify-content: space-between; gap: .6rem; margin-top: 1rem; }
+  .opt-buttons button { padding: .45rem 1rem; cursor: pointer; background: var(--ink); color: var(--paper);
+    border: 0; border-radius: 3px; }
+  .opt-buttons .end-game-btn, .opt-buttons .confirm-end { background: #8a1f1a; color: #fff; }
+  [hidden] { display: none !important; }
   .play > .stage { flex: 1; min-width: 0; }
   .morse-chart { flex: 0 0 auto; width: clamp(9rem, 20vw, 17rem); box-sizing: border-box; margin: .5rem 0 .5rem .5rem;
     padding: .6rem .7rem; background: var(--paper); color: var(--ink); border: 2px solid var(--brass2);
