@@ -6,7 +6,24 @@
 <title>Dead Air</title>
 <!-- build:css -->
 <style>
-  html, body { margin: 0; height: 100%; background: #111; color: #ddd; font-family: serif; }
+  :root, [data-mode="night"] {
+    --bg: #0d1412; --wall: #1a2622; --desk: #2a2a26; --frame: #3a4a45; --sky: #0a1a24;
+    --paper: #cdbb94; --ink: #4a3b22; --metal: #8a948f; --wood: #4a3a2a; --text: #cfd8d4;
+  }
+  [data-mode="day"] {
+    --bg: #fff3c4; --wall: #f7e6a6; --desk: #c9915a; --frame: #a8754a; --sky: #aee0ff;
+    --paper: #fffaf0; --ink: #5a4630; --metal: #7a6a58; --wood: #8a5a30; --text: #3a2a18;
+  }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: serif; }
+  #app { width: 100%; max-width: 1920px; margin: 0 auto; }
+  .desk { display: block; width: 100%; height: auto; max-height: 100vh; aspect-ratio: 16 / 9; }
+  .desk .wall { fill: var(--wall); } .desk .desktop { fill: var(--desk); }
+  .desk .frame { fill: var(--frame); } .desk .sky { fill: var(--sky); } .desk .slot { fill: var(--bg); }
+  .desk .bar { stroke: var(--frame); stroke-width: 1.5; }
+  .desk .paper { fill: var(--paper); } .desk .line { stroke: var(--ink); stroke-width: .8; }
+  .desk .metal, .desk .arm { fill: var(--metal); } .desk .wood { fill: var(--wood); }
+  .desk .knob { fill: var(--ink); }
+  .desk .thought { fill: var(--text); font-size: 3.5px; }
 </style>
 <!-- /build:css -->
 </head>
