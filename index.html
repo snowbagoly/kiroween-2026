@@ -45,9 +45,24 @@
   .desk .base { fill: var(--base); } .desk .base-top { fill: var(--desk); }
   .desk .coil { fill: var(--coil); }
   .desk .knob { fill: var(--knob); } .desk .knob-top { fill: #fff; opacity: .15; }
-  .desk .lever { transform-box: fill-box; transform-origin: 12% 50%; }
+  .desk .lever { transform-box: fill-box; transform-origin: 12% 50%; transition: transform 25ms linear; }
+  .desk .lever.down { transform: rotate(5deg); }
   .desk .edge { fill: var(--edge); }
   .desk .thought { fill: var(--thought); font-size: 3.2px; font-style: italic; }
+  .play { display: flex; align-items: flex-start; gap: clamp(.4rem, 1vw, 1rem); }
+  .play > .stage { flex: 1; min-width: 0; }
+  .morse-chart { flex: 0 0 auto; width: clamp(9rem, 20vw, 17rem); box-sizing: border-box; margin: .5rem 0 .5rem .5rem;
+    padding: .6rem .7rem; background: var(--paper); color: var(--ink); border: 2px solid var(--brass2);
+    border-radius: 3px; box-shadow: 0 3px 10px var(--shadow); font-size: clamp(.7rem, 1vw, 1rem); }
+  .morse-chart h2 { margin: 0 0 .4rem; font-size: 1em; letter-spacing: .25em; text-align: center; text-transform: uppercase;
+    border-bottom: 1px solid var(--ink); padding-bottom: .3rem; }
+  .morse-chart ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(13, auto); grid-auto-flow: column; gap: .25rem .6rem; }
+  .morse-chart li { display: flex; align-items: center; gap: .4rem; }
+  .morse-chart b { width: 1.1em; }
+  .morse-chart span { display: flex; align-items: center; gap: .18em; }
+  .morse-chart i { display: block; height: .38em; background: var(--ink); border-radius: .2em; }
+  .morse-chart i.dot { width: .38em; border-radius: 50%; }
+  .morse-chart i.dash { width: 1.15em; }
 </style>
 <!-- /build:css -->
 </head>

@@ -111,6 +111,11 @@ export function deskSvg() {
 </svg>`;
 }
 
+// Tilts the key lever while Space is down [R3.2].
+export function setKeyDown(root, down) {
+  root.querySelector('#key .lever')?.classList.toggle('down', !!down);
+}
+
 export function mountScene(root, search = '') {
   const mode = getMode(search);
   root.innerHTML = deskSvg();
