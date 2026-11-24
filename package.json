@@ -7,7 +7,7 @@
   "license": "MIT",
   "scripts": {
     "build": "node build.mjs",
-    "test": "node --test"
+    "test": "node --test \"test/**/*.test.js\""
   },
   "devDependencies": {
     "fast-check": "^3.23.1"
