@@ -1,0 +1,15 @@
+{
+  "name": "dead-air",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Dead Air: a telegraph operator horror game played with Morse code.",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "fast-check": "^3.23.1"
+  }
+}
