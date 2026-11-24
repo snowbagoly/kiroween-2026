@@ -124,7 +124,7 @@ Acceptance criteria:
 3. WHEN a day ends without game over THEN the system SHALL start the next day after the player clicks "Next day".
 4. The system SHALL always start a new game at Day 1 and SHALL NOT offer a day picker in normal play. After game over, the player can only restart the current day (R5.6a) or go to the main menu.
 5. WHEN Day 3 starts THEN the system SHALL show a short intro explaining that the player now both sends and receives.
-6. Lives SHALL reset to 5 at the start of each day.
+6. Lives SHALL reset to the mode maximum (10, or 5 in Dead Air) at the start of each day.
 
 ### R10. Accessibility and controls
 Acceptance criteria:
