@@ -7,23 +7,47 @@
 <!-- build:css -->
 <style>
   :root, [data-mode="night"] {
-    --bg: #0d1412; --wall: #1a2622; --desk: #2a2a26; --frame: #3a4a45; --sky: #0a1a24;
-    --paper: #cdbb94; --ink: #4a3b22; --metal: #8a948f; --wood: #4a3a2a; --text: #cfd8d4;
+    --bg: #0b1110; --wall: #1f2b27; --wall2: #141c19; --wainscot: #1a1510; --base: #2f2318; --plank: #101715;
+    --desk: #3d2c1d; --desk2: #251a11; --edge: #160f09; --frame: #3a2d22;
+    --sky: #070e14; --sky2: #1d2e38; --hills: #0a1310; --rain: #7f9ca8;
+    --paper: #c4ae80; --face: #e3d8bc; --ink: #4a3b22; --brass: #c29a52; --brass2: #5f4520;
+    --coil: #141414; --knob: #1b1512; --cable: #0e0b08; --text: #cfd8d4; --thought: #b9c7c1;
+    --shadow: rgba(0,0,0,.55); --shade: rgba(0,0,0,.75);
   }
   [data-mode="day"] {
-    --bg: #fff3c4; --wall: #f7e6a6; --desk: #c9915a; --frame: #a8754a; --sky: #aee0ff;
-    --paper: #fffaf0; --ink: #5a4630; --metal: #7a6a58; --wood: #8a5a30; --text: #3a2a18;
+    --bg: #fff3c4; --wall: #f4e1a4; --wall2: #faecbc; --wainscot: #8f5e35; --base: #a8703f; --plank: #e5cd88;
+    --desk: #c08249; --desk2: #9a5f30; --edge: #5e3a1c; --frame: #8a5a34;
+    --sky: #9fd8ff; --sky2: #fff4cf; --hills: #8fbf6a; --rain: transparent;
+    --paper: #fffaf0; --face: #fffdf3; --ink: #5a4630; --brass: #e2b85c; --brass2: #8f6a26;
+    --coil: #2b2622; --knob: #3a2a1c; --cable: #4a3020; --text: #3a2a18; --thought: #fff3d6;
+    --shadow: rgba(70,35,0,.25); --shade: rgba(120,70,0,0);
   }
-  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: serif; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: Georgia, serif; }
   #app { width: 100%; max-width: 1920px; margin: 0 auto; }
   .desk { display: block; width: 100%; height: auto; max-height: 100vh; aspect-ratio: 16 / 9; }
-  .desk .wall { fill: var(--wall); } .desk .desktop { fill: var(--desk); }
-  .desk .frame { fill: var(--frame); } .desk .sky { fill: var(--sky); } .desk .slot { fill: var(--bg); }
-  .desk .bar { stroke: var(--frame); stroke-width: 1.5; }
-  .desk .paper { fill: var(--paper); } .desk .line { stroke: var(--ink); stroke-width: .8; }
-  .desk .metal, .desk .arm { fill: var(--metal); } .desk .wood { fill: var(--wood); }
-  .desk .knob { fill: var(--ink); }
-  .desk .thought { fill: var(--text); font-size: 3.5px; }
+  .desk .plank { stroke: var(--plank); stroke-width: .5; }
+  .desk .wainscot { fill: var(--wainscot); } .desk .rail, .desk .frame, .desk .board { fill: var(--frame); }
+  .desk .sash { stroke: var(--frame); stroke-width: 1.4; fill: none; }
+  .desk .hills { fill: var(--hills); }
+  .desk .pole { stroke: var(--hills); stroke-width: .7; fill: none; }
+  .desk .rain { stroke: var(--rain); stroke-width: .25; opacity: .7; }
+  .desk .wire { stroke: var(--cable); stroke-width: .35; fill: none; }
+  .desk .paper { fill: var(--paper); }
+  .desk .head { fill: var(--ink); font-size: 3px; letter-spacing: .6px; font-weight: bold; }
+  .desk .rule { stroke: var(--ink); stroke-width: .5; }
+  .desk .line { stroke: var(--ink); stroke-width: .25; opacity: .5; }
+  .desk .pin { fill: #8a1f1a; }
+  .desk .screw { fill: var(--brass2); }
+  .desk .glare { stroke: #fff; stroke-width: .8; fill: none; opacity: .35; stroke-linecap: round; }
+  .desk .grain { stroke: var(--desk2); stroke-width: .3; fill: none; opacity: .8; }
+  .desk .cable { stroke: var(--cable); stroke-width: .6; fill: none; }
+  .desk .shadow { fill: var(--shadow); }
+  .desk .base { fill: var(--base); } .desk .base-top { fill: var(--desk); }
+  .desk .coil { fill: var(--coil); }
+  .desk .knob { fill: var(--knob); } .desk .knob-top { fill: #fff; opacity: .15; }
+  .desk .lever { transform-box: fill-box; transform-origin: 12% 50%; }
+  .desk .edge { fill: var(--edge); }
+  .desk .thought { fill: var(--thought); font-size: 3.2px; font-style: italic; }
 </style>
 <!-- /build:css -->
 </head>
