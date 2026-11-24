@@ -32,6 +32,7 @@ export function findExternalLinks(text) {
 export const PAGES = [
   ['index.html', 'src/main.js', 'index.html'],
   ['dev/audio.html', 'dev/audio.js', 'dev-audio.html'],
+  ['index.html', 'dev/send.js', 'dev-send.html'],
 ];
 
 export function buildPage(htmlFile, entryFile, outFile) {

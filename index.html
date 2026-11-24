@@ -45,7 +45,8 @@
   .desk .base { fill: var(--base); } .desk .base-top { fill: var(--desk); }
   .desk .coil { fill: var(--coil); }
   .desk .knob { fill: var(--knob); } .desk .knob-top { fill: #fff; opacity: .15; }
-  .desk .lever { transform-box: fill-box; transform-origin: 12% 50%; }
+  .desk .lever { transform-box: fill-box; transform-origin: 12% 50%; transition: transform 25ms linear; }
+  .desk .lever.down { transform: rotate(5deg); }
   .desk .edge { fill: var(--edge); }
   .desk .thought { fill: var(--thought); font-size: 3.2px; font-style: italic; }
 </style>
