@@ -49,6 +49,17 @@
   .desk .lever.down { transform: rotate(5deg); }
   .desk .edge { fill: var(--edge); }
   .desk .thought { fill: var(--thought); font-size: 3.2px; font-style: italic; }
+  .desk .g-ticks { stroke: var(--ink); stroke-width: .45; }
+  .desk .g-red { stroke: #a3241c; stroke-width: 1.8; fill: none; }
+  .desk .g-needle { stroke: #1a1410; stroke-width: .55; stroke-linecap: round; }
+  .desk .g-pivot { fill: var(--brass2); }
+  .desk .needle { transform-box: view-box; transform-origin: 130px 23px; transform: rotate(var(--a, 0deg));
+    transition: transform .45s cubic-bezier(.3, 1.5, .5, 1); }
+  .desk .tremble { transform-box: view-box; transform-origin: 130px 23px; animation: tremble .11s infinite alternate ease-in-out; }
+  @keyframes tremble { from { transform: rotate(calc(-1 * var(--t, 0deg))); } to { transform: rotate(var(--t, 0deg)); } }
+  .desk .lives-num { display: none; fill: var(--face); font-size: 2.6px; font-weight: bold; }
+  .desk .show-num .lives-num { display: inline; }
+  @media (prefers-reduced-motion: reduce) { .desk .tremble { animation: none; } .desk .needle { transition-duration: .1s; } }
   .play { display: flex; align-items: flex-start; gap: clamp(.4rem, 1vw, 1rem); }
   .play > .stage { flex: 1; min-width: 0; }
   .morse-chart { flex: 0 0 auto; width: clamp(9rem, 20vw, 17rem); box-sizing: border-box; margin: .5rem 0 .5rem .5rem;
