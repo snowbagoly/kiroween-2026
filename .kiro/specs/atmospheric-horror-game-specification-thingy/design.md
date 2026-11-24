@@ -193,7 +193,7 @@ The desk is one inline SVG, 16:9 inside a responsive box. Parts are grouped so e
 | Thought text | bottom line, fades [R12] |
 | Window with rain | Night Shift only; Day Shift shows a bright window |
 
-The left side holds the Morse chart, a 4 column list of A to Z with dots and dashes [R3.1a]. It is not drawn in Dead Air [R16.5]. The text row above the desk shows the message letters. In sending mode the next letter is highlighted [R3.1]. In receiving mode it shows blanks that fill in [R4.2].
+The left side holds the Morse chart, a 2 column list (A to M, then N to Z) with dots and dashes [R3.1a]. It is not drawn in Dead Air [R16.5]. The text row above the desk shows the message letters. In sending mode the next letter is highlighted [R3.1]. In receiving mode it shows blanks that fill in [R4.2].
 
 **Palette** is a set of CSS variables per mode: Night Shift is cold, dark green and grey with sepia paper; Day Shift is warm yellow and cream. All text pairs are checked for 4.5:1 [R10.4].
 
