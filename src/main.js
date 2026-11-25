@@ -5,9 +5,11 @@ import { createBus } from './core/events.js';
 import { createGame } from './core/game.js';
 import { createSettingsStore, setSetting } from './core/settings.js';
 import { createAudioEngine } from './audio/engine.js';
+import { playLetter, armDownAt } from './audio/sequencer.js';
+import { createReplayCounter, replayLabel, NEXT_LETTER_PAUSE_MS, IDLE_REPLAY_MS } from './core/receive.js';
 import { playTone, playTick } from './audio/voices.js';
 import { createPressReader, attachKeyboard } from './input/keyboard.js';
-import { mountScene, setKeyDown } from './ui/scene.js';
+import { mountScene, setKeyDown, setSounderDown } from './ui/scene.js';
 import { mountMorseChart } from './ui/morse-chart.js';
 import { mountGalvanometer } from './ui/galvanometer.js';
 import { mountTextRow } from './ui/text-row.js';
@@ -72,9 +74,88 @@ window.addEventListener('keydown', (e) => {
   if (!canPlay() || role() !== 'receive' || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
   if (!/^[a-z]$/i.test(e.key)) return;
   e.preventDefault();
+  recv.clearIdle();
   game.dispatch({ type: 'INPUT', t: now() });
   game.dispatch({ type: 'LETTER', letter: e.key.toUpperCase(), t: now() });
 });
+
+// ---- receiving: play one letter, wait for the typed letter -----------------
+
+const recv = {
+  counter: createReplayCounter('night'),
+  idleUsed: false, // the 15 s replay happens once per letter
+  busyUntil: 0, // audio-clock time when the current letter stops sounding
+  timer: null,
+  idle: null,
+  raf: 0,
+  clearIdle() { clearTimeout(recv.idle); recv.idle = null; },
+  stop() {
+    clearTimeout(recv.timer);
+    recv.timer = null;
+    recv.clearIdle();
+    cancelAnimationFrame(recv.raf);
+    if (desk) setSounderDown(desk.stage, false);
+    recv.busyUntil = 0;
+  },
+};
+const receiving = () => canPlay() && role() === 'receive';
+const playingNow = () => audio.ready && audio.ctx.currentTime < recv.busyUntil;
+
+function animateArm(schedule, end) {
+  cancelAnimationFrame(recv.raf);
+  const step = () => {
+    if (!desk || !audio.ready) return;
+    const t = audio.ctx.currentTime; // the arm reads the audio clock, so it moves with the tones
+    setSounderDown(desk.stage, armDownAt(schedule, t));
+    if (t < end + 0.05) recv.raf = requestAnimationFrame(step);
+    else setSounderDown(desk.stage, false);
+  };
+  recv.raf = requestAnimationFrame(step);
+}
+
+// Plays the letter the player has to type, after `delayMs` (and after any letter still sounding).
+function playCurrent(delayMs = 0) {
+  clearTimeout(recv.timer);
+  recv.clearIdle();
+  const left = playingNow() ? (recv.busyUntil - audio.ctx.currentTime) * 1000 + 150 : 0;
+  recv.timer = setTimeout(() => {
+    recv.timer = null;
+    if (!receiving()) return;
+    const s = st();
+    const letter = s.message.letters[s.pos];
+    if (!letter) return;
+    audio.unlock();
+    const h = playLetter(audio, letter);
+    if (h) {
+      recv.busyUntil = h.end;
+      animateArm(h.schedule, h.end);
+    }
+    const soundMs = h ? (h.end - audio.ctx.currentTime) * 1000 : 0;
+    // No input for 15 s: play it once more, free [R4.5a].
+    recv.idle = setTimeout(() => {
+      if (!receiving() || recv.idleUsed) return;
+      recv.idleUsed = true;
+      playCurrent(0);
+    }, soundMs + IDLE_REPLAY_MS);
+    updateReplay();
+  }, Math.max(delayMs, left));
+}
+
+function updateReplay() {
+  const b = desk?.replay;
+  if (!b) return;
+  const show = st().screen === 'playing' && role() === 'receive';
+  b.parentElement.hidden = !show;
+  b.textContent = replayLabel(recv.counter);
+  b.disabled = !recv.counter.canUse();
+}
+
+function onReplay() {
+  if (!receiving() || playingNow()) return;
+  if (!recv.counter.use()) return; // 3 per message in Night Shift, unlimited in Day Shift [R4.5]
+  playCurrent(0);
+  updateReplay();
+}
 
 // ---- screens ------------------------------------------------------------
 
@@ -99,6 +180,7 @@ function onAction(action) {
 }
 
 function renderStart() {
+  recv.stop();
   desk = null;
   reader.reset();
   document.documentElement.dataset.mode = 'night';
@@ -121,7 +203,11 @@ function buildDesk(s) {
   hud.className = 'hud-label';
   stage.prepend(hud);
   const gauge = mountGalvanometer(stage, { max: s.maxLives, lives: s.lives ?? s.maxLives });
-  desk = { mode: s.mode, stage, gauge, row, hud, layer: view.querySelector('.card-layer') };
+  stage.querySelector('.text-row-box').insertAdjacentHTML('afterend', '<p class="replay-row" hidden><button type="button" class="replay-btn">Replay</button></p>');
+  const replay = stage.querySelector('.replay-btn');
+  replay.addEventListener('click', () => { onReplay(); replay.blur(); });
+  recv.counter = createReplayCounter(s.mode);
+  desk = { mode: s.mode, stage, gauge, row, hud, replay, layer: view.querySelector('.card-layer') };
   applySettings();
 }
 
@@ -134,7 +220,9 @@ function renderRun(s) {
     document.activeElement?.blur?.();
   } else {
     reader.reset();
+    recv.stop();
   }
+  updateReplay();
 }
 
 function render() {
@@ -155,9 +243,21 @@ bus.on('DAY_STARTED', ({ lives, max }) => {
 bus.on('MESSAGE_STARTED', ({ message }) => {
   card.role = message.role;
   desk?.row.show(message.text, message.role);
+  recv.stop();
+  recv.counter.reset();
+  recv.idleUsed = false;
+  if (message.role === 'receive') playCurrent(700);
 });
-bus.on('LETTER_OK', ({ next }) => desk?.row.setPos(next));
-bus.on('LETTER_WRONG', () => desk?.row.wrong());
+bus.on('LETTER_OK', ({ next }) => {
+  desk?.row.setPos(next);
+  if (role() !== 'receive') return;
+  recv.idleUsed = false;
+  if (next < (st().message?.letters.length ?? 0)) playCurrent(NEXT_LETTER_PAUSE_MS); // R4.3
+});
+bus.on('LETTER_WRONG', () => {
+  desk?.row.wrong();
+  if (role() === 'receive') playCurrent(NEXT_LETTER_PAUSE_MS); // same letter again, free [R4.4]
+});
 bus.on('LIFE_LOST', ({ lives }) => { desk?.gauge.set(lives); playTick(audio); });
 bus.on('LIFE_REFILLED', ({ lives }) => desk?.gauge.set(lives));
 bus.on('DAY_ENDED', ({ stats }) => { card.stats = stats; });
@@ -180,11 +280,12 @@ options = mountOptions(document.body, {
   inRun: () => st().screen !== 'start',
   onEndGame: () => game.dispatch({ type: 'END_GAME' }),
   onOpenChange: (open) => {
-    if (open) { reader.cancel(); reader.reset(); }
+    if (open) { reader.cancel(); reader.reset(); recv.stop(); } else if (receiving()) playCurrent(NEXT_LETTER_PAUSE_MS);
     bus.emit(open ? 'PAUSE' : 'RESUME'); // game time pauses while open [design 11]
   },
 });
 
 applySettings();
 render();
+if (query.get('test') === '1') window.__deadAir = { game, bus, audio }; // hook for the browser check only
 export { bus, game, options };
