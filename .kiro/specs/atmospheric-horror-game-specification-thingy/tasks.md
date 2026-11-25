@@ -90,9 +90,9 @@ Cut order if late: T22 (one-shot sounds), T23 (Day Shift music), T27 (phone), T2
   Needs: T3, T10, T17. Build `director/horror.js`: intensity from day and lives, random effect scheduler with the minimum gap, no effect while a key is down, Day 3 full set, Dead Air from Day 1.
   Done when: property test: no two effects closer than 8 s (4 s on Day 3), none while a key is down; the scheduler is never started in Day Shift. [R6.5, R6.7, R16.1]
 
-- [ ] **T20. Strange messages and uneasy thoughts**
-  Needs: T7, T19. Write the strange messages and the uneasy thought variants; connect them to the director and the day builder.
-  Done when: Day 1 shows a strange message only as the 5th message; Day 2 has at least 2; Day 3 has at least 3. [R6.3, R6.7, R12.6]
+- [ ] **T20. Strange messages**
+  Needs: T7, T19. Write the strange messages; connect them to the director and the day builder.
+  Done when: Day 1 shows a strange message only as the 5th message; Day 2 has at least 2; Day 3 has at least 3. [R6.3, R6.7]
 
 - [ ] **T21. Character thoughts and facts**
   Needs: T2, T7. Build `director/thoughts.js`: at least 6 facts, at least 4 message reactions, at most 2 per day, at most 20 words, fade after 8 s, blocked while pressing or typing.

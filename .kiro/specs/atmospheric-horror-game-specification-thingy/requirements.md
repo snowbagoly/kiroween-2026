@@ -149,7 +149,7 @@ Acceptance criteria:
 4. The system SHALL include at least 6 facts, for example: telegrams were paid per word so people wrote short; "STOP" marked the end of a sentence; operators could recognise each other by their tapping style; messages travelled along a wire as on/off current.
 4a. The character SHALL also react to the message in front of him. For example, WHEN a message is very long THEN he may think "Phew, that must be a rich guy!". WHEN a message is cryptic, with many abbreviations, THEN he may think "I understand that you want to spare some money, but this message makes no sense anymore." At least 4 such reactions SHALL exist, and each SHALL show only when the message fits it.
 5. Work messages in Day 1 and Day 2 SHALL read like real 1870s telegrams (short, no small words, "STOP" used for full stops).
-6. In Night Shift mode some thoughts SHALL turn uneasy (for example, "The wire only carries on and off... so who is answering?"). The real fact SHALL still be readable.
+6. Each thought SHALL have one version, the same in Night Shift and Day Shift.
 
 ### R13. Kiroween Judge mode
 **User story:** As a Kiroween judge with only a few seconds, I want to jump around the game and see its best moments right away, so I can judge it without playing it through.

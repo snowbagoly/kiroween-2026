@@ -8,6 +8,7 @@ import { createAudioEngine } from './audio/engine.js';
 import { playLetter, armDownAt } from './audio/sequencer.js';
 import { createNightMusic } from './audio/music-night.js';
 import { createHorrorDirector, intensityFor } from './director/horror.js';
+import { createThoughts, SHOW_MS } from './director/thoughts.js';
 import { createTutorial, HEARD_LETTER } from './core/tutorial.js';
 import { createReplayCounter, replayLabel, NEXT_LETTER_PAUSE_MS, IDLE_REPLAY_MS } from './core/receive.js';
 import { playTone, playTick, playStatic } from './audio/voices.js';
@@ -60,6 +61,7 @@ const role = () => st().message?.role ?? 'send';
 const canPlay = () => st().screen === 'playing' && !options?.isOpen;
 const inTutorial = () => st().screen === 'tutorial' && !options?.isOpen;
 let tone = null;
+let lastInputAt = -Infinity; // the last Space press or typed letter
 let tutor = null; // the tutorial sheets while the tutorial screen is open
 let tutorHint = '';
 let tutorReadyAt = 0; // the dial sheet takes a key only after the needle has moved
@@ -67,6 +69,7 @@ let meterRaf = 0;
 
 const reader = createPressReader({
   onPressStart: () => {
+    lastInputAt = now();
     audio.unlock();
     tone = playTone(audio);
     if (desk) setKeyDown(desk.stage, true);
@@ -112,6 +115,7 @@ window.addEventListener('keydown', (e) => {
   if (!/^[a-z]$/i.test(e.key)) return;
   if (e.defaultPrevented) return;
   e.preventDefault();
+  lastInputAt = now();
   recv.clearIdle();
   game.dispatch({ type: 'INPUT', t: now() });
   game.dispatch({ type: 'LETTER', letter: e.key.toUpperCase(), t: now() });
@@ -292,6 +296,7 @@ function onAction(action) {
 
 function renderStart() {
   recv.stop();
+  clearTimeout(thoughtTimer);
   desk = null;
   reader.reset();
   document.documentElement.dataset.mode = 'night';
@@ -321,7 +326,10 @@ function buildDesk(s) {
   // Screen effects exist only in Night Shift and Dead Air; Day Shift never loads them [R7.1].
   const fx = s.mode === 'day' ? null : mountEffects(stage, { reduce: reduceFlashing() });
   fx?.setIntensity(nightTension(s));
-  desk = { mode: s.mode, stage, gauge, row, hud, replay, fx, layer: view.querySelector('.card-layer') };
+  // Thoughts: a line at the bottom of the desk. A status region, so it never takes focus [R12.3].
+  stage.insertAdjacentHTML('beforeend', '<p class="thought-line" role="status" aria-live="polite"></p>');
+  const thought = stage.querySelector('.thought-line');
+  desk = { mode: s.mode, stage, gauge, row, hud, replay, fx, thought, layer: view.querySelector('.card-layer') };
   applySettings();
 }
 
@@ -391,8 +399,42 @@ function render() {
 
 // ---- game events to pictures and sounds ----------------------------------
 
-bus.on('RUN_STARTED', () => { deadAirBefore = data.deadAirUnlocked; });
+// ---- thoughts -----------------------------------------------------------------
+
+let thoughts = createThoughts();
+let thoughtTimer = null;
+const THOUGHT_DELAY_MS = 700; // shortly after the message appears
+const THOUGHT_GIVE_UP_MS = 6000; // still busy after this: drop it, it was never shown
+// Never while Space is down or the player is typing [R12.2].
+const thoughtBlocked = () => reader.pressing || now() - lastInputAt < 1200 || !!options?.isOpen;
+
+function showThought(th) {
+  if (!desk?.thought) return;
+  thoughts.shown(th);
+  const el = desk.thought;
+  el.textContent = th.text;
+  el.classList.remove('on');
+  void el.offsetWidth;
+  el.classList.add('on'); // CSS fades it out over 8 s
+  clearTimeout(el.__clear);
+  el.__clear = setTimeout(() => { el.classList.remove('on'); el.textContent = ''; }, SHOW_MS);
+}
+
+function queueThought(th) {
+  clearTimeout(thoughtTimer);
+  const until = now() + THOUGHT_GIVE_UP_MS;
+  const attempt = () => {
+    const sc = st().screen;
+    if (sc !== 'playing' && sc !== 'messageDone') return;
+    if (!thoughtBlocked()) { showThought(th); return; }
+    if (now() < until) thoughtTimer = setTimeout(attempt, 300);
+  };
+  thoughtTimer = setTimeout(attempt, THOUGHT_DELAY_MS);
+}
+
+bus.on('RUN_STARTED', () => { deadAirBefore = data.deadAirUnlocked; thoughts = createThoughts(); });
 bus.on('DAY_STARTED', ({ lives, max }) => {
+  thoughts.newDay(); // at most 2 thoughts a day [R12.2]
   if (!desk) return;
   desk.gauge.setMax(max, lives);
   applySettings();
@@ -400,6 +442,8 @@ bus.on('DAY_STARTED', ({ lives, max }) => {
 });
 bus.on('MESSAGE_STARTED', ({ message }) => {
   card.role = message.role;
+  const th = thoughts.pick(message);
+  if (th) queueThought(th);
   desk?.row.show(message.text, message.role);
   // A strange message looks wrong on the row and makes the night worse while it lasts [R6.3].
   desk?.row.setStrange(!!message.strange && st().mode !== 'day');
