@@ -9,7 +9,7 @@ import { playLetter, armDownAt } from './audio/sequencer.js';
 import { createNightMusic } from './audio/music-night.js';
 import { createTutorial, HEARD_LETTER } from './core/tutorial.js';
 import { createReplayCounter, replayLabel, NEXT_LETTER_PAUSE_MS, IDLE_REPLAY_MS } from './core/receive.js';
-import { playTone, playTick } from './audio/voices.js';
+import { playTone, playTick, playStatic } from './audio/voices.js';
 import { createPressReader, attachKeyboard } from './input/keyboard.js';
 import { mountScene, setKeyDown, setSounderDown } from './ui/scene.js';
 import { mountMorseChart } from './ui/morse-chart.js';
@@ -17,6 +17,7 @@ import { mountGalvanometer } from './ui/galvanometer.js';
 import { mountTextRow } from './ui/text-row.js';
 import { mountStart, showCard, hudLabel } from './ui/screens.js';
 import { mountOptions } from './ui/options.js';
+import { mountEffects } from './ui/effects-fx.js';
 
 const query = new URLSearchParams(window.location.search);
 const judge = query.get('judge') === '1'; // read once at boot [design 13]
@@ -37,12 +38,16 @@ let options = null;
 let deadAirBefore = data.deadAirUnlocked;
 let card = { role: 'send', stats: null, canRestart: true, totals: null, best: null, unlocked: false };
 
+// "Reduce flashing" in Options, or the computer's own reduce-motion setting.
+const reduceFlashing = () => data.settings.reduceFlashing || !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
 function applySettings() {
   const s = data.settings;
   audio.setMusicVolume(s.musicVol);
   audio.setSfxVolume(s.sfxVol);
   audio.setMuted(s.mute);
   document.documentElement.classList.toggle('reduce-flashing', s.reduceFlashing);
+  desk?.fx?.setReduce(reduceFlashing());
   desk?.gauge.showNumber(s.showLivesNumber);
 }
 
@@ -312,7 +317,10 @@ function buildDesk(s) {
   const replay = stage.querySelector('.replay-btn');
   replay.addEventListener('click', () => { onReplay(); replay.blur(); });
   recv.counter = createReplayCounter(s.mode);
-  desk = { mode: s.mode, stage, gauge, row, hud, replay, layer: view.querySelector('.card-layer') };
+  // Screen effects exist only in Night Shift and Dead Air; Day Shift never loads them [R7.1].
+  const fx = s.mode === 'day' ? null : mountEffects(stage, { reduce: reduceFlashing() });
+  fx?.setIntensity(nightTension(s));
+  desk = { mode: s.mode, stage, gauge, row, hud, replay, fx, layer: view.querySelector('.card-layer') };
   applySettings();
 }
 
@@ -356,6 +364,7 @@ function updateNight() {
   if (want && !night.running) { audio.unlock(); night.start(); }
   if (!want && night.running) night.stop();
   if (night.running) night.setTension(nightTension(s));
+  desk?.fx?.setIntensity(nightTension(s));
 }
 
 function render() {
@@ -390,6 +399,8 @@ bus.on('LETTER_OK', ({ next }) => {
 });
 bus.on('LETTER_WRONG', () => {
   desk?.row.wrong();
+  // A mistake in Night Shift: static and flicker, or a slow fade with "Reduce flashing" [R6.4, R6.6].
+  if (desk?.fx && desk.fx.mistake()) playStatic(audio);
   if (role() === 'receive') playCurrent(NEXT_LETTER_PAUSE_MS); // same letter again, free [R4.4]
 });
 bus.on('LIFE_LOST', ({ lives }) => { desk?.gauge.set(lives); playTick(audio); updateNight(); });
