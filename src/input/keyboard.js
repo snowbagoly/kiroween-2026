@@ -76,12 +76,14 @@ export function attachKeyboard(target, reader, { enabled = () => true } = {}) {
   const isSpace = (e) => e.code === 'Space' || e.key === ' ';
   const down = (e) => {
     if (!isSpace(e)) return;
+    if (!enabled() && !reader.pressing) return; // let Space work on buttons when not sending
     e.preventDefault?.(); // no page scroll
     if (e.repeat || !enabled()) return; // a held key sends many keydowns [R3.8]
     reader.pressStart();
   };
   const up = (e) => {
     if (!isSpace(e)) return;
+    if (!reader.pressing) return;
     e.preventDefault?.();
     reader.pressEnd();
   };
