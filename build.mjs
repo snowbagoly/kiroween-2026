@@ -28,16 +28,29 @@ export function findExternalLinks(text) {
   return found.filter((u) => !/^https?:\/\/www\.w3\.org\//.test(u));
 }
 
+// The bundle puts every module in one scope, so two modules must not declare the same
+// top-level name. Returns the names declared more than once.
+export function findDuplicateNames(js) {
+  const seen = new Map();
+  for (const m of js.matchAll(/^(?:const|let|var|function\*?|class|async\s+function)\s+([A-Za-z_$][\w$]*)/gm)) {
+    seen.set(m[1], (seen.get(m[1]) ?? 0) + 1);
+  }
+  return [...seen].filter(([, n]) => n > 1).map(([name]) => name);
+}
+
 // Pages to build: [html template, entry script, output file]. Dev pages are for manual checks.
 export const PAGES = [
   ['index.html', 'src/main.js', 'index.html'],
   ['dev/audio.html', 'dev/audio.js', 'dev-audio.html'],
   ['index.html', 'dev/send.js', 'dev-send.html'],
+  ['dev/night.html', 'dev/night.js', 'dev-night.html'],
 ];
 
 export function buildPage(htmlFile, entryFile, outFile) {
   let html = readFileSync(resolve(root, htmlFile), 'utf8');
   const js = bundle(resolve(root, entryFile)).join('\n\n').replace(/<\/script/gi, '<\\/script');
+  const dup = findDuplicateNames(js);
+  if (dup.length) throw new Error(`${entryFile}: these top-level names are declared in more than one module: ${dup.join(', ')}`);
   html = html
     .replace(/<!-- build:js -->[\s\S]*?<!-- \/build:js -->/, () => `<script type="module">\n${js}\n</script>`)
     .replace(/<!-- build:css -->\n?/, '')
