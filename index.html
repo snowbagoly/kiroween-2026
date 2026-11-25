@@ -47,6 +47,12 @@
   .desk .knob { fill: var(--knob); } .desk .knob-top { fill: #fff; opacity: .15; }
   .desk .lever { transform-box: fill-box; transform-origin: 12% 50%; transition: transform 25ms linear; }
   .desk .lever.down { transform: rotate(5deg); }
+  .desk #sounder .arm { transform-box: view-box; transform-origin: 135.5px 57.9px; transition: transform 12ms linear; }
+  .desk #sounder .arm.down { transform: rotate(-4deg); }
+  .replay-row { text-align: center; margin: 0 0 .3rem; }
+  .replay-btn { padding: .3rem .9rem; cursor: pointer; background: var(--paper); color: var(--ink);
+    border: 2px solid var(--brass2); border-radius: 3px; }
+  .replay-btn[disabled] { opacity: .55; cursor: default; }
   .desk .edge { fill: var(--edge); }
   .desk .thought { fill: var(--thought); font-size: 3.2px; font-style: italic; }
   .desk .g-ticks { stroke: var(--ink); stroke-width: .45; }
@@ -92,7 +98,8 @@
     border-bottom: 2px solid transparent; line-height: 1.2; }
   .text-row .done { opacity: .45; }
   .text-row .next { background: var(--paper); color: var(--ink); box-shadow: 0 0 0 2px var(--brass); }
-  .text-row.receive .cell { border-bottom-color: var(--text); min-height: 1.2em; }
+  .text-row.receive { font-size: clamp(1rem, 2.1vw, 1.7rem); gap: .3em .9em; }
+  .text-row.receive .cell { border-bottom-color: var(--text); min-height: 1.1em; }
   .text-row.receive .done { opacity: 1; color: var(--text); }
   .text-row.receive .next { background: transparent; color: var(--text); box-shadow: none; border-bottom: 3px solid var(--brass); }
   .text-row .wrong, .text-row.receive .wrong { background: #8a1f1a; color: #fff; animation: wrong-shake .3s; }

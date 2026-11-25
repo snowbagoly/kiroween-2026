@@ -116,6 +116,11 @@ export function setKeyDown(root, down) {
   root.querySelector('#key .lever')?.classList.toggle('down', !!down);
 }
 
+// Drops the sounder arm onto the coils while a received tone sounds [R4.1].
+export function setSounderDown(root, down) {
+  root.querySelector('#sounder .arm')?.classList.toggle('down', !!down);
+}
+
 export function mountScene(root, search = '') {
   const mode = getMode(search);
   root.innerHTML = deskSvg();
