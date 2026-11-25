@@ -6,6 +6,7 @@ import { createGame } from './core/game.js';
 import { createSettingsStore, setSetting } from './core/settings.js';
 import { createAudioEngine } from './audio/engine.js';
 import { playLetter, armDownAt } from './audio/sequencer.js';
+import { createNightMusic } from './audio/music-night.js';
 import { createTutorial, HEARD_LETTER } from './core/tutorial.js';
 import { createReplayCounter, replayLabel, NEXT_LETTER_PAUSE_MS, IDLE_REPLAY_MS } from './core/receive.js';
 import { playTone, playTick } from './audio/voices.js';
@@ -338,8 +339,28 @@ function renderRun(s) {
   updateReplay();
 }
 
+// ---- Night Shift sound bed --------------------------------------------------
+
+const night = createNightMusic(audio);
+const NIGHT_SCREENS = ['dayIntro', 'playing', 'messageDone', 'dayStats', 'gameOver'];
+// Until the horror director (T19) owns this: calm on Day 1, worse each day and as lives fall [R6.2, R6.7].
+const DAY_BASE = { 1: 0.15, 2: 0.45, 3: 0.8 };
+function nightTension(s) {
+  const base = s.mode === 'deadair' ? 0.8 : DAY_BASE[s.day] ?? 0.15;
+  const pressure = s.maxLives ? 1 - (s.lives ?? s.maxLives) / s.maxLives : 0;
+  return Math.min(1, base + pressure * 0.3);
+}
+function updateNight() {
+  const s = st();
+  const want = (s.mode === 'night' || s.mode === 'deadair') && NIGHT_SCREENS.includes(s.screen);
+  if (want && !night.running) { audio.unlock(); night.start(); }
+  if (!want && night.running) night.stop();
+  if (night.running) night.setTension(nightTension(s));
+}
+
 function render() {
   const s = st();
+  updateNight();
   if (s.screen === 'start') renderStart();
   else renderRun(s);
 }
@@ -371,8 +392,8 @@ bus.on('LETTER_WRONG', () => {
   desk?.row.wrong();
   if (role() === 'receive') playCurrent(NEXT_LETTER_PAUSE_MS); // same letter again, free [R4.4]
 });
-bus.on('LIFE_LOST', ({ lives }) => { desk?.gauge.set(lives); playTick(audio); });
-bus.on('LIFE_REFILLED', ({ lives }) => desk?.gauge.set(lives));
+bus.on('LIFE_LOST', ({ lives }) => { desk?.gauge.set(lives); playTick(audio); updateNight(); });
+bus.on('LIFE_REFILLED', ({ lives }) => { desk?.gauge.set(lives); updateNight(); });
 bus.on('DAY_ENDED', ({ stats }) => { card.stats = stats; });
 bus.on('GAME_OVER', ({ canRestart }) => { card.canRestart = canRestart; });
 bus.on('RUN_FINISHED', ({ totals, best, deadAirUnlocked }) => {
@@ -380,7 +401,7 @@ bus.on('RUN_FINISHED', ({ totals, best, deadAirUnlocked }) => {
   card.best = best;
   card.unlocked = deadAirUnlocked && !deadAirBefore;
 });
-bus.on('STOP_SOUND', () => { tone?.stop(); tone = null; });
+bus.on('STOP_SOUND', () => { tone?.stop(); tone = null; night.stop(); });
 bus.on('SCREEN', render);
 
 options = mountOptions(document.body, {
@@ -400,5 +421,5 @@ options = mountOptions(document.body, {
 
 applySettings();
 render();
-if (query.get('test') === '1') window.__deadAir = { game, bus, audio }; // hook for the browser check only
+if (query.get('test') === '1') window.__deadAir = { game, bus, audio, night }; // hook for the browser check only
 export { bus, game, options };
