@@ -89,6 +89,21 @@
   .stats-table th { font-weight: normal; }
   .stats-table td { text-align: right; font-weight: bold; }
   .card .unlock { font-weight: bold; }
+  .card-layer:has(.card-tutorial) { background: transparent; pointer-events: none; align-items: flex-start; padding-top: 22vh; }
+  .card-tutorial { pointer-events: auto; width: min(27rem, 92vw); transform: rotate(-1.2deg); text-align: left;
+    background: var(--face); font-style: italic; box-shadow: 0 8px 24px rgba(0,0,0,.55); }
+  .card-tutorial h2 { font-size: 1rem; font-style: normal; letter-spacing: .15em; text-transform: uppercase; text-align: center; }
+  .sheet-text { font-size: 1.1rem; }
+  .sheet-hint { min-height: 1.3em; font-style: normal; font-weight: bold; color: #8a1f1a; }
+  .press-meter { position: relative; height: 1.4rem; margin: .6rem 0 .2rem; border: 2px solid var(--ink); border-radius: 3px; overflow: hidden; }
+  .press-bar { height: 100%; width: 0; background: var(--brass); }
+  .press-bar.dash { background: var(--brass2); }
+  .press-mark { position: absolute; top: 0; bottom: 0; left: 50%; border-left: 2px dashed var(--ink); }
+  .press-label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-style: normal;
+    font-size: .85rem; font-weight: bold; color: var(--ink); }
+  .desk .pulse { animation: dial-pulse 1s ease-in-out 3; }
+  @keyframes dial-pulse { 50% { filter: drop-shadow(0 0 3px var(--brass)) brightness(1.25); } }
+  @media (prefers-reduced-motion: reduce) { .desk .pulse { animation: none; outline: 2px solid var(--brass); } }
   .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
   .text-row-box { padding: .7rem 6.5rem .5rem; min-height: 3rem; }
   .row-role { margin: 0 0 .35rem; text-align: center; font-size: .85rem; letter-spacing: .14em; text-transform: uppercase; color: var(--thought); }

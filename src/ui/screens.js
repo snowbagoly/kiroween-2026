@@ -70,11 +70,20 @@ export function cardHtml(screen, info = {}) {
     case 'tutorialDialog':
       return `<h2>Start with the tutorial?</h2>
         <div class="card-buttons">${btn('tutorial-start', 'Start tutorial')}${btn('tutorial-notnow', 'Not now')}${btn('tutorial-never', 'Never')}</div>`;
-    case 'tutorial':
-      // Stand-in until T16 adds the instruction sheets.
-      return `<h2>A stack of instruction sheets</h2>
-        <p>Someone left notes on the desk. The sheets are not written yet.</p>
-        <div class="card-buttons">${btn('tutorial-done', 'Put the sheets away')}</div>`;
+    case 'tutorial': {
+      // One handwritten sheet on the desk [R2.2, R2.3, R2.5].
+      const sh = info.sheet;
+      if (!sh) return '';
+      const meter = sh.kind === 'press'
+        ? `<div class="press-meter" aria-hidden="true"><div class="press-bar"></div><span class="press-mark"></span><span class="press-label">press Space</span></div>`
+        : '';
+      const replay = sh.kind === 'type' ? btn('tutorial-replay', 'Play it again') : '';
+      return `<h2>Note ${info.index + 1} of ${info.total}</h2>
+        <p class="sheet-text">${sh.text}</p>
+        ${meter}
+        <p class="sheet-hint" role="status">${info.hint ?? ''}</p>
+        <div class="card-buttons">${replay}${btn('tutorial-done', 'Put the sheets away')}</div>`;
+    }
     case 'dayIntro':
       return `<h2>Day ${day}</h2><p>${DAY_INTROS[day] ?? ''}</p>
         <div class="card-buttons">${btn('continue', 'Start the day')}</div>`;
@@ -114,5 +123,6 @@ export function showCard(layer, screen, info, onAction) {
   layer.hidden = !html;
   layer.innerHTML = html ? `<div class="card card-${screen}" role="dialog" aria-modal="false" aria-labelledby="card-title">${html.replace('<h2>', '<h2 id="card-title">')}</div>` : '';
   for (const b of layer.querySelectorAll('[data-action]')) b.addEventListener('click', () => onAction(b.dataset.action));
-  layer.querySelector('[data-action]')?.focus();
+  // On a tutorial sheet Space is the telegraph key, so no button may hold focus there.
+  if (screen !== 'tutorial') layer.querySelector('[data-action]')?.focus();
 }

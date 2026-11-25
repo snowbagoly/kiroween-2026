@@ -40,7 +40,7 @@ test('screens: closing shows the run, best stats and the unlock', () => {
 
 test('screens: tutorial dialog buttons [R2.1a]', () => {
   assert.deepEqual(buttons(cardHtml('tutorialDialog')), ['Start tutorial', 'Not now', 'Never']);
-  assert.deepEqual(buttons(cardHtml('tutorial')), ['Put the sheets away']);
+  assert.deepEqual(buttons(cardHtml('tutorial', { sheet: { kind: 'press', text: 'x' }, index: 0, total: 5 })), ['Put the sheets away']);
 });
 
 test('screens: playing has no card, HUD shows mode and day [R1.2]', () => {
