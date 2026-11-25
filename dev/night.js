@@ -1,22 +1,24 @@
-// Manual check page for T17. Built to dist/dev-night.html.
+// Manual check page for T17, T22 and T23. Built to dist/dev-night.html.
 import { createAudioEngine } from '../src/audio/engine.js';
 import { createNightMusic, bpmFor } from '../src/audio/music-night.js';
 import { HORROR_SOUNDS } from '../src/audio/horror-voices.js';
+import { createDayMusic } from '../src/audio/music-day.js';
 import { playStatic } from '../src/audio/voices.js';
 import { mountCaptions } from '../src/audio/captions.js';
 
 const audio = createAudioEngine();
 audio.attachUnlock(window);
 const night = createNightMusic(audio);
+const day = createDayMusic(audio);
 const $ = (id) => document.getElementById(id);
 
 function status() {
   $('status').textContent = night.running
     ? `Playing. Heartbeat ${Math.round(bpmFor(night.tension))} beats per minute.`
-    : 'Not playing';
+    : day.running ? 'Playing Day Shift music.' : 'Not playing';
 }
 
-$('start').addEventListener('click', () => { audio.unlock(); night.start(); status(); });
+$('start').addEventListener('click', () => { audio.unlock(); day.stop(); night.start(); status(); });
 $('stop').addEventListener('click', () => { night.stop(); status(); });
 $('tension').addEventListener('input', (e) => {
   night.setTension(Number(e.target.value));
@@ -26,6 +28,8 @@ $('tension').addEventListener('input', (e) => {
 $('music').addEventListener('input', (e) => audio.setMusicVolume(e.target.value));
 $('sfx').addEventListener('input', (e) => audio.setSfxVolume(e.target.value));
 $('mute').addEventListener('change', (e) => audio.setMuted(e.target.checked));
+$('day-start').addEventListener('click', () => { audio.unlock(); night.stop(); day.start(); status(); });
+$('day-stop').addEventListener('click', () => { day.stop(); status(); });
 const caps = mountCaptions(document.body, { enabled: () => $('captions').checked });
 const sounds = { ...HORROR_SOUNDS, static: playStatic };
 for (const b of document.querySelectorAll('[data-sound]')) {
@@ -33,4 +37,4 @@ for (const b of document.querySelectorAll('[data-sound]')) {
 }
 // From the browser console: deadAirSound('thunder'), 'crow', 'scream', 'knock' or 'static'.
 window.deadAirSound = (name) => { audio.unlock(); const ok = !!sounds[name]?.(audio); if (ok) caps.show(name); return ok; };
-if (new URLSearchParams(window.location.search).get('test') === '1') window.__night = { audio, night, caps };
+if (new URLSearchParams(window.location.search).get('test') === '1') window.__night = { audio, night, day, caps };
