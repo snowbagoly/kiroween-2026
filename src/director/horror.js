@@ -9,6 +9,7 @@ export const MIN_GAP_FULL_MS = 4000; // Day 3 in Night Shift, and every day in D
 export const MAX_GAP_MS = 20000;
 export const DAY1_CALM_MS = 25000; // Day 1 starts calm: nothing in the first 25 s
 export const BUSY_RETRY_MS = 500;
+export const STRANGE_BOOST = 0.15;
 
 // Effect types per stage. Day 3 and Dead Air use the full set [R6.7].
 export const EFFECTS = ['thunder', 'crow', 'knock', 'scream'];
@@ -60,6 +61,7 @@ export function createHorrorDirector({
 } = {}) {
   let st = { day: 1, mode: 'night', lives: 10, max: 10 };
   let override = null;
+  let strangeBoost = 0; // a strange message on screen makes things worse for that message
   let running = false;
   let paused = false;
   let timer = null;
@@ -67,7 +69,7 @@ export function createHorrorDirector({
   let dueAt = null; // when the next effect is wanted
   let pausedLeft = null;
 
-  const intensity = () => intensityFor({ ...st, override });
+  const intensity = () => (override !== null ? intensityFor({ ...st, override }) : clampUnit(intensityFor(st) + strangeBoost));
 
   function arm(at) {
     if (timer !== null) clearTimer(timer);
@@ -106,6 +108,8 @@ export function createHorrorDirector({
       return true;
     },
     update(state) { st = { ...st, ...state }; },
+    // A new message starts. Strange ones raise intensity by 0.15 until the next message [R6.3].
+    message(msg) { strangeBoost = msg?.strange ? STRANGE_BOOST : 0; },
     setOverride(v) { override = v === null || v === undefined ? null : clampUnit(v); },
     // Options open: hold the clock. Resume keeps the time that was left.
     pause() {
