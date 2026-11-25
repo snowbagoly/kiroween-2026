@@ -71,6 +71,8 @@ attachKeyboard(window, reader, { enabled: () => canPlay() && role() === 'send' }
 
 // Receiving: type the letter you heard. No Enter needed, not case-sensitive [R4.3].
 window.addEventListener('keydown', (e) => {
+  // Space never scrolls the page during play, also on receive messages where it sends nothing.
+  if (canPlay() && (e.code === 'Space' || e.key === ' ') && !(e.target instanceof HTMLButtonElement)) e.preventDefault();
   if (!canPlay() || role() !== 'receive' || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
   if (!/^[a-z]$/i.test(e.key)) return;
   e.preventDefault();
