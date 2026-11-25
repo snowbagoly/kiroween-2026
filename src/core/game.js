@@ -1,7 +1,7 @@
 // Game rules: one state object and one function, dispatch(event) [design 3, design 4].
 // Input events change the state; output events go to the bus for UI, audio and the director.
 // No browser calls here. The run lives in memory only, so a page reload drops it [R5.6b].
-import { buildDay, MESSAGES_PER_DAY } from './messages.js';
+import { buildDay, MESSAGES_PER_DAY, lettersOf, lengthClass } from './messages.js';
 import { createLives, maxLivesFor } from './lives.js';
 import { createStats, accuracyOf, wpmOf, finalRank, updateBest } from './stats.js';
 import { createRng } from './rng.js';
@@ -11,6 +11,12 @@ export const SCREENS = ['start', 'tutorialDialog', 'tutorial', 'dayIntro', 'play
 export const MODES = ['night', 'day', 'deadair'];
 export const LAST_DAY = 3;
 const RUN_SCREENS = ['tutorialDialog', 'tutorial', 'dayIntro', 'playing', 'messageDone', 'dayStats', 'gameOver'];
+
+// Numbers for the Judge "Show stats" button: a good, believable day [R13.3f].
+export const SAMPLE_STATS = Object.freeze({
+  messages: 5, lettersCorrect: 96, mistakes: 3, longestStreak: 41, activeMs: 4 * 60000, livesLeft: 8,
+  accuracy: (96 / 99) * 100, wpm: 96 / 5 / 4, rank: 'Operator',
+});
 
 // Adds up the day summaries of a run for the closing screen and best stats.
 export function runTotals(days, livesLeft = 0) {
@@ -101,6 +107,11 @@ export function createGame({ data = defaultData(), save = () => {}, seed = 1, bu
     const { lives, dead } = s.lives.loseLife();
     emit('LETTER_WRONG', { index: s.pos, expected, got: e.letter });
     emit('LIFE_LOST', { lives, max: s.lives.max });
+    if (dead && s.infinite) {
+      // Judge "Infinite lives": the needle stops at the last step, never game over [R13.3d].
+      emit('LIVES_SET', { lives: s.lives.set(1), max: s.lives.max });
+      return;
+    }
     if (dead) {
       emit('GAME_OVER', { day: s.day, canRestart: s.mode !== 'deadair' });
       go('gameOver');
@@ -139,6 +150,115 @@ export function createGame({ data = defaultData(), save = () => {}, seed = 1, bu
     emit('RUN_FINISHED', { mode: s.mode, totals, best: saved.best[s.mode], deadAirUnlocked: saved.deadAirUnlocked });
     go('closing');
   }
+
+  // ---- Kiroween Judge mode [design 13, R13.3, R13.4a] ----------------------------
+  // Cheats are extra events. They work on any screen, but only when the game was made with
+  // `judge: true`; normal play ignores them [R13.8]. Nothing here saves [R13.5].
+
+  // Judge cheats may need a run that does not exist yet (from the start screen or the welcome card).
+  function ensureRun(mode = 'night') {
+    if (s.mode) return;
+    s.mode = MODES.includes(mode) ? mode : 'night';
+    s.lives = createLives(maxLivesFor(s.mode));
+    s.stats = createStats();
+    emit('RUN_STARTED', { mode: s.mode, judge: true });
+  }
+
+  function startMessage() {
+    s.pos = 0;
+    s.msgMistakes = 0;
+    emit('MESSAGE_STARTED', { index: s.msgIndex, message: message() });
+    go('playing');
+  }
+
+  const inRun = () => s.mode !== null && RUN_SCREENS.concat('closing').includes(s.screen);
+
+  const judgeHandlers = {
+    // Day 1, 2, 3 or 'closing', in one click. Lands on the first message, not the intro card.
+    JUDGE_JUMP_DAY(e) {
+      ensureRun(e.mode ?? s.mode ?? 'night');
+      if ((e.mode === 'night' || e.mode === 'day') && s.mode !== e.mode) {
+        s.mode = e.mode; // the demo starts in Day Shift even if a Night Shift run is open
+        s.lives = createLives(maxLivesFor(s.mode));
+        emit('MODE_CHANGED', { mode: s.mode, day: s.day });
+      }
+      if (e.day === 'closing') {
+        if (!s.days.length) s.days = [1, 2, 3].map((day) => ({ day, ...SAMPLE_STATS }));
+        const totals = runTotals(s.days, s.lives.lives);
+        emit('RUN_FINISHED', { mode: s.mode, totals, best: totals, deadAirUnlocked: saved.deadAirUnlocked });
+        go('closing');
+        return;
+      }
+      const day = Math.min(LAST_DAY, Math.max(1, Math.round(Number(e.day) || 1)));
+      s.days = s.days.filter((d) => d.day < day);
+      startDay(day);
+      startMessage();
+    },
+    // Night Shift and Day Shift switch, keeping the day [R13.4a]. The day's messages are rebuilt,
+    // so Day Shift never keeps a strange one. Dead Air is not part of the switch.
+    JUDGE_SET_MODE(e) {
+      if (e.mode !== 'night' && e.mode !== 'day') return;
+      if (!s.mode) { ensureRun(e.mode); startDay(1); startMessage(); return; }
+      if (s.mode === e.mode) return;
+      const lives = s.lives.lives;
+      s.mode = e.mode;
+      s.lives = createLives(maxLivesFor(s.mode));
+      s.lives.set(lives);
+      const keep = s.msgIndex;
+      s.messages = buildDay(s.day || 1, s.mode, rng);
+      s.msgIndex = Math.min(keep, s.messages.length - 1);
+      emit('MODE_CHANGED', { mode: s.mode, day: s.day });
+      emit('LIVES_SET', { lives: s.lives.lives, max: s.lives.max });
+      if (s.screen === 'playing' || s.screen === 'messageDone') startMessage();
+      else go(s.screen);
+    },
+    // Puts a chosen message on the desk now (demo reel, "strange message" button).
+    JUDGE_SET_MESSAGE(e) {
+      ensureRun(s.mode ?? 'night');
+      if (!s.day) { startDay(1); }
+      const text = String(e.text ?? '').toUpperCase().replace(/[^A-Z ]/g, '').trim();
+      if (!lettersOf(text)) return;
+      const strange = !!e.strange && s.mode !== 'day';
+      const m = {
+        id: `judge-${s.msgIndex}`, day: s.day, kind: 'either', text, strange, abbreviations: false,
+        role: e.role === 'receive' || e.role === 'send' ? e.role : message()?.role ?? 'send',
+        letters: lettersOf(text), length: lengthClass(text),
+      };
+      s.messages = s.messages.map((x, i) => (i === s.msgIndex ? m : x));
+      startMessage();
+    },
+    JUDGE_SKIP() {
+      if (s.screen === 'playing' || s.screen === 'messageDone') nextMessage();
+    },
+    JUDGE_LIVES(e) {
+      if (!s.lives) return;
+      if (e.op === '-1') {
+        const { lives, dead } = s.lives.loseLife();
+        emit('LIFE_LOST', { lives, max: s.lives.max });
+        if (dead && s.infinite) emit('LIVES_SET', { lives: s.lives.set(1), max: s.lives.max });
+        else if (dead && inRun()) { emit('GAME_OVER', { day: s.day, canRestart: s.mode !== 'deadair' }); go('gameOver'); }
+        return;
+      }
+      const n = e.op === 'full' ? s.lives.max : s.lives.lives + 1;
+      emit('LIVES_SET', { lives: s.lives.set(n), max: s.lives.max });
+    },
+    JUDGE_INFINITE(e) { s.infinite = !!e.on; },
+    JUDGE_FORCE_GAMEOVER() {
+      ensureRun(s.mode ?? 'night');
+      if (!s.day) startDay(1);
+      emit('GAME_OVER', { day: s.day, canRestart: s.mode !== 'deadair' });
+      go('gameOver');
+    },
+    // The statistics screen with sample numbers [R13.3f].
+    JUDGE_SHOW_STATS() {
+      ensureRun(s.mode ?? 'night');
+      if (!s.day) startDay(1);
+      const stats = { ...SAMPLE_STATS, livesLeft: s.lives.lives };
+      s.days = s.days.filter((d) => d.day !== s.day).concat({ day: s.day, ...stats });
+      emit('DAY_ENDED', { day: s.day, stats, sample: true });
+      go('dayStats');
+    },
+  };
 
   const handlers = {
     start: {
@@ -194,6 +314,10 @@ export function createGame({ data = defaultData(), save = () => {}, seed = 1, bu
         if (RUN_SCREENS.includes(s.screen)) endRunToStart();
         return [...out];
       }
+      if (event.type.startsWith('JUDGE_')) {
+        if (judge) judgeHandlers[event.type]?.(event);
+        return [...out];
+      }
       const h = handlers[s.screen]?.[event.type];
       if (h) h(event);
       return [...out];
@@ -204,7 +328,7 @@ export function createGame({ data = defaultData(), save = () => {}, seed = 1, bu
         message: message(), messages: s.messages, messageCount: MESSAGES_PER_DAY,
         lives: s.lives?.lives ?? null, maxLives: s.lives?.max ?? null,
         dayStats: s.stats?.summary(s.lives?.lives ?? 0) ?? null,
-        days: s.days.map((d) => ({ ...d })), judge,
+        days: s.days.map((d) => ({ ...d })), judge, infinite: !!s.infinite,
       };
     },
     get saved() { return saved; },

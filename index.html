@@ -89,6 +89,25 @@
   .stats-table th { font-weight: normal; }
   .stats-table td { text-align: right; font-weight: bold; }
   .card .unlock { font-weight: bold; }
+  .judge-badge { display: inline-block; padding: 0 .4em; margin-right: .3em; background: #8a1f1a; color: #fff; font-size: .8rem;
+    font-weight: bold; letter-spacing: .12em; border-radius: 2px; }
+  .judge-panel { position: fixed; z-index: 22; left: .5rem; top: 19.5rem; width: clamp(14rem, 20vw, 17rem); max-height: calc(100vh - 20.5rem);
+    overflow: auto; box-sizing: border-box; padding: .5rem .6rem; background: rgba(20,14,10,.92); color: #f2e6cc;
+    border: 1px solid #8a6a3a; border-radius: 4px; font-size: .85rem; box-shadow: 0 6px 18px rgba(0,0,0,.5); }
+  .jp-head { display: flex; justify-content: space-between; align-items: center; gap: .5rem; }
+  .jp-sound { margin: .3rem 0; color: #ffd27a; font-weight: bold; }
+  .judge-panel fieldset { margin: .4rem 0 0; padding: .3rem .4rem .45rem; border: 1px solid rgba(242,230,204,.25); border-radius: 3px; }
+  .judge-panel legend { padding: 0 .3rem; color: #c9b58a; text-transform: uppercase; letter-spacing: .1em; font-size: .72rem; }
+  .judge-panel button { margin: .15rem .1rem; padding: .2rem .45rem; cursor: pointer; background: #f2e6cc; color: #2a1d10;
+    border: 0; border-radius: 2px; font-size: .8rem; }
+  .judge-panel button[aria-pressed="true"] { background: #ffd27a; font-weight: bold; }
+  .judge-panel label { display: inline-flex; align-items: center; gap: .3rem; margin: .2rem .3rem .2rem 0; }
+  .judge-panel .jp-wide { display: flex; width: 100%; }
+  .judge-panel .jp-wide input { flex: 1; min-width: 0; }
+  .judge-panel .jp-exit { display: block; width: 100%; margin-top: .5rem; background: #8a1f1a; color: #fff; }
+  .judge-welcome { position: fixed; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center;
+    padding: 1rem; background: rgba(0,0,0,.6); }
+  .judge-welcome .card { width: min(34rem, 100%); }
   .caption-line { position: fixed; bottom: 4.4rem; left: calc(50% + clamp(4.5rem, 10vw, 8.5rem)); transform: translateX(-50%); z-index: 25; margin: 0; padding: .3rem .9rem;
     background: rgba(0,0,0,.8); color: #fff; font-size: 1.05rem; letter-spacing: .03em; border-radius: 3px; pointer-events: none; }
   .caption-line:empty { display: none; }

@@ -33,5 +33,7 @@ export function createLives(max = MAX_LIVES) {
 
     // Start of a day: full lives, streak cleared [R9.6].
     reset() { lives = max; cleanStreak = 0; },
+    // Judge mode only: set lives directly, kept between 0 and max [R13.3d].
+    set(n) { lives = Math.min(max, Math.max(0, Math.round(Number(n) || 0))); return lives; },
   };
 }

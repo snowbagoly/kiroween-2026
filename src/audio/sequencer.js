@@ -7,13 +7,15 @@ export const DASH_S = 0.36;
 export const SYMBOL_GAP_S = 0.12;
 
 // Start and end time (seconds) of each tone in a letter, beginning at `t0`.
-export function letterSchedule(pattern, t0 = 0) {
+// `speed` (Judge auto-play x2, x4) shortens every time by the same factor.
+export function letterSchedule(pattern, t0 = 0, speed = 1) {
   const out = [];
   let t = t0;
+  const k = 1 / Math.max(0.25, Number(speed) || 1);
   for (const s of pattern) {
-    const len = s === '.' ? DOT_S : DASH_S;
+    const len = (s === '.' ? DOT_S : DASH_S) * k;
     out.push({ start: t, end: t + len });
-    t += len + SYMBOL_GAP_S;
+    t += len + SYMBOL_GAP_S * k;
   }
   return out;
 }
@@ -34,14 +36,14 @@ function burst(data, sr, at, { amp, decay, thumpHz, thumpAmp }) {
 // One letter is one voice of the engine: a gated sine for the tones and one noise buffer
 // holding a "click" when the arm drops and a higher, softer "clack" when it lifts.
 // Returns { schedule, end } in audio-clock seconds, or null if there is no sound yet or no room.
-export function playLetter(engine, letter, { freq = 600, level = 0.32, lead = 0.05 } = {}) {
+export function playLetter(engine, letter, { freq = 600, level = 0.32, lead = 0.05, speed = 1, clicks = true } = {}) {
   const pattern = encode(letter);
   if (!pattern) return null;
   let schedule = null;
   let end = 0;
   const v = engine.voice((ctx, out) => {
     const t0 = ctx.currentTime + lead;
-    schedule = letterSchedule(pattern, t0);
+    schedule = letterSchedule(pattern, t0, speed);
     end = schedule[schedule.length - 1].end;
     const stopAt = end + 0.12;
 
@@ -62,7 +64,7 @@ export function playLetter(engine, letter, { freq = 600, level = 0.32, lead = 0.
     const sr = ctx.sampleRate;
     const buf = ctx.createBuffer(1, Math.ceil((stopAt - t0) * sr), sr);
     const data = buf.getChannelData(0);
-    for (const { start, end: e } of schedule) {
+    for (const { start, end: e } of clicks ? schedule : []) {
       burst(data, sr, start - t0, { amp: 0.8, decay: 0.004, thumpHz: 140, thumpAmp: 0.6 }); // click: arm drops
       burst(data, sr, e - t0, { amp: 0.5, decay: 0.003, thumpHz: 260, thumpAmp: 0.25 }); // clack: arm lifts
     }
