@@ -1,6 +1,9 @@
 // Manual check page for T17. Built to dist/dev-night.html.
 import { createAudioEngine } from '../src/audio/engine.js';
 import { createNightMusic, bpmFor } from '../src/audio/music-night.js';
+import { HORROR_SOUNDS } from '../src/audio/horror-voices.js';
+import { playStatic } from '../src/audio/voices.js';
+import { mountCaptions } from '../src/audio/captions.js';
 
 const audio = createAudioEngine();
 audio.attachUnlock(window);
@@ -23,4 +26,11 @@ $('tension').addEventListener('input', (e) => {
 $('music').addEventListener('input', (e) => audio.setMusicVolume(e.target.value));
 $('sfx').addEventListener('input', (e) => audio.setSfxVolume(e.target.value));
 $('mute').addEventListener('change', (e) => audio.setMuted(e.target.checked));
-if (new URLSearchParams(window.location.search).get('test') === '1') window.__night = { audio, night };
+const caps = mountCaptions(document.body, { enabled: () => $('captions').checked });
+const sounds = { ...HORROR_SOUNDS, static: playStatic };
+for (const b of document.querySelectorAll('[data-sound]')) {
+  b.addEventListener('click', () => { audio.unlock(); if (sounds[b.dataset.sound](audio)) caps.show(b.dataset.sound); });
+}
+// From the browser console: deadAirSound('thunder'), 'crow', 'scream', 'knock' or 'static'.
+window.deadAirSound = (name) => { audio.unlock(); const ok = !!sounds[name]?.(audio); if (ok) caps.show(name); return ok; };
+if (new URLSearchParams(window.location.search).get('test') === '1') window.__night = { audio, night, caps };

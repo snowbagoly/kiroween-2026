@@ -7,6 +7,8 @@ import { createSettingsStore, setSetting } from './core/settings.js';
 import { createAudioEngine } from './audio/engine.js';
 import { playLetter, armDownAt } from './audio/sequencer.js';
 import { createNightMusic } from './audio/music-night.js';
+import { HORROR_SOUNDS } from './audio/horror-voices.js';
+import { mountCaptions } from './audio/captions.js';
 import { createHorrorDirector, intensityFor } from './director/horror.js';
 import { createThoughts, SHOW_MS } from './director/thoughts.js';
 import { createTutorial, HEARD_LETTER } from './core/tutorial.js';
@@ -33,6 +35,7 @@ audio.attachUnlock(window);
 const game = createGame({ data, save: (d) => { data = d; store.save(d); }, seed: Date.now() >>> 0, bus, judge });
 
 const app = document.getElementById('app');
+const captions = mountCaptions(document.body, { enabled: () => data.settings.captions });
 app.innerHTML = '<div class="view"></div>';
 const view = app.querySelector('.view');
 let desk = null; // { mode, stage, gauge, row, hud, layer } while a run is on screen
@@ -464,7 +467,7 @@ bus.on('LETTER_OK', ({ next }) => {
 bus.on('LETTER_WRONG', () => {
   desk?.row.wrong();
   // A mistake in Night Shift: static and flicker, or a slow fade with "Reduce flashing" [R6.4, R6.6].
-  if (desk?.fx && desk.fx.mistake()) playStatic(audio);
+  if (desk?.fx && desk.fx.mistake()) { playStatic(audio); captions.show('static'); }
   if (role() === 'receive') playCurrent(NEXT_LETTER_PAUSE_MS); // same letter again, free [R4.4]
 });
 bus.on('LIFE_LOST', ({ lives }) => { desk?.gauge.set(lives); playTick(audio); updateNight(); });
@@ -477,6 +480,17 @@ bus.on('RUN_FINISHED', ({ totals, best, deadAirUnlocked }) => {
   card.unlocked = deadAirUnlocked && !deadAirBefore;
 });
 bus.on('STOP_SOUND', () => { tone?.stop(); tone = null; night.stop(); director.stop(); });
+// Horror effects from the director: the sound and its caption [R6.1, R10.3]. Never in Day Shift.
+function playHorror(name) {
+  if (st().mode === 'day') return false;
+  const play = HORROR_SOUNDS[name];
+  if (!play) return false;
+  audio.unlock();
+  const v = play(audio);
+  if (v) captions.show(name);
+  return !!v;
+}
+bus.on('HORROR_EFFECT', ({ name }) => playHorror(name));
 bus.on('SCREEN', render);
 
 options = mountOptions(document.body, {
@@ -497,5 +511,5 @@ options = mountOptions(document.body, {
 
 applySettings();
 render();
-if (query.get('test') === '1') window.__deadAir = { game, bus, audio, night, director }; // hook for the browser check only
+if (query.get('test') === '1') window.__deadAir = { game, bus, audio, night, director, playHorror, captions }; // hook for the browser check only
 export { bus, game, options };
