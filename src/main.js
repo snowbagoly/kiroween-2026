@@ -6,6 +6,7 @@ import { createGame } from './core/game.js';
 import { createSettingsStore, setSetting } from './core/settings.js';
 import { createAudioEngine } from './audio/engine.js';
 import { playLetter, armDownAt } from './audio/sequencer.js';
+import { createTutorial, HEARD_LETTER } from './core/tutorial.js';
 import { createReplayCounter, replayLabel, NEXT_LETTER_PAUSE_MS, IDLE_REPLAY_MS } from './core/receive.js';
 import { playTone, playTick } from './audio/voices.js';
 import { createPressReader, attachKeyboard } from './input/keyboard.js';
@@ -50,24 +51,51 @@ const now = () => performance.now();
 const st = () => game.state;
 const role = () => st().message?.role ?? 'send';
 const canPlay = () => st().screen === 'playing' && !options?.isOpen;
+const inTutorial = () => st().screen === 'tutorial' && !options?.isOpen;
 let tone = null;
+let tutor = null; // the tutorial sheets while the tutorial screen is open
+let tutorHint = '';
+let tutorReadyAt = 0; // the dial sheet takes a key only after the needle has moved
+let meterRaf = 0;
 
 const reader = createPressReader({
   onPressStart: () => {
     audio.unlock();
     tone = playTone(audio);
     if (desk) setKeyDown(desk.stage, true);
+    if (inTutorial()) startMeter();
     game.dispatch({ type: 'INPUT', t: now() });
   },
   onPressEnd: () => {
     tone?.stop();
     tone = null;
     if (desk) setKeyDown(desk.stage, false);
+    stopMeter();
   },
+  onSymbol: ({ symbol }) => { if (inTutorial() && tutor) tutorResult(tutor.symbol(symbol)); },
   // A pattern that is no letter counts as a wrong letter.
-  onLetter: (r) => { if (canPlay() && role() === 'send') game.dispatch({ type: 'LETTER', letter: r.letter ?? '?', t: now() }); },
+  onLetter: (r) => {
+    if (inTutorial() && tutor) { tutorResult(tutor.letter(r.letter)); return; }
+    if (canPlay() && role() === 'send') game.dispatch({ type: 'LETTER', letter: r.letter ?? '?', t: now() });
+  },
 });
-attachKeyboard(window, reader, { enabled: () => canPlay() && role() === 'send' });
+attachKeyboard(window, reader, { enabled: () => (canPlay() && role() === 'send') || (inTutorial() && tutor?.sheet?.kind === 'press') });
+
+// Tutorial keys: any key on the dial sheet, a typed letter on the listening sheet.
+window.addEventListener('keydown', (e) => {
+  if (!inTutorial() || !tutor || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+  const kind = tutor.sheet?.kind;
+  if (kind === 'key') {
+    if (['Tab', 'Escape', 'Shift'].includes(e.key) || now() < tutorReadyAt) return;
+    e.preventDefault();
+    tutorResult(tutor.key());
+  } else if (kind === 'type' && /^[a-z]$/i.test(e.key)) {
+    e.preventDefault();
+    tutorResult(tutor.typed(e.key));
+  } else if (kind === 'type' && e.key === ' ') {
+    e.preventDefault();
+  }
+});
 
 // Receiving: type the letter you heard. No Enter needed, not case-sensitive [R4.3].
 window.addEventListener('keydown', (e) => {
@@ -75,6 +103,7 @@ window.addEventListener('keydown', (e) => {
   if (canPlay() && (e.code === 'Space' || e.key === ' ') && !(e.target instanceof HTMLButtonElement)) e.preventDefault();
   if (!canPlay() || role() !== 'receive' || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
   if (!/^[a-z]$/i.test(e.key)) return;
+  if (e.defaultPrevented) return;
   e.preventDefault();
   recv.clearIdle();
   game.dispatch({ type: 'INPUT', t: now() });
@@ -115,6 +144,83 @@ function animateArm(schedule, end) {
   recv.raf = requestAnimationFrame(step);
 }
 
+// Plays one received letter with the sounder arm. Returns the schedule, or null with no sound.
+function playReceived(letter) {
+  audio.unlock();
+  const h = playLetter(audio, letter);
+  if (h) {
+    recv.busyUntil = h.end;
+    animateArm(h.schedule, h.end);
+  }
+  return h;
+}
+
+// ---- tutorial -------------------------------------------------------------
+
+const PRESS_SCALE_MS = 600; // the meter is full at 600 ms; the mark at 300 ms splits dot and dash
+
+function startMeter() {
+  const t0 = now();
+  cancelAnimationFrame(meterRaf);
+  const step = () => {
+    const bar = desk?.layer.querySelector('.press-bar');
+    const label = desk?.layer.querySelector('.press-label');
+    if (!bar || !reader.pressing) return;
+    const ms = now() - t0;
+    bar.style.width = `${Math.min(1, ms / PRESS_SCALE_MS) * 100}%`;
+    bar.classList.toggle('dash', ms >= 300);
+    label.textContent = ms < 300 ? 'dot' : 'dash';
+    meterRaf = requestAnimationFrame(step);
+  };
+  meterRaf = requestAnimationFrame(step);
+}
+
+function stopMeter() {
+  cancelAnimationFrame(meterRaf);
+  // The bar keeps its last length for a moment so the player can see what the press was.
+}
+
+function drawSheet() {
+  if (!desk || !tutor?.sheet) return;
+  showCard(desk.layer, 'tutorial', { sheet: tutor.sheet, index: tutor.index, total: 5, hint: tutorHint }, onAction);
+  document.activeElement?.blur?.();
+  const slot = desk.stage.querySelector('#galvanometer-slot');
+  const dial = tutor.sheet.id === 'dial';
+  slot.classList.toggle('pulse', dial);
+  if (dial) {
+    // Show the needle swing down one step and back, the way a mistake and a refill look.
+    tutorReadyAt = now() + 1500;
+    const max = st().maxLives;
+    setTimeout(() => desk?.gauge.set(max - 1), 300);
+    setTimeout(() => desk?.gauge.set(max), 1200);
+  }
+  if (tutor.sheet.id === 'receive') playTutorLetter(800);
+}
+
+function playTutorLetter(delayMs) {
+  clearTimeout(recv.timer);
+  recv.timer = setTimeout(() => {
+    if (inTutorial() && tutor?.sheet?.id === 'receive' && !playingNow()) playReceived(HEARD_LETTER);
+  }, delayMs);
+}
+
+// A sheet check finished. Pass: next sheet, or the tutorial ends. Fail: same sheet with a hint, no life lost.
+function tutorResult(r) {
+  if (!r || !tutor) return;
+  if (r === 'fail') {
+    tutorHint = tutor.sheet.hint;
+    const hint = desk?.layer.querySelector('.sheet-hint');
+    if (hint) hint.textContent = tutorHint;
+    if (tutor.sheet.id === 'receive') playTutorLetter(500);
+    return;
+  }
+  tutorHint = '';
+  reader.reset();
+  if (tutor.done) { game.dispatch({ type: 'TUTORIAL_DONE' }); return; }
+  // Leave the finished sheet up a moment before the next one.
+  setTimeout(() => { if (inTutorial()) drawSheet(); }, 450);
+}
+
 // Plays the letter the player has to type, after `delayMs` (and after any letter still sounding).
 function playCurrent(delayMs = 0) {
   clearTimeout(recv.timer);
@@ -126,12 +232,7 @@ function playCurrent(delayMs = 0) {
     const s = st();
     const letter = s.message.letters[s.pos];
     if (!letter) return;
-    audio.unlock();
-    const h = playLetter(audio, letter);
-    if (h) {
-      recv.busyUntil = h.end;
-      animateArm(h.schedule, h.end);
-    }
+    const h = playReceived(letter);
     const soundMs = h ? (h.end - audio.ctx.currentTime) * 1000 : 0;
     // No input for 15 s: play it once more, free [R4.5a].
     recv.idle = setTimeout(() => {
@@ -175,6 +276,7 @@ const ACTIONS = {
 
 function onAction(action) {
   audio.unlock();
+  if (action === 'tutorial-replay') { playTutorLetter(0); return; }
   const s = st().screen;
   // The closing screen leaves with CONTINUE; the game-over screen with MAIN_MENU.
   if (action === 'main-menu' && s === 'closing') game.dispatch({ type: 'CONTINUE' });
@@ -216,6 +318,15 @@ function buildDesk(s) {
 function renderRun(s) {
   if (!desk || desk.mode !== s.mode) buildDesk(s);
   desk.hud.textContent = hudLabel(s.mode, s.day);
+  if (s.screen === 'tutorial') {
+    tutor ??= createTutorial();
+    reader.reset();
+    drawSheet();
+    updateReplay();
+    return;
+  }
+  tutor = null;
+  desk.stage.querySelector('#galvanometer-slot')?.classList.remove('pulse');
   showCard(desk.layer, s.screen, { ...card, day: s.day, mode: s.mode }, onAction);
   if (s.screen === 'playing') {
     // No button keeps focus, so Space and letters go to the game.
@@ -282,7 +393,7 @@ options = mountOptions(document.body, {
   inRun: () => st().screen !== 'start',
   onEndGame: () => game.dispatch({ type: 'END_GAME' }),
   onOpenChange: (open) => {
-    if (open) { reader.cancel(); reader.reset(); recv.stop(); } else if (receiving()) playCurrent(NEXT_LETTER_PAUSE_MS);
+    if (open) { reader.cancel(); reader.reset(); recv.stop(); } else if (inTutorial() && tutor?.sheet?.id === 'receive') playTutorLetter(400); else if (receiving()) playCurrent(NEXT_LETTER_PAUSE_MS);
     bus.emit(open ? 'PAUSE' : 'RESUME'); // game time pauses while open [design 11]
   },
 });
