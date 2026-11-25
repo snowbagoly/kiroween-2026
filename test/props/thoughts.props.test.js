@@ -23,11 +23,11 @@ test('R12.2, R12.4a: on random messages, at most 2 a day, at most 20 words, and 
       t.newDay();
       let today = 0;
       for (const m of msgs) {
-        const th = t.pick(m, { day: i + 1, mode });
+        const th = t.pick(m);
         if (!th) continue;
         assert.ok(wordCount(th.text) <= MAX_THOUGHT_WORDS, th.text);
         if (th.kind === 'reaction') assert.ok(fits(REACTIONS.find((x) => x.id === th.id), m), `${th.id} on "${m.text}"`);
-        if (mode === 'day') assert.ok(!th.uneasy && FACTS.every((f) => f.uneasy !== th.text));
+        if (th.kind === 'fact') assert.ok(FACTS.some((f) => f.text === th.text));
         t.shown(th);
         today += 1;
       }

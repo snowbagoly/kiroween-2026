@@ -1,7 +1,7 @@
-// The new operator's thoughts [design 6 Thoughts, R12.1 to R12.4a, R12.6].
+// The new operator's thoughts [design 6 Thoughts, R12.1 to R12.4a].
 // At most 2 a day, at most 20 words each. A reaction shows only when the message fits it.
 // Which thought, and when, is decided here; showing and fading is the page's job.
-import { FACTS, factText, wordCount, MAX_THOUGHT_WORDS } from './thoughts-data.js';
+import { FACTS, wordCount, MAX_THOUGHT_WORDS } from './thoughts-data.js';
 
 export const MAX_PER_DAY = 2;
 export const SHOW_MS = 8000; // fades out by itself after 8 s [R12.3]
@@ -21,13 +21,6 @@ const TRIGGER_FITS = {
 };
 export const fits = (reaction, message) => !!TRIGGER_FITS[reaction.trigger]?.(message);
 
-// Chance that a fact shows its uneasy version: none on Day 1, more each day, always in Dead Air.
-export function uneasyChance(day, mode) {
-  if (mode === 'day') return 0;
-  if (mode === 'deadair') return 1;
-  return day >= 3 ? 0.8 : day === 2 ? 0.5 : 0;
-}
-
 export function createThoughts({ rng = Math.random } = {}) {
   let shownToday = 0;
   const usedReactions = new Set();
@@ -46,15 +39,14 @@ export function createThoughts({ rng = Math.random } = {}) {
     newDay() { shownToday = 0; },
     // Called when a message appears. Returns { id, kind, text } or null.
     // The caller must call `shown(thought)` when it really showed it (it may drop one if the player was busy).
-    pick(message, { day = 1, mode = 'night' } = {}) {
+    pick(message) {
       if (shownToday >= MAX_PER_DAY) return null;
       const fitting = REACTIONS.filter((r) => fits(r, message));
       const fresh = fitting.find((r) => !usedReactions.has(r.id));
       if (fresh) return { id: fresh.id, kind: 'reaction', text: fresh.text };
       if (rng() >= FACT_CHANCE) return null;
       const f = nextFact();
-      const uneasy = rng() < uneasyChance(day, mode);
-      return { id: f.id, kind: 'fact', text: factText(f, mode, uneasy), uneasy: uneasy && mode !== 'day' };
+      return { id: f.id, kind: 'fact', text: f.text };
     },
     shown(thought) {
       if (!thought) return;

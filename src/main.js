@@ -413,7 +413,6 @@ function showThought(th) {
   thoughts.shown(th);
   const el = desk.thought;
   el.textContent = th.text;
-  el.classList.toggle('uneasy', !!th.uneasy);
   el.classList.remove('on');
   void el.offsetWidth;
   el.classList.add('on'); // CSS fades it out over 8 s
@@ -443,7 +442,7 @@ bus.on('DAY_STARTED', ({ lives, max }) => {
 });
 bus.on('MESSAGE_STARTED', ({ message }) => {
   card.role = message.role;
-  const th = thoughts.pick(message, { day: st().day, mode: st().mode });
+  const th = thoughts.pick(message);
   if (th) queueThought(th);
   desk?.row.show(message.text, message.role);
   // A strange message looks wrong on the row and makes the night worse while it lasts [R6.3].

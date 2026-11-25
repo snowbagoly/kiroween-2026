@@ -147,11 +147,10 @@ Pool size: at least 12 messages per day (about 5 short, 5 medium, 4 long, 5 stra
 
 ```js
 { id: "paid-per-word", text: "Each word costs money... that is why everyone writes so short.",
-  trigger: "fact" | "long-message" | "cryptic-message" | "tutorial-sheet-3",
-  night: false }       // night: true means this is the uneasy version
+  trigger: "fact" | "long-message" | "cryptic-message" | "tutorial-sheet-3" }
 ```
 
-At least 6 facts and 4 message reactions, each at most 20 words. `director/thoughts.js` picks at most 2 per day. A reaction is allowed only when its trigger fits the current message (`length === "long"` or `abbreviations === true`). In Night Shift some facts use an uneasy variant [R12.6]. Thoughts show as text at the bottom of the desk, fade after 8 s, never take focus, and are blocked while Space is down or the player is typing [R12.2, R12.3].
+At least 6 facts and 4 message reactions, each at most 20 words. `director/thoughts.js` picks at most 2 per day. A reaction is allowed only when its trigger fits the current message (`length === "long"` or `abbreviations === true`). Each thought has one version, the same in every mode [R12.6]. Thoughts show as text at the bottom of the desk, fade after 8 s, never take focus, and are blocked while Space is down or the player is typing [R12.2, R12.3].
 
 ### Saved data [R8.4, R2, R16.3]
 
