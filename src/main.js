@@ -7,6 +7,7 @@ import { createSettingsStore, setSetting } from './core/settings.js';
 import { createAudioEngine } from './audio/engine.js';
 import { playLetter, armDownAt } from './audio/sequencer.js';
 import { createNightMusic } from './audio/music-night.js';
+import { createHorrorDirector, intensityFor } from './director/horror.js';
 import { createTutorial, HEARD_LETTER } from './core/tutorial.js';
 import { createReplayCounter, replayLabel, NEXT_LETTER_PAUSE_MS, IDLE_REPLAY_MS } from './core/receive.js';
 import { playTone, playTick, playStatic } from './audio/voices.js';
@@ -347,22 +348,36 @@ function renderRun(s) {
   updateReplay();
 }
 
-// ---- Night Shift sound bed --------------------------------------------------
+// ---- Night Shift sound bed and the horror director ---------------------------
 
 const night = createNightMusic(audio);
 const NIGHT_SCREENS = ['dayIntro', 'playing', 'messageDone', 'dayStats', 'gameOver'];
-// Until the horror director (T19) owns this: calm on Day 1, worse each day and as lives fall [R6.2, R6.7].
-const DAY_BASE = { 1: 0.15, 2: 0.45, 3: 0.8 };
+const director = createHorrorDirector({
+  // Never while Space is down or a received letter is sounding [R6.5].
+  isBusy: () => reader.pressing || playingNow(),
+  onEffect: (name, info) => bus.emit('HORROR_EFFECT', { name, ...info }), // sounds and pictures come in T22
+});
+const directorState = (s) => ({ day: s.day || 1, mode: s.mode, lives: s.lives ?? s.maxLives ?? 10, max: s.maxLives ?? 10 });
+// Music tension and the vignette follow the director's intensity [design 10].
 function nightTension(s) {
-  const base = s.mode === 'deadair' ? 0.8 : DAY_BASE[s.day] ?? 0.15;
-  const pressure = s.maxLives ? 1 - (s.lives ?? s.maxLives) / s.maxLives : 0;
-  return Math.min(1, base + pressure * 0.3);
+  return intensityFor(directorState(s));
 }
 function updateNight() {
   const s = st();
-  const want = (s.mode === 'night' || s.mode === 'deadair') && NIGHT_SCREENS.includes(s.screen);
+  const nightMode = s.mode === 'night' || s.mode === 'deadair';
+  const want = nightMode && NIGHT_SCREENS.includes(s.screen);
   if (want && !night.running) { audio.unlock(); night.start(); }
   if (!want && night.running) night.stop();
+  // Random effects only while a message is being worked on, never in Day Shift [R7.1].
+  if (nightMode && s.screen === 'playing') {
+    if (!director.running) director.start(directorState(s));
+    else director.update(directorState(s));
+    if (options?.isOpen) director.pause(); else director.resume();
+  } else if (nightMode && (s.screen === 'messageDone')) {
+    director.pause();
+  } else if (director.running) {
+    director.stop();
+  }
   if (night.running) night.setTension(nightTension(s));
   desk?.fx?.setIntensity(nightTension(s));
 }
@@ -412,7 +427,7 @@ bus.on('RUN_FINISHED', ({ totals, best, deadAirUnlocked }) => {
   card.best = best;
   card.unlocked = deadAirUnlocked && !deadAirBefore;
 });
-bus.on('STOP_SOUND', () => { tone?.stop(); tone = null; night.stop(); });
+bus.on('STOP_SOUND', () => { tone?.stop(); tone = null; night.stop(); director.stop(); });
 bus.on('SCREEN', render);
 
 options = mountOptions(document.body, {
@@ -425,6 +440,7 @@ options = mountOptions(document.body, {
   inRun: () => st().screen !== 'start',
   onEndGame: () => game.dispatch({ type: 'END_GAME' }),
   onOpenChange: (open) => {
+    updateNight(); // the director holds its clock while Options is open
     if (open) { reader.cancel(); reader.reset(); recv.stop(); } else if (inTutorial() && tutor?.sheet?.id === 'receive') playTutorLetter(400); else if (receiving()) playCurrent(NEXT_LETTER_PAUSE_MS);
     bus.emit(open ? 'PAUSE' : 'RESUME'); // game time pauses while open [design 11]
   },
@@ -432,5 +448,5 @@ options = mountOptions(document.body, {
 
 applySettings();
 render();
-if (query.get('test') === '1') window.__deadAir = { game, bus, audio, night }; // hook for the browser check only
+if (query.get('test') === '1') window.__deadAir = { game, bus, audio, night, director }; // hook for the browser check only
 export { bus, game, options };
