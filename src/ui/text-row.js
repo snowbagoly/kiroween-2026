@@ -20,7 +20,8 @@ export function textRowHtml(text, { role = 'send', pos = 0, wrongAt = null } = {
     }).join('');
     return `<span class="word">${cells}</span>`;
   }).join('');
-  return `<div class="text-row ${role}" aria-hidden="true">${words}</div>`;
+  const tag = role === 'receive' ? 'Incoming: listen and type' : 'Outgoing: tap it out with Space';
+  return `<p class="row-role ${role}" aria-hidden="true">${tag}</p><div class="text-row ${role}" aria-hidden="true">${words}</div>`;
 }
 
 // What a screen reader hears for the current state.
