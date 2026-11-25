@@ -60,3 +60,28 @@ export function playTick(engine, { level = 0.5 } = {}) {
     return { source: src, nodes: [bp, g] };
   });
 }
+
+// Static burst on a mistake in Night Shift: band-passed white noise, 300 ms [design 9, R6.4].
+export function playStatic(engine, { level = 0.22, duration = 0.3 } = {}) {
+  return engine.voice((ctx, out) => {
+    const t = ctx.currentTime;
+    const len = Math.ceil(ctx.sampleRate * duration);
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * (i % 900 < 60 ? 0.3 : 1); // small dropouts, like a bad line
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.value = 2400;
+    bp.Q.value = 0.7;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(level, t);
+    g.gain.linearRampToValueAtTime(0, t + duration);
+    src.connect(bp);
+    bp.connect(g);
+    g.connect(out);
+    src.start(t);
+    return { source: src, nodes: [bp, g] };
+  });
+}
