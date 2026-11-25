@@ -51,6 +51,12 @@ test('R12.4a: a cryptic message shows the savings reaction', () => {
   assert.equal(th.text, 'I understand that you want to spare some money, but this message makes no sense anymore.');
 });
 
+test('R12.4a: a long cryptic message gets the cryptic reaction first', () => {
+  const t = createThoughts({ rng: () => 0.99 });
+  const th = t.pick({ text: 'AMT DUE PAID STOP MDSE FOLLOWS PROX', length: 'long', abbreviations: true });
+  assert.equal(th.id, 'savings');
+});
+
 test('thoughts: at least 6 facts and 4 reactions [R12.4, R12.4a]', () => {
   assert.ok(FACTS.length >= 6);
   assert.ok(REACTIONS.length >= 4);

@@ -41,7 +41,9 @@ export function createThoughts({ rng = Math.random } = {}) {
     // The caller must call `shown(thought)` when it really showed it (it may drop one if the player was busy).
     pick(message) {
       if (shownToday >= MAX_PER_DAY) return null;
-      const fitting = REACTIONS.filter((r) => fits(r, message));
+      // A cryptic message gets a cryptic reaction even when it is also long: that is the better joke.
+      const fitting = REACTIONS.filter((r) => fits(r, message))
+        .sort((a, b) => (b.trigger === 'cryptic-message') - (a.trigger === 'cryptic-message'));
       const fresh = fitting.find((r) => !usedReactions.has(r.id));
       if (fresh) return { id: fresh.id, kind: 'reaction', text: fresh.text };
       if (rng() >= FACT_CHANCE) return null;

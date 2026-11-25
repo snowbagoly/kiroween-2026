@@ -11,6 +11,8 @@
   label { display: block; margin: 1rem 0; }
   input[type=range] { width: 18rem; vertical-align: middle; }
   #status { margin-top: 1.5rem; opacity: .8; }
+  .caption-line { position: fixed; top: .8rem; left: 50%; transform: translateX(-50%); margin: 0; padding: .3rem .8rem; background: #000c; color: #fff; border-radius: 3px; }
+  .caption-line:empty { display: none; }
 </style>
 <!-- /build:css -->
 </head>
@@ -23,6 +25,15 @@
 <label>Music volume <input id="music" type="range" min="0" max="1" step="0.01" value="0.8"></label>
 <label>Effects volume (rain) <input id="sfx" type="range" min="0" max="1" step="0.01" value="0.8"></label>
 <label><input id="mute" type="checkbox"> Mute</label>
+<h2>One-shot sounds</h2>
+<p>
+  <button data-sound="thunder">Thunder</button>
+  <button data-sound="crow">Crow</button>
+  <button data-sound="scream">Distant scream</button>
+  <button data-sound="knock">Knocking</button>
+  <button data-sound="static">Static</button>
+</p>
+<label><input id="captions" type="checkbox" checked> Captions</label>
 <div id="status">Not playing</div>
 <!-- build:js -->
 <script type="module" src="./night.js"></script>
