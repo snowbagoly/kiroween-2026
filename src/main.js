@@ -38,7 +38,13 @@ audio.attachUnlock(window);
 const game = createGame({ data, save: (d) => { data = d; store.save(d); }, seed: Date.now() >>> 0, bus, judge });
 
 const app = document.getElementById('app');
-const captions = mountCaptions(document.body, { enabled: () => data.settings.captions });
+// Captions follow the setting, and turn on by themselves when the browser blocks sound [R10.3].
+let audioBlocked = false;
+const captions = mountCaptions(document.body, { enabled: () => data.settings.captions || audioBlocked });
+function checkAudioBlocked() {
+  setTimeout(() => { audioBlocked = !audio.ready || audio.ctx.state !== 'running'; }, 800);
+}
+for (const ev of ['pointerdown', 'keydown']) window.addEventListener(ev, checkAudioBlocked, { once: true });
 app.innerHTML = '<div class="view"></div>';
 const view = app.querySelector('.view');
 let desk = null; // { mode, stage, gauge, row, hud, layer } while a run is on screen
@@ -111,6 +117,18 @@ window.addEventListener('keydown', (e) => {
   } else if (kind === 'type' && e.key === ' ') {
     e.preventDefault();
   }
+});
+
+// Keyboard safety net for cards: if nothing has focus while a card is up (focus can drop to the
+// page when the card is redrawn), Enter presses the card's first button [R10.1].
+window.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' || e.repeat || options?.isOpen) return;
+  const a = document.activeElement;
+  if (a && a !== document.body && a !== document.documentElement) return;
+  const first = desk?.layer && !desk.layer.hidden ? desk.layer.querySelector('[data-action]') : null;
+  if (!first || st().screen === 'playing' || st().screen === 'tutorial') return;
+  e.preventDefault();
+  first.click();
 });
 
 // Receiving: type the letter you heard. No Enter needed, not case-sensitive [R4.3].
@@ -607,5 +625,5 @@ options = mountOptions(document.body, {
 
 applySettings();
 render();
-if (query.get('test') === '1') window.__deadAir = { game, bus, audio, night, dayMusic, director, playHorror, captions, judgeUi: () => judgeUi, store }; // hook for the browser check only
+if (query.get('test') === '1') window.__deadAir = { game, bus, audio, night, dayMusic, director, playHorror, captions, judgeUi: () => judgeUi, store, audioBlocked: () => audioBlocked }; // hook for the browser check only
 export { bus, game, options };
