@@ -55,6 +55,11 @@ export function createThoughts({ rng = Math.random } = {}) {
       shownToday += 1;
       if (thought.kind === 'reaction') usedReactions.add(thought.id);
     },
+    // Judge "Show a thought": the next fact at once, ignoring the daily limit [R13.4h].
+    pickAny() {
+      const f = nextFact();
+      return { id: f.id, kind: 'fact', text: f.text, judge: true };
+    },
   };
 }
 

@@ -109,7 +109,7 @@ Cut order if late: T22 (one-shot sounds), T23 (Day Shift music), T27 (phone), T2
 ## Phase 5. Extras (27.11 to 30.11)
 
 - [ ] **T24. Kiroween Judge mode**
-  Needs: T10, T14, T19, T21. Build `judge/judge.js`: button, `?judge=1`, panel, keys J N M C, cheats, show-off tools, demo reel, auto-play, speed, welcome card, "Click anywhere to enable sound", exit button. No storage writes.
+  Needs: T10, T14, T19, T21. Build `judge/judge.js`: button, `?judge=1`, panel (mouse only, no shortcut keys), cheats, show-off tools, demo reel, auto-play, speed, welcome card, "Click anywhere to enable sound", exit button. No storage writes.
   Done when: a judge can reach any day in one click; the demo reel runs 30 seconds and ends on the stats screen; property test: Judge mode writes nothing to storage. [R13.1 to R13.8]
 
 - [ ] **T25. Accessibility pass**

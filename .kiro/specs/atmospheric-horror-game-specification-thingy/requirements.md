@@ -156,7 +156,7 @@ Acceptance criteria:
 
 Acceptance criteria:
 1. The start screen SHALL show a "Kiroween Judge" button. The system SHALL also open Judge mode when the page URL contains `?judge=1`.
-2. WHEN Judge mode is on THEN the system SHALL show a small, always-visible "Judge panel" that can be collapsed, and a "JUDGE" badge on the HUD. The panel SHALL work with the mouse and with these keys: J (open/close panel), N (next day), M (next message), C (complete the current letter or message correctly).
+2. WHEN Judge mode is on THEN the system SHALL show a small, always-visible "Judge panel" that can be collapsed, and a "JUDGE" badge on the HUD. The panel SHALL be used with the mouse. It has no shortcut keys, because the letter keys are needed for typing received letters.
 3. The Judge panel SHALL provide these cheats:
    a. **Jump to day**: buttons for Day 1, Day 2, Day 3, and the closing screen. All days are reachable at once.
    b. **Auto-solve**: "Type it correctly" completes the current letter, or the whole message, as if the player had done it perfectly. It SHALL play the sent or received tones, so the audio still shows.
@@ -174,7 +174,7 @@ Acceptance criteria:
    g. **Captions on**: a button that turns on sound captions (R10.3) so a muted judge still sees "[thunder]", "[crow]".
    h. **Show a thought**: a button that shows the next character thought (R12) at once, in any mode and day.
 5. WHILE Judge mode is on THEN the system SHALL NOT save progress, best stats, or the "Start with tutorial" setting to localStorage, and SHALL skip the tutorial.
-6. WHEN a judge opens the page with `?judge=1` THEN the system SHALL show a one-screen welcome card that lists the shortcut keys and has a "Start demo" button and an "Explore" button. The card SHALL need no more than one click to reach any day.
+6. WHEN a judge opens the page with `?judge=1` THEN the system SHALL show a one-screen welcome card that explains the panel and has a "Start demo" button and an "Explore" button. The card SHALL need no more than one click to reach any day.
 7. The system SHALL work with sound off, since browsers block sound until a click. WHILE no click has happened yet THEN the Judge panel SHALL show "Click anywhere to enable sound".
 8. Judge mode SHALL be a separate switch from Night Shift and Day Shift and SHALL NOT change the rules of normal play. The system SHALL leave Judge mode through an "Exit Kiroween Judge" button that returns to the start screen.
 

@@ -23,6 +23,8 @@ import { mountTextRow } from './ui/text-row.js';
 import { mountStart, showCard, hudLabel } from './ui/screens.js';
 import { mountOptions } from './ui/options.js';
 import { mountEffects } from './ui/effects-fx.js';
+import { mountJudge } from './judge/judge.js';
+import { MESSAGES } from './core/messages.js';
 
 const query = new URLSearchParams(window.location.search);
 const judge = query.get('judge') === '1'; // read once at boot [design 13]
@@ -160,9 +162,9 @@ function animateArm(schedule, end) {
 }
 
 // Plays one received letter with the sounder arm. Returns the schedule, or null with no sound.
-function playReceived(letter) {
+function playReceived(letter, speed = 1) {
   audio.unlock();
-  const h = playLetter(audio, letter);
+  const h = playLetter(audio, letter, { speed });
   if (h) {
     recv.busyUntil = h.end;
     animateArm(h.schedule, h.end);
@@ -243,7 +245,7 @@ function playCurrent(delayMs = 0) {
   const left = playingNow() ? (recv.busyUntil - audio.ctx.currentTime) * 1000 + 150 : 0;
   recv.timer = setTimeout(() => {
     recv.timer = null;
-    if (!receiving()) return;
+    if (!receiving() || solving) return;
     const s = st();
     const letter = s.message.letters[s.pos];
     if (!letter) return;
@@ -340,6 +342,7 @@ function buildDesk(s) {
 function renderRun(s) {
   if (!desk || desk.mode !== s.mode) buildDesk(s);
   desk.hud.textContent = hudLabel(s.mode, s.day);
+  if (judge) desk.hud.insertAdjacentHTML('afterbegin', '<span class="judge-badge">JUDGE</span> '); // [R13.2]
   if (s.screen === 'tutorial') {
     tutor ??= createTutorial();
     reader.reset();
@@ -373,7 +376,8 @@ const director = createHorrorDirector({
 const directorState = (s) => ({ day: s.day || 1, mode: s.mode, lives: s.lives ?? s.maxLives ?? 10, max: s.maxLives ?? 10 });
 // Music tension and the vignette follow the director's intensity [design 10].
 function nightTension(s) {
-  return intensityFor(directorState(s));
+  if (judgeScare !== null) return judgeScare; // the Judge scare dial wins [R13.4b]
+  return intensityFor(directorState(s)) + (st().message?.strange ? 0.15 : 0);
 }
 function updateNight() {
   const s = st();
@@ -419,7 +423,7 @@ const thoughtBlocked = () => reader.pressing || now() - lastInputAt < 1200 || !!
 
 function showThought(th) {
   if (!desk?.thought) return;
-  thoughts.shown(th);
+  if (!th.judge) thoughts.shown(th); // Judge thoughts do not use up the day's two
   const el = desk.thought;
   el.textContent = th.text;
   el.classList.remove('on');
@@ -478,6 +482,7 @@ bus.on('LETTER_WRONG', () => {
 });
 bus.on('LIFE_LOST', ({ lives }) => { desk?.gauge.set(lives); playTick(audio); updateNight(); });
 bus.on('LIFE_REFILLED', ({ lives }) => { desk?.gauge.set(lives); updateNight(); });
+bus.on('LIVES_SET', ({ lives, max }) => { if (desk && desk.gauge.state.max !== max) desk.gauge.setMax(max, lives); else desk?.gauge.set(lives); updateNight(); });
 bus.on('DAY_ENDED', ({ stats }) => { card.stats = stats; });
 bus.on('GAME_OVER', ({ canRestart }) => { card.canRestart = canRestart; });
 bus.on('RUN_FINISHED', ({ totals, best, deadAirUnlocked }) => {
@@ -499,6 +504,91 @@ function playHorror(name) {
 bus.on('HORROR_EFFECT', ({ name }) => playHorror(name));
 bus.on('SCREEN', render);
 
+// ---- Kiroween Judge mode [R13] ------------------------------------------------
+
+let solving = false; // the Judge is typing a letter or a message right now
+let judgeScare = null; // 0..1 from the scare dial, or null for the director's own value
+let judgeUi = null;
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+let keyRaf = 0;
+
+// A sent letter played by the Judge: the telegraph tone with the key lever, no sounder clicks.
+function playSent(letter, speed) {
+  audio.unlock();
+  const h = playLetter(audio, letter, { speed, clicks: false });
+  if (!h || !desk) return h;
+  cancelAnimationFrame(keyRaf);
+  const step = () => {
+    if (!desk || !audio.ready) return;
+    const t = audio.ctx.currentTime;
+    setKeyDown(desk.stage, armDownAt(h.schedule, t));
+    if (t < h.end + 0.05) keyRaf = requestAnimationFrame(step);
+    else setKeyDown(desk.stage, false);
+  };
+  keyRaf = requestAnimationFrame(step);
+  return h;
+}
+
+// "Type it correctly" [R13.3b]: plays each letter with the same sequencer as the game, then counts it.
+async function autoSolve(scope = 'message') {
+  if (solving || st().screen !== 'playing') return;
+  solving = true;
+  recv.stop();
+  reader.reset();
+  try {
+    do {
+      const s = st();
+      if (s.screen !== 'playing') break;
+      const l = s.message?.letters[s.pos];
+      if (!l) break;
+      const speed = judgeUi?.speed ?? 1;
+      const h = s.message.role === 'receive' ? playReceived(l, speed) : playSent(l, speed);
+      const soundMs = h ? Math.max(0, (h.end - audio.ctx.currentTime) * 1000) : 200;
+      await sleep(soundMs + (s.message.role === 'receive' ? 380 : 260) / speed);
+      const after = st();
+      if (after.screen !== 'playing' || after.pos !== s.pos || after.msgIndex !== s.msgIndex) break;
+      lastInputAt = now();
+      game.dispatch({ type: 'INPUT', t: now() });
+      game.dispatch({ type: 'LETTER', letter: l, t: now() });
+    } while (scope === 'message');
+  } finally {
+    solving = false;
+    if (receiving()) playCurrent(NEXT_LETTER_PAUSE_MS);
+  }
+}
+
+const STRANGE_TEXTS = MESSAGES.filter((m) => m.strange).map((m) => m.text);
+
+// One Judge effect button [R13.4c]. Fires now, no time limit. Scares need Night Shift, so it switches.
+function judgeEffect(name) {
+  audio.unlock();
+  if (!st().mode || st().mode === 'day') game.dispatch({ type: 'JUDGE_SET_MODE', mode: 'night' });
+  if (name === 'strange') {
+    const text = STRANGE_TEXTS[Math.floor(Math.random() * STRANGE_TEXTS.length)];
+    game.dispatch({ type: 'JUDGE_SET_MESSAGE', text, strange: true });
+    return;
+  }
+  if (name === 'static') { desk?.fx?.staticBurst(); playStatic(audio); captions.show('static'); return; }
+  if (name === 'flicker') { desk?.fx?.flicker(); return; }
+  playHorror(name);
+}
+
+if (judge) {
+  judgeUi = mountJudge(document.body, {
+    dispatch: (e) => { audio.unlock(); return game.dispatch(e); },
+    state: () => st(),
+    audioReady: () => audio.ready,
+    isBusy: () => solving || reader.pressing || playingNow(),
+    autoSolve,
+    effect: judgeEffect,
+    setScare: (v) => { judgeScare = v === null ? null : Math.min(1, Math.max(0, v)); director.setOverride(judgeScare); updateNight(); },
+    captionsOn: () => { data = setSetting(data, 'captions', true); store.save(data); options?.refresh(); },
+    showThought: () => { if (desk) showThought(thoughts.pickAny()); },
+    exit: () => { window.location.href = window.location.pathname; }, // back to the start screen, no Judge
+    get speed() { return judgeUi?.speed ?? 1; },
+  }, { welcome: true });
+}
+
 options = mountOptions(document.body, {
   getData: () => data,
   setValue: (key, value) => {
@@ -517,5 +607,5 @@ options = mountOptions(document.body, {
 
 applySettings();
 render();
-if (query.get('test') === '1') window.__deadAir = { game, bus, audio, night, dayMusic, director, playHorror, captions }; // hook for the browser check only
+if (query.get('test') === '1') window.__deadAir = { game, bus, audio, night, dayMusic, director, playHorror, captions, judgeUi: () => judgeUi, store }; // hook for the browser check only
 export { bus, game, options };

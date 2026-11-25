@@ -92,6 +92,15 @@ export function mountEffects(container, { reduce = false, now = () => performanc
       }
       return plan;
     },
+    // Judge effect buttons: each part on its own [R13.4c]. With "Reduce flashing" both become the fade.
+    flicker() {
+      if (reduced) { restartClass(fade, 'on'); return; }
+      restartClass(container, 'fx-flicker');
+    },
+    staticBurst() {
+      if (reduced) { restartClass(fade, 'on'); return; }
+      showStatic();
+    },
     destroy() { clearInterval(frameTimer); layer.remove(); container.classList.remove('fx-flicker'); },
   };
 }
