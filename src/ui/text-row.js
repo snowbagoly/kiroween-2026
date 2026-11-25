@@ -44,6 +44,7 @@ export function mountTextRow(parent) {
   box.append(visual, status);
   parent.prepend(box);
   let cur = { text: '', role: 'send', pos: 0, wrongAt: null };
+  const setStrangeClass = (on) => box.classList.toggle('strange', !!on);
   let timer = null;
   const draw = () => {
     visual.innerHTML = cur.text ? textRowHtml(cur.text, cur) : '';
@@ -60,6 +61,7 @@ export function mountTextRow(parent) {
       timer = setTimeout(() => { cur.wrongAt = null; visual.innerHTML = textRowHtml(cur.text, cur); }, 600);
     },
     clear() { cur.text = ''; draw(); },
+    setStrange(on) { setStrangeClass(on); },
     get state() { return { ...cur }; },
   };
 }

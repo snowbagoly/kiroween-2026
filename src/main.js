@@ -401,6 +401,11 @@ bus.on('DAY_STARTED', ({ lives, max }) => {
 bus.on('MESSAGE_STARTED', ({ message }) => {
   card.role = message.role;
   desk?.row.show(message.text, message.role);
+  // A strange message looks wrong on the row and makes the night worse while it lasts [R6.3].
+  desk?.row.setStrange(!!message.strange && st().mode !== 'day');
+  director.message(message);
+  if (message.strange && st().mode !== 'day') bus.emit('HORROR_EFFECT', { name: 'strange', intensity: director.intensity });
+  updateNight();
   recv.stop();
   recv.counter.reset();
   recv.idleUsed = false;
