@@ -65,6 +65,7 @@ export function createAudioEngine({
     get ctx() { return ctx; },
     get musicBus() { return musicBus; },
     get sfxBus() { return sfxBus; },
+    get master() { return master; }, // after mute and volume, for level checks
     get activeVoices() { return active.size; },
 
     setMusicVolume(v) { state.music = clamp01(v); setGain(musicBus, state.music); },

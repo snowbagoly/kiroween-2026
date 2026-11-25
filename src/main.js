@@ -7,6 +7,7 @@ import { createSettingsStore, setSetting } from './core/settings.js';
 import { createAudioEngine } from './audio/engine.js';
 import { playLetter, armDownAt } from './audio/sequencer.js';
 import { createNightMusic } from './audio/music-night.js';
+import { createDayMusic } from './audio/music-day.js';
 import { HORROR_SOUNDS } from './audio/horror-voices.js';
 import { mountCaptions } from './audio/captions.js';
 import { createHorrorDirector, intensityFor } from './director/horror.js';
@@ -362,6 +363,7 @@ function renderRun(s) {
 // ---- Night Shift sound bed and the horror director ---------------------------
 
 const night = createNightMusic(audio);
+const dayMusic = createDayMusic(audio);
 const NIGHT_SCREENS = ['dayIntro', 'playing', 'messageDone', 'dayStats', 'gameOver'];
 const director = createHorrorDirector({
   // Never while Space is down or a received letter is sounding [R6.5].
@@ -379,6 +381,10 @@ function updateNight() {
   const want = nightMode && NIGHT_SCREENS.includes(s.screen);
   if (want && !night.running) { audio.unlock(); night.start(); }
   if (!want && night.running) night.stop();
+  // Day Shift has its own calm music on the same screens [R7.3].
+  const wantDay = s.mode === 'day' && NIGHT_SCREENS.includes(s.screen);
+  if (wantDay && !dayMusic.running) { audio.unlock(); dayMusic.start(); }
+  if (!wantDay && dayMusic.running) dayMusic.stop();
   // Random effects only while a message is being worked on, never in Day Shift [R7.1].
   if (nightMode && s.screen === 'playing') {
     if (!director.running) director.start(directorState(s));
@@ -479,7 +485,7 @@ bus.on('RUN_FINISHED', ({ totals, best, deadAirUnlocked }) => {
   card.best = best;
   card.unlocked = deadAirUnlocked && !deadAirBefore;
 });
-bus.on('STOP_SOUND', () => { tone?.stop(); tone = null; night.stop(); director.stop(); });
+bus.on('STOP_SOUND', () => { tone?.stop(); tone = null; night.stop(); dayMusic.stop(); director.stop(); });
 // Horror effects from the director: the sound and its caption [R6.1, R10.3]. Never in Day Shift.
 function playHorror(name) {
   if (st().mode === 'day') return false;
@@ -511,5 +517,5 @@ options = mountOptions(document.body, {
 
 applySettings();
 render();
-if (query.get('test') === '1') window.__deadAir = { game, bus, audio, night, director, playHorror, captions }; // hook for the browser check only
+if (query.get('test') === '1') window.__deadAir = { game, bus, audio, night, dayMusic, director, playHorror, captions }; // hook for the browser check only
 export { bus, game, options };
