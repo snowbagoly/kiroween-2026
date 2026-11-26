@@ -2,7 +2,7 @@
 // The game rules (core/game.js) own the state. This file turns keys into game events and
 // game events into pictures and sounds.
 import { createBus } from './core/events.js';
-import { createGame } from './core/game.js';
+import { createGame, CLOCK_SCREENS } from './core/game.js';
 import { createSettingsStore, setSetting, setHand } from './core/settings.js';
 import { createHand } from './core/hand.js';
 import { createAudioEngine } from './audio/engine.js';
@@ -15,7 +15,8 @@ import { createHorrorDirector, intensityFor } from './director/horror.js';
 import { createThoughts, SHOW_MS } from './director/thoughts.js';
 import { createTutorial, HEARD_LETTER } from './core/tutorial.js';
 import { createReplayCounter, replayLabel, NEXT_LETTER_PAUSE_MS, IDLE_REPLAY_MS } from './core/receive.js';
-import { playTone, playTick, playTock, playStatic } from './audio/voices.js';
+import { playTone, playTick, playTock, playStatic, playBell } from './audio/voices.js';
+import { wallMinutes } from './core/day-clock.js';
 import { createPressReader, attachKeyboard } from './input/keyboard.js';
 import { mountScene, setKeyDown, setSounderDown } from './ui/scene.js';
 import { mountMorseChart } from './ui/morse-chart.js';
@@ -44,7 +45,7 @@ const saveFromGame = (d) => {
   data = { ...data, best: d.best, deadAirUnlocked: d.deadAirUnlocked, settings: { ...data.settings, tutorial: d.settings.tutorial } };
   store.save(data);
 };
-const game = createGame({ data, save: saveFromGame, seed: Date.now() >>> 0, bus, judge });
+const game = createGame({ data, save: saveFromGame, seed: Date.now() >>> 0, bus, judge, timed: true });
 // The player's hand: learned from every press, saved after each letter (not in Judge mode) [R3.3, R3.3a].
 const hand = createHand(data.hand);
 const saveHand = () => { data = setHand(data, hand.saved); store.save(data); };
@@ -471,7 +472,7 @@ function buildDesk(s) {
 function renderRun(s) {
   if (!desk || desk.mode !== s.mode) buildDesk(s);
   office?.setDay(s.day);
-  desk.hud.textContent = hudLabel(s.mode, s.day);
+  desk.hud.textContent = hudLabel(s.mode, s.day) + (s.clock ? ` · ${s.clock.time}` : '');
   if (judge) desk.hud.insertAdjacentHTML('afterbegin', '<span class="judge-badge">JUDGE</span> '); // [R13.2]
   if (s.screen === 'tutorial') {
     tutor ??= createTutorial();
@@ -498,7 +499,7 @@ function renderRun(s) {
 
 const night = createNightMusic(audio);
 const dayMusic = createDayMusic(audio);
-const NIGHT_SCREENS = ['dayIntro', 'playing', 'messageDone', 'dayStats', 'gameOver'];
+const NIGHT_SCREENS = ['dayIntro', 'playing', 'messageDone', 'waiting', 'dayStats', 'gameOver'];
 const director = createHorrorDirector({
   // Never while Space is down or a received letter is sounding [R6.5].
   isBusy: () => reader.pressing || playingNow(),
@@ -525,7 +526,7 @@ function updateNight() {
     if (!director.running) director.start(directorState(s));
     else director.update(directorState(s));
     if (options?.isOpen) director.pause(); else director.resume();
-  } else if (nightMode && (s.screen === 'messageDone')) {
+  } else if (nightMode && (s.screen === 'messageDone' || s.screen === 'waiting')) {
     director.pause();
   } else if (director.running) {
     director.stop();
@@ -621,8 +622,38 @@ bus.on('LIFE_REFILLED', ({ lives }) => { desk?.gauge.set(lives); updateNight(); 
 bus.on('LIVES_SET', ({ lives, max }) => { if (desk && desk.gauge.state.max !== max) desk.gauge.setMax(max, lives); else desk?.gauge.set(lives); updateNight(); });
 // A finished form is stamped SENT or RECEIVED with the office's time [R3.7, R4.5b].
 bus.on('MESSAGE_DONE', () => { if (office) desk?.row.stamp?.(formatTime(office.minutes)); });
+// ---- the game clock [R9.7] ---------------------------------------------------
+// Real time goes to the game in small steps while a day runs. It stops while the game is held:
+// Options open, or the tab hidden [R10.1b]. Judge speed runs it faster.
+const TICK_MS = 200;
+let lastTick = now();
+setInterval(() => {
+  const t = now();
+  const ms = t - lastTick;
+  lastTick = t;
+  if (options?.isOpen || document.hidden || !CLOCK_SCREENS.includes(st().screen)) return;
+  game.dispatch({ type: 'TICK', ms: ms * (judgeUi?.speed ?? 1) });
+}, TICK_MS);
+document.addEventListener('visibilitychange', () => { lastTick = now(); });
+
+// The wall clock, the window's sky toward dawn (from 60% of the night), the HUD time [R9.7, R9.9].
+const DAWN_FROM = 0.6;
+bus.on('CLOCK', ({ minutes, time, progress, waiting }) => {
+  office?.setTime(wallMinutes(minutes));
+  office?.office.querySelector('.room-window')?.style.setProperty('--dawn', Math.max(0, (progress - DAWN_FROM) / (1 - DAWN_FROM)).toFixed(3));
+  if (desk) desk.hud.textContent = hudLabel(st().mode, st().day) + ` · ${time}`;
+  desk?.row.setWaiting?.(waiting);
+});
+// A telegram is handed in: the counter bell; it waits on the spike if the desk is busy [R9.7b, R9.7c].
+bus.on('ARRIVED', ({ waiting }) => {
+  playBell(audio);
+  captions.show('bell');
+  desk?.row.setWaiting?.(waiting);
+});
+bus.on('DESK_EMPTY', () => { desk?.row.clear(); updateReplay(); });
+
 bus.on('DAY_ENDED', ({ stats }) => { card.stats = stats; });
-bus.on('GAME_OVER', ({ canRestart }) => { card.canRestart = canRestart; });
+bus.on('GAME_OVER', ({ canRestart, reason }) => { card.canRestart = canRestart; card.reason = reason; });
 bus.on('RUN_FINISHED', ({ totals, best, deadAirUnlocked }) => {
   card.totals = totals;
   card.best = best;

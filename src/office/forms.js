@@ -35,6 +35,8 @@ export function formHtml() {
 export function mountForm(parent) {
   parent.insertAdjacentHTML('beforeend', formHtml());
   const el = parent.lastElementChild;
+  parent.insertAdjacentHTML('beforeend', '<p class="waiting" aria-live="polite"></p>');
+  const spike = parent.lastElementChild;
   const $ = (sel) => el.querySelector(sel);
   let cur = { text: '', role: 'send', pos: 0, wrongAt: null };
   let mistakes = 0;
@@ -88,6 +90,11 @@ export function mountForm(parent) {
       draw();
     },
     setStrange(on) { el.classList.toggle('strange', !!on); },
+    // Telegrams waiting on the spike show as more forms under this one [R9.7c].
+    setWaiting(n) {
+      el.classList.toggle('stacked', n > 0);
+      spike.textContent = n > 0 ? `${n} more waiting on the spike` : '';
+    },
     get state() { return { ...cur }; },
   };
 }

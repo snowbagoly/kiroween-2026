@@ -512,6 +512,13 @@
 .office .tape { width: 100%; flex: none; }
 .office .on-desk { margin-top: auto; padding-bottom: 60px; display: flex; flex-direction: column; align-items: center; position: relative; z-index: 3; }
 .office .telegram { width: 320px; }
+.office .waiting {
+  margin: -4px 0 0;
+  min-height: 1em;
+  font: 500 19px/1 "Caveat", cursive;
+  color: #b9a679;
+}
+.office .waiting { margin-top: 10px; }
 /* The longest messages (about 50 letters) fit in four lines, so the form stays clear of the galvanometer. */
 .office .tg-body { font-size: 30px; background: repeating-linear-gradient(transparent 0 38px, rgb(58 47 34 / .25) 38px 39px); }
 .office .tg-char.blank { min-width: .55em; border-bottom: 2px solid rgb(34 48 63 / .5); margin: 0 1px; }

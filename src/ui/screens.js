@@ -101,7 +101,11 @@ export function cardHtml(screen, info = {}) {
     case 'gameOver': {
       const title = mode === 'day' ? 'Out of lives' : 'The line went dead';
       const restart = info.canRestart === false ? '' : btn('restart-day', 'Restart this day');
-      return `<h2>${title}</h2><p>Day ${day} ended with no lives left.</p>
+      // Out of time: 06:00 came with telegrams left [R9.7g].
+      const why = info.reason === 'time'
+        ? 'RELIEF OPERATOR ARRIVED / TELEGRAMS NOT SENT STOP'
+        : `Day ${day} ended with no lives left.`;
+      return `<h2>${info.reason === 'time' ? 'Out of time' : title}</h2><p>${why}</p>
         <div class="card-buttons">${restart}${btn('main-menu', 'Main menu')}</div>`;
     }
     case 'closing': {
