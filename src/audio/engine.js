@@ -21,6 +21,7 @@ export function createAudioEngine({
   const state = { music: clamp01(music), sfx: clamp01(sfx), muted: !!muted };
   const active = new Set();
   let ctx = null;
+  let held = false;
   let musicBus = null;
   let sfxBus = null;
   let master = null;
@@ -49,9 +50,19 @@ export function createAudioEngine({
     // Call from a user event. Makes the context the first time and resumes it if the browser paused it.
     unlock() {
       if (!ctx) build();
-      if (ctx.state === 'suspended' && ctx.resume) ctx.resume();
+      if (!held && ctx.state === 'suspended' && ctx.resume) ctx.resume();
       return ctx;
     },
+
+    // While the game is held ("Line Held", or the tab hidden), every sound stops where it is;
+    // a click does not wake it until the hold ends [R10.1b].
+    hold(on) {
+      held = !!on;
+      if (!ctx) return;
+      if (held && ctx.state === 'running') ctx.suspend?.();
+      else if (!held && ctx.state === 'suspended') ctx.resume?.();
+    },
+    get held() { return held; },
 
     // Listens for clicks, touches and keys on a target (usually window) and unlocks on each one.
     attachUnlock(target) {

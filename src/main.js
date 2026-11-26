@@ -64,10 +64,13 @@ function checkAudioBlocked() {
   setTimeout(() => { audioBlocked = !audio.ready || audio.ctx.state !== 'running'; }, 800);
 }
 for (const ev of ['pointerdown', 'keydown']) window.addEventListener(ev, checkAudioBlocked, { once: true });
+// The first click or key allows sound: the start screen's office starts to sound [R1.3].
+for (const ev of ['pointerdown', 'keydown']) window.addEventListener(ev, () => setTimeout(() => { if (st().screen === 'start') updateNight(); }, 0), { once: true });
 app.innerHTML = '<div class="view"></div>';
 const view = app.querySelector('.view');
 let desk = null; // { mode, stage, gauge, row, hud, layer } while a run is on screen
 let office = null; // the office's parts, in Night Shift and Dead Air (office/room.js)
+let startOffice = null; // the empty office behind the start card
 let tapeWords = new Set(); // letter indexes that start a new word, for gaps on the tape
 let options = null;
 let deadAirBefore = data.deadAirUnlocked;
@@ -81,7 +84,7 @@ function applySettings() {
   audio.setMusicVolume(s.musicVol);
   audio.setSfxVolume(s.sfxVol);
   audio.setMuted(s.mute);
-  night?.setMusic(s.music); // the "Music" switch turns the record off, not the room [R6.8]
+  night?.setMusic(s.music && st().screen !== 'start'); // the "Music" switch turns the record off, not the room [R6.8]
   document.documentElement.classList.toggle('reduce-flashing', s.reduceFlashing);
   desk?.fx?.setReduce(reduceFlashing());
   desk?.gauge.showNumber(s.showLivesNumber);
@@ -619,6 +622,8 @@ function scheduleNextMessage(screen) {
 }
 
 function renderStart() {
+  startOffice?.unmount();
+  startOffice = null;
   scheduleNextMessage(null);
   toggleCodebook(false);
   recv.stop();
@@ -633,12 +638,16 @@ function renderStart() {
     judge,
     onPick: (mode) => { audio.unlock(); game.dispatch({ type: 'PICK_MODE', mode }); },
     onJudge: () => { window.location.search = '?judge=1'; },
+    // The empty office behind the card, at one minute to ten [R1.1].
+    backdrop: (el) => { startOffice = mountOffice(el, { max: 10, minutes: 21 * 60 + 59 }); },
   });
 }
 
 function buildDesk(s) {
   document.documentElement.dataset.mode = s.mode === 'day' ? 'day' : 'night';
   toggleCodebook(false);
+  startOffice?.unmount();
+  startOffice = null;
   office?.unmount();
   office = null;
   view.innerHTML = '<div class="play"><div class="stage"></div></div><div class="card-layer" hidden></div>';
@@ -742,8 +751,12 @@ function updateNight() {
   const s = st();
   const nightMode = s.mode === 'night' || s.mode === 'deadair';
   // The dead line is silent: no night sound under it [R5.5].
-  const want = nightMode && NIGHT_SCREENS.includes(s.screen) && s.screen !== 'gameOver';
+  // The start screen has the office's sound too, once a click allows sound; the record stays silent
+  // until the operator sits down at the desk [R1.3].
+  const onStart = s.screen === 'start' && audio.ready;
+  const want = onStart || (nightMode && NIGHT_SCREENS.includes(s.screen) && s.screen !== 'gameOver');
   if (want && !night.running) { audio.unlock(); night.start(); }
+  night.setMusic(s.screen === 'start' ? false : data.settings.music);
   if (!want && night.running) night.stop();
   // Day Shift has its own calm music on the same screens [R7.3].
   const wantDay = s.mode === 'day' && NIGHT_SCREENS.includes(s.screen);
@@ -873,7 +886,11 @@ setInterval(() => {
   if (options?.isOpen || document.hidden || !CLOCK_SCREENS.includes(st().screen)) return;
   game.dispatch({ type: 'TICK', ms: ms * (judgeUi?.speed ?? 1) });
 }, TICK_MS);
-document.addEventListener('visibilitychange', () => { lastTick = now(); });
+document.addEventListener('visibilitychange', () => {
+  lastTick = now();
+  // Leaving the tab holds the line too, during a run [R10.1b].
+  if (st().screen !== 'start' && !options?.isOpen) audio.hold(document.hidden);
+});
 
 // The wall clock, the window's sky toward dawn (from 60% of the night), the HUD time [R9.7, R9.9].
 const DAWN_FROM = 0.6;
@@ -1014,6 +1031,7 @@ options = mountOptions(document.body, {
     updateNight(); // the director holds its clock while Options is open
     if (open) { reader.cancel(); reader.reset(); recv.stop(); } else if (inTutorial() && tutor?.sheet?.id === 'receive') playTutorLetter(400); else if (receiving()) playCurrent(NEXT_LETTER_PAUSE_MS);
     bus.emit(open ? 'PAUSE' : 'RESUME'); // game time pauses while open [design 11]
+    audio.hold(open && st().screen !== 'start'); // Line Held: every sound stops where it is [R10.1b]
   },
 });
 

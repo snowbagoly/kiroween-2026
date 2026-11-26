@@ -7,24 +7,41 @@ const MODE_BUTTONS = [
 
 export const MODE_NAMES = { night: 'Night Shift', day: 'Day Shift', deadair: 'Dead Air' };
 
+// The duty roster on the start card: one row a day, its date in November 1903 [R1.1, R9.8].
+export const ROSTER = [
+  { day: 1, date: 'Wed. 4 Nov.' },
+  { day: 2, date: 'Thurs. 5 Nov.' },
+  { day: 3, date: 'Fri. 6 Nov.' },
+];
+
+// The start screen [R1.1, R1.1a]: the company's printed card over the empty office, with the game's
+// name, Station 7, the night duty roster (tonight marked in pencil) and the ways in.
 export function startScreenHtml({ deadAirUnlocked = false, judge = false } = {}) {
   const open = deadAirUnlocked || judge;
   const modes = MODE_BUTTONS.map((b) => `<button type="button" class="mode-btn" data-pick="${b.mode}">
       <span class="mode-name">${b.label}</span><span class="mode-line">${b.line}</span></button>`).join('');
   const dead = `<button type="button" class="mode-btn" data-pick="deadair"${open ? '' : ' disabled aria-disabled="true"'}>
       <span class="mode-name">Dead Air</span>
-      <span class="mode-line">${open ? 'hard: 5 lives, no Morse chart, no second chance' : 'Finish Night Shift to unlock'}</span></button>`;
+      <span class="mode-line">${open ? 'hard: 5 lives, no codebook, no second chance' : 'Finish Night Shift to unlock'}</span></button>`;
+  const roster = ROSTER.map((r, i) => `<tr${i === 0 ? ' class="tonight"' : ''}><td>Night ${r.day}</td><td>${r.date}</td><td>22:00 to 06:00</td><td class="pencil">${i === 0 ? 'tonight' : ''}</td></tr>`).join('');
   return `<section class="screen start-screen" aria-labelledby="start-title">
-    <h1 id="start-title">Dead Air</h1>
-    <p class="subtitle">A telegraph station, 1873</p>
-    <div class="mode-list">${modes}${dead}</div>
-    <button type="button" class="judge-btn">Kiroween Judge</button>
+    <div class="start-office" aria-hidden="true"></div>
+    <div class="start-card">
+      <p class="co">Marsh &amp; Western Telegraph Co.</p>
+      <h1 id="start-title">Night Shift</h1>
+      <p class="subtitle">Station 7 · Lower Marsh Relay</p>
+      <table class="roster"><caption>Night duty roster</caption><tbody>${roster}</tbody></table>
+      <div class="mode-list">${modes}${dead}</div>
+      <button type="button" class="judge-btn">Kiroween Judge</button>
+    </div>
   </section>`;
 }
 
-// Draws the start screen into `root`. `onPick(mode)` runs on a mode button, `onJudge()` on the Judge button.
-export function mountStart(root, { data, judge = false, onPick = () => {}, onJudge = () => {} } = {}) {
+// Draws the start screen into `root`. `onPick(mode)` runs on a mode button, `onJudge()` on the Judge
+// button. `backdrop(el)` may paint the empty office into the element behind the card.
+export function mountStart(root, { data, judge = false, onPick = () => {}, onJudge = () => {}, backdrop = null } = {}) {
   root.innerHTML = startScreenHtml({ deadAirUnlocked: data?.deadAirUnlocked, judge });
+  backdrop?.(root.querySelector('.start-office'));
   for (const btn of root.querySelectorAll('.mode-btn')) {
     btn.addEventListener('click', () => { if (!btn.disabled) onPick(btn.dataset.pick); });
   }
