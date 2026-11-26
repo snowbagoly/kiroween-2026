@@ -16,7 +16,7 @@ import { createHorrorDirector, intensityFor } from './director/horror.js';
 import { createThoughts, SHOW_MS } from './director/thoughts.js';
 import { createTutorial, HEARD_LETTER } from './core/tutorial.js';
 import { createReplayCounter, replayLabel, NEXT_LETTER_PAUSE_MS, IDLE_REPLAY_MS } from './core/receive.js';
-import { playTone, playTick, playTock, playStatic, playBell, playChurchBell } from './audio/voices.js';
+import { playTone, playTick, playTock, playStatic, playBell, playChurchBell, playStamp, playRustle } from './audio/voices.js';
 import { wallMinutes } from './core/day-clock.js';
 import { createPressReader, attachKeyboard } from './input/keyboard.js';
 import { mountScene, setKeyDown, setSounderDown } from './ui/scene.js';
@@ -674,6 +674,7 @@ bus.on('MESSAGE_STARTED', ({ message }) => {
   if (th) queueThought(th);
   desk?.row.show(message.text, message.role, message);
   tapeWords = wordStarts(message.text);
+  if (office) playRustle(audio); // the new form slides across the desk
   office?.tape.gap();
   // A strange message looks wrong on the row and makes the night worse while it lasts [R6.3].
   desk?.row.setStrange(!!message.strange && st().mode !== 'day');
@@ -704,7 +705,11 @@ bus.on('LIFE_LOST', ({ lives }) => { desk?.gauge.set(lives); (office ? playTock 
 bus.on('LIFE_REFILLED', ({ lives }) => { desk?.gauge.set(lives); updateNight(); });
 bus.on('LIVES_SET', ({ lives, max }) => { if (desk && desk.gauge.state.max !== max) desk.gauge.setMax(max, lives); else desk?.gauge.set(lives); updateNight(); });
 // A finished form is stamped SENT or RECEIVED with the office's time [R3.7, R4.5b].
-bus.on('MESSAGE_DONE', () => { if (office) desk?.row.stamp?.(formatTime(office.minutes)); });
+bus.on('MESSAGE_DONE', () => {
+  if (!office) return;
+  desk?.row.stamp?.(st().clock?.time ?? formatTime(office.minutes));
+  playStamp(audio);
+});
 // ---- the game clock [R9.7] ---------------------------------------------------
 // Real time goes to the game in small steps while a day runs. It stops while the game is held:
 // Options open, or the tab hidden [R10.1b]. Judge speed runs it faster.
