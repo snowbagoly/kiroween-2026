@@ -4,7 +4,8 @@
 // The room goes to the effects bus; the record to the music bus.
 import { createPhonograph } from './phonograph.js';
 
-export const LEVELS = Object.freeze({ rain: 0.13, rumble: 0.08, hum50: 0.012, hum100: 0.005, wind: 0.05, wires: 0.02 });
+// The rain and the wind stay well under the record, so the waltz can be heard through them.
+export const LEVELS = Object.freeze({ rain: 0.035, rumble: 0.06, hum50: 0.01, hum100: 0.004, wind: 0.03, wires: 0.015 });
 export const WIRE_PITCH = 318; // Hz; the lowest tone the wires sing
 export const KEY_TONE_HZ = 622; // Eb5: the key's tone sits inside the waltz's key [R6.2]
 export const WIND_FULL = 0.3; // wind gain at dread 1 (T37)

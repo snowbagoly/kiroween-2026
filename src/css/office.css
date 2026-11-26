@@ -503,6 +503,13 @@
 .office .telegram.stacked {
   box-shadow:
     5px 5px 0 -1px #cdbd93,
+    0 14px 30px rgb(0 0 0 / .7),
+    inset 0 0 26px rgb(120 90 40 / .25);
+}
+/* Two or more waiting: two forms under this one. One waiting: one under it [R9.7c]. */
+.office .telegram.stacked.many {
+  box-shadow:
+    5px 5px 0 -1px #cdbd93,
     10px 10px 0 -2px #bfae82,
     0 14px 30px rgb(0 0 0 / .7),
     inset 0 0 26px rgb(120 90 40 / .25);
@@ -523,10 +530,9 @@
 .office .tg-body { font-size: 30px; background: repeating-linear-gradient(transparent 0 38px, rgb(58 47 34 / .25) 38px 39px); }
 .office .tg-char.blank { min-width: .55em; border-bottom: 2px solid rgb(34 48 63 / .5); margin: 0 1px; }
 .office .telegram.incoming .tg-char.current { box-shadow: none; border-bottom-color: #8a6626; }
+/* A strange message stands still on the form, only written in a dark red ink. */
 .office .telegram.strange .tg-body { color: #5a1a12; }
-.office .telegram.strange .tg-char:nth-child(3n) { animation: strange-drift 3.7s ease-in-out infinite; }
-.office .telegram.strange .tg-char:nth-child(4n+1) { animation: strange-drift 5.3s ease-in-out infinite reverse; }
-@media (prefers-reduced-motion: reduce) { .office .telegram.strange .tg-char, .office .tg-char.wrong { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .office .tg-char.wrong { animation: none; } }
 @media (max-width: 1050px) {
   .office .on-desk { margin-top: 0; padding-bottom: 0; }
   .office .telegram { width: min(320px, 92vw); }

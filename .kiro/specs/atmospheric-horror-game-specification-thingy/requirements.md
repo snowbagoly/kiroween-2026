@@ -143,7 +143,7 @@ Acceptance criteria:
 6. Lives SHALL reset to the mode maximum (10, or 5 in Dead Air) at the start of each day.
 7. Each day SHALL run from 22:00 on the game clock, which runs in real time. The wall clock's hands SHALL show it.
 7a. The clock SHALL start with the player's first press of the key (or first typed letter) of the day, and SHALL stop while the game is held (R10.1b).
-7b. Each day SHALL have its own real length at normal clock speed (to start with: Day 1 5 minutes, Day 2 6 minutes, Day 3 7 minutes; tuned in playtesting). Its 5 messages SHALL be handed in at set times between 22:00 and 04:00, each with a ring of the counter bell.
+7b. Each day SHALL have its own real length at normal clock speed (to start with: Day 1 10 minutes, Day 2 12 minutes, Day 3 14 minutes; tuned in playtesting). Its 5 messages SHALL be handed in at set times between 22:00 and 04:00, each with a ring of the counter bell.
 7c. WHEN a message is handed in while the player is busy THEN it SHALL wait on the spike. WHEN a message is done and one is waiting THEN the next SHALL slide in at once.
 7d. WHILE no message is waiting THEN the clock SHALL run 4 times faster. WHEN all 5 messages are done THEN it SHALL run 6 times faster to 06:00, leaving a last quiet stretch of about 10 to 15 seconds before dawn.
 7e. The day SHALL always end at 06:00 on the game clock. WHEN all 5 messages are done before 06:00 THEN the clock SHALL run on to 06:00 and the day SHALL end with the dawn (R9.9) and the end-of-day notice (R8.1).

@@ -4,7 +4,7 @@
 // It goes to the music bus, so the music slider, mute and the "Music" switch rule it.
 import { WALTZ_BEAT_SECONDS, PAUSE_BETWEEN_PLAYS, midiToHz, HARMONY, SECTIONS, FORM } from './scores.js';
 
-export const RECORD_LEVEL = 0.35;
+export const RECORD_LEVEL = 0.6;
 export const WOW_DEPTH = 0.0012; // the normal pitch wobble of the turntable; dread makes it worse
 export const DRAG_DELAY = 0.38; // seconds the record falls behind when it drags; that is the pitch drop
 export const REVOLUTION = 60 / 78; // one turn of a 78 rpm record: what repeats when the needle sticks

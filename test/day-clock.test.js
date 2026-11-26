@@ -55,7 +55,7 @@ test('clock: all done runs on to 06:00 within 15 s and ends with the dawn', () =
 test('clock: 06:00 with work left is time up, never later', () => {
   const c = createDayClock({ day: 1, arrivals: [0, 10] });
   c.start();
-  const events = runFor(c, 10 * 60000, { inHand: true, done: 0 });
+  const events = runFor(c, 30 * 60000, { inHand: true, done: 0 });
   assert.equal(events.filter((e) => e.type === 'TIME_UP').length, 1);
   assert.equal(c.minutes, NIGHT_MINUTES);
   assert.deepEqual(c.tick(1000, { inHand: true }), []);
@@ -64,7 +64,7 @@ test('clock: 06:00 with work left is time up, never later', () => {
 test('clock: Judge infinite lives holds it at 05:59 until the work is done', () => {
   const c = createDayClock({ day: 1, arrivals: [0] });
   c.start();
-  runFor(c, 10 * 60000, { inHand: true, done: 0, hold: true });
+  runFor(c, 30 * 60000, { inHand: true, done: 0, hold: true });
   assert.equal(c.minutes, NIGHT_MINUTES - 1);
   assert.equal(c.over, false);
 });
@@ -161,7 +161,7 @@ test('game: a fast day ends with the dawn at 06:00', () => {
 test('game: a slow day is lost at 06:00 with telegrams not sent', () => {
   const g = timedGame('day'); // Day Shift: no idling, so only the clock ends it
   g.dispatch({ type: 'INPUT', t: 0 });
-  const events = ticks(g, 10 * 60000);
+  const events = ticks(g, 30 * 60000);
   const over = events.find((e) => e.type === 'GAME_OVER');
   assert.equal(over.reason, 'time');
   assert.equal(g.state.screen, 'gameOver');
@@ -186,7 +186,7 @@ test('game: idling to zero lives is a game over', () => {
 test('game: restart this day starts the clock again at 22:00', () => {
   const g = timedGame('day');
   g.dispatch({ type: 'INPUT', t: 0 });
-  ticks(g, 10 * 60000);
+  ticks(g, 30 * 60000);
   g.dispatch({ type: 'RESTART_DAY' });
   g.dispatch({ type: 'CONTINUE' });
   assert.equal(g.state.clock.time, '22:00');
