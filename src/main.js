@@ -25,6 +25,8 @@ import { mountGalvanometer } from './ui/galvanometer.js';
 import { mountOffice, usesOffice } from './office/room.js';
 import { mountForm, mountTape, wordStarts, formatTime } from './office/forms.js';
 import { mountLight } from './office/light.js';
+import { playStory } from './story/intro.js';
+import { createStorySound } from './story/story-sound.js';
 import { createFaults, strainLevel, CLOSING_DARK } from './director/faults.js';
 import { createDread } from './director/dread.js';
 import { robin, apparition, earRing, flameDrop, flickerBuzz, glassCrack, knock, lineFault, lineSnaps, phantomClick } from './audio/fault-sound.js';
@@ -50,7 +52,7 @@ const saveFromGame = (d) => {
   data = { ...data, best: d.best, deadAirUnlocked: d.deadAirUnlocked, settings: { ...data.settings, tutorial: d.settings.tutorial } };
   store.save(data);
 };
-const game = createGame({ data, save: saveFromGame, seed: Date.now() >>> 0, bus, judge, timed: true, mustHear: true });
+const game = createGame({ data, save: saveFromGame, seed: Date.now() >>> 0, bus, judge, timed: true, mustHear: true, story: true, skipStory: () => data.settings.skipStory });
 // The player's hand: learned from every press, saved after each letter (not in Judge mode) [R3.3, R3.3a].
 const hand = createHand(data.hand);
 const saveHand = () => { data = setHand(data, hand.saved); store.save(data); };
@@ -389,6 +391,8 @@ const ACTIONS = {
   'tutorial-start': { type: 'TUTORIAL_CHOICE', choice: 'start' },
   'tutorial-notnow': { type: 'TUTORIAL_CHOICE', choice: 'notnow' },
   'tutorial-never': { type: 'TUTORIAL_CHOICE', choice: 'never' },
+  'story-read': { type: 'STORY_CHOICE', choice: 'read' },
+  'story-skip': { type: 'STORY_CHOICE', choice: 'skip' },
   'tutorial-done': { type: 'TUTORIAL_DONE' },
   continue: { type: 'CONTINUE' },
   'next-message': { type: 'NEXT_MESSAGE' },
@@ -753,10 +757,10 @@ function updateNight() {
   // The dead line is silent: no night sound under it [R5.5].
   // The start screen has the office's sound too, once a click allows sound; the record stays silent
   // until the operator sits down at the desk [R1.3].
-  const onStart = s.screen === 'start' && audio.ready;
+  const onStart = (s.screen === 'start' || s.screen === 'storyOffer') && audio.ready;
   const want = onStart || (nightMode && NIGHT_SCREENS.includes(s.screen) && s.screen !== 'gameOver');
   if (want && !night.running) { audio.unlock(); night.start(); }
-  night.setMusic(s.screen === 'start' ? false : data.settings.music);
+  night.setMusic(['start', 'storyOffer'].includes(s.screen) ? false : data.settings.music);
   if (!want && night.running) night.stop();
   // Day Shift has its own calm music on the same screens [R7.3].
   const wantDay = s.mode === 'day' && NIGHT_SCREENS.includes(s.screen);
@@ -780,7 +784,34 @@ function render() {
   const s = st();
   updateNight();
   if (s.screen === 'start') renderStart();
+  else if (s.screen === 'storyOffer') renderStoryOffer();
+  else if (s.screen === 'story') renderStory();
   else renderRun(s);
+}
+
+// The story is offered on the start card's office [R17.6]. "Always go straight to the desk" is saved.
+function renderStoryOffer() {
+  if (!view.querySelector('.start-screen')) renderStart();
+  view.querySelector('.story-offer')?.remove();
+  view.insertAdjacentHTML('beforeend', '<div class="card-layer story-offer"></div>');
+  const layer = view.querySelector('.story-offer');
+  showCard(layer, 'storyOffer', {}, (action) => {
+    if (layer.querySelector('[name="always-skip"]')?.checked) { data = setSetting(data, 'skipStory', true); store.save(data); }
+    onAction(action);
+  });
+}
+
+// The lantern show, over everything; it leads into Day 1 (or the tutorial question) [R17].
+let story = null;
+function renderStory() {
+  startOffice?.unmount();
+  startOffice = null;
+  view.innerHTML = '';
+  audio.unlock();
+  const sound = createStorySound(audio, { music: data.settings.music });
+  story = playStory(document.body, sound, {
+    onDone: () => { story = null; if (st().screen === 'story') game.dispatch({ type: 'STORY_DONE' }); },
+  });
 }
 
 // ---- game events to pictures and sounds ----------------------------------

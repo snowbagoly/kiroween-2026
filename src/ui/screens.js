@@ -98,6 +98,11 @@ export const NOTICE_SCREENS = ['dayStats', 'gameOver', 'closing'];
 export function cardHtml(screen, info = {}) {
   const { day = 1, mode = 'night' } = info;
   switch (screen) {
+    // Before the first night: the story, or straight to the desk [R17.6].
+    case 'storyOffer':
+      return `<h2>Before your first night</h2><p>A letter, written on the way to Station 7.</p>
+        <div class="card-buttons">${btn('story-read', 'Read the letter')}${btn('story-skip', 'Go straight to the desk')}</div>
+        <label class="always-skip"><input type="checkbox" name="always-skip"> Always go straight to the desk</label>`;
     case 'tutorialDialog':
       return `<h2>Start with the tutorial?</h2>
         <div class="card-buttons">${btn('tutorial-start', 'Start tutorial')}${btn('tutorial-notnow', 'Not now')}${btn('tutorial-never', 'Never')}</div>`;
