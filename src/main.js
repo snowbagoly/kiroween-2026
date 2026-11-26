@@ -387,7 +387,24 @@ function onAction(action) {
   else if (ACTIONS[action]) game.dispatch(ACTIONS[action]);
 }
 
+// A finished message: after a moment to see the stamp (or the card), the next one starts by itself.
+// It waits while the Options menu is open.
+const NEXT_MESSAGE_MS = 1600;
+let nextTimer = null;
+function scheduleNextMessage(screen) {
+  clearTimeout(nextTimer);
+  nextTimer = null;
+  if (screen !== 'messageDone') return;
+  const fire = () => {
+    if (st().screen !== 'messageDone') return;
+    if (options?.isOpen) { nextTimer = setTimeout(fire, 500); return; }
+    game.dispatch({ type: 'NEXT_MESSAGE' });
+  };
+  nextTimer = setTimeout(fire, NEXT_MESSAGE_MS);
+}
+
 function renderStart() {
+  scheduleNextMessage(null);
   toggleCodebook(false);
   recv.stop();
   clearTimeout(thoughtTimer);
@@ -465,7 +482,8 @@ function renderRun(s) {
   }
   tutor = null;
   desk.stage.querySelector('#galvanometer-slot')?.classList.remove('pulse');
-  showCard(desk.layer, s.screen, { ...card, day: s.day, mode: s.mode }, onAction);
+  showCard(desk.layer, s.screen, { ...card, day: s.day, mode: s.mode, office: !!office }, onAction);
+  scheduleNextMessage(s.screen);
   if (s.screen === 'playing') {
     // No button keeps focus, so Space and letters go to the game.
     document.activeElement?.blur?.();

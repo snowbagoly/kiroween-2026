@@ -87,9 +87,10 @@ export function cardHtml(screen, info = {}) {
     case 'dayIntro':
       return `<h2>Day ${day}</h2><p>${DAY_INTROS[day] ?? ''}</p>
         <div class="card-buttons">${btn('continue', 'Start the day')}</div>`;
+    // No button: the next message starts by itself. In the office the stamp on the form says it,
+    // so there is no card at all [R3.7, R4.5b].
     case 'messageDone':
-      return `<h2>${info.role === 'receive' ? 'Message received' : 'Message sent'}</h2>
-        <div class="card-buttons">${btn('next-message', 'Next message')}</div>`;
+      return info.office ? '' : `<h2>${info.role === 'receive' ? 'Message received' : 'Message sent'}</h2>`;
     case 'dayStats': {
       const s = info.stats;
       return `<h2>End of Day ${day}</h2>
