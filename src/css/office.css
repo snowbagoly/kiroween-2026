@@ -533,6 +533,45 @@
   .office .tg-body { font-size: 26px; background-size: auto; }
 }
 
+/* ---- The dawn [R9.9] ---- */
+/* The sky goes pale, the lamp gutters out and smokes, its glow fades and grey light comes in
+   through the window, falling across the room and onto the desk. */
+.office::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  opacity: 0;
+  mix-blend-mode: screen;
+  background:
+    radial-gradient(ellipse 22% 30% at 15% 16%, rgb(255 244 220 / .28), transparent 70%),
+    linear-gradient(162deg, transparent 8%, rgb(255 242 216 / .14) 16%, rgb(244 223 186 / .06) 45%, transparent 70%),
+    radial-gradient(ellipse 30% 9% at 30% 92%, rgb(251 231 192 / .22), transparent 70%);
+  transition: opacity 7s ease-in-out 1s;
+}
+.office.at-dawn::after { opacity: 1; }
+.office.at-dawn .window-morning { opacity: 1; }
+.office.at-dawn .lamp-glow { animation: none; opacity: 0; transition: opacity 4s 1s; }
+.office.at-dawn .desk-lamp .lamp-flame { animation: gutter 3.2s ease-in 1.2s forwards; }
+.office.at-dawn .room-window .lamp-reflection { animation: reflection-out 3.2s ease-in 1.2s forwards; }
+.office.at-dawn .desk-lamp .lamp-smoke { animation: lamp-smoke 6s ease-out 4.2s infinite; }
+@keyframes gutter {
+  0% { opacity: 1; transform: scale(1); }
+  30% { opacity: .75; transform: scale(.85); }
+  36% { opacity: .95; transform: scale(.92); }
+  62% { opacity: .4; transform: scale(.6); }
+  70% { opacity: .65; transform: scale(.66); }
+  100% { opacity: 0; transform: scale(.25); }
+}
+@keyframes reflection-out { 30% { opacity: .75; } 36% { opacity: .95; } 62% { opacity: .4; } 70% { opacity: .65; } to { opacity: 0; } }
+@keyframes lamp-smoke {
+  from { opacity: 0; transform: translate(0, 0); }
+  20% { opacity: .45; }
+  to { opacity: 0; transform: translate(4px, -26px); }
+}
+.office .lamp-reflection { transform-box: fill-box; transform-origin: 50% 70%; }
+
 /* Narrow screens: one column that scrolls; the window, clock, calendar and lamp are left out. */
 @media (max-width: 1050px) {
   .office { height: auto; min-height: 100vh; grid-template-columns: minmax(0, 1fr); padding: 3rem 12px 0; row-gap: 20px; }

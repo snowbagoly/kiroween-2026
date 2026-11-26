@@ -86,6 +86,35 @@ export function playBell(engine, { level = 0.22 } = {}) {
   });
 }
 
+// A church bell far off, one stroke [R9.9]: a low strike tone with its hum and a few inharmonic
+// partials, ringing out over four seconds.
+export function playChurchBell(engine, { level = 0.16 } = {}) {
+  return engine.voice((ctx, out) => {
+    const t = ctx.currentTime;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(level, t + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 4);
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 1800; // far off, over the marsh
+    g.connect(lp);
+    lp.connect(out);
+    const parts = [[155.6, 0.6], [311.1, 1], [370, 0.45], [466.2, 0.35], [622.3, 0.25], [826, 0.12]].map(([f, mix]) => {
+      const o = ctx.createOscillator();
+      o.frequency.value = f;
+      const m = ctx.createGain();
+      m.gain.value = mix;
+      o.connect(m);
+      m.connect(g);
+      o.start(t);
+      o.stop(t + 4.1);
+      return [o, m];
+    });
+    return { source: parts[0][0], nodes: [g, lp, ...parts.flat().slice(1)] };
+  });
+}
+
 // The office galvanometer's needle jolting in its case when a life is lost: a dull wooden tock,
 // band-passed noise around 520 Hz that dies in 45 ms [R5.2].
 export function playTock(engine, { level = 0.9 } = {}) {
