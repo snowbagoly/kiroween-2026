@@ -578,6 +578,44 @@
 }
 .office .lamp-reflection { transform-box: fill-box; transform-origin: 50% 70%; }
 
+/* ---- The light and what happens to it [R6.4 to R6.7, R5.5] ---- */
+.light-layers > * { position: fixed; inset: 0; pointer-events: none; }
+.light-layers { position: fixed; inset: 0; z-index: 4; pointer-events: none; }
+.light-layers .darkness { background: #000; opacity: 0; }
+.light-layers .gaze {
+  background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), transparent var(--r, 100px), rgb(0 0 0 / .92) calc(var(--r, 100px) * 3));
+  opacity: 0;
+  transition: opacity 1.6s ease-in-out;
+}
+.light-layers .gaze.on { transition: opacity .12s ease-out; }
+.light-layers .closing {
+  background: radial-gradient(ellipse 46% 50% at 50% 50%, transparent 20%, rgb(0 0 0 / .97) 100%);
+  opacity: 0;
+  transition: opacity 2.5s ease-in-out;
+}
+.light-layers .cold { background: #12203a; mix-blend-mode: color; opacity: 0; transition: opacity 1.2s ease-in-out; }
+.light-layers.blue-flame .cold { opacity: .38; }
+.light-layers .flash { background: #f2efff; opacity: 0; }
+.light-layers .flash.on { animation: flash .4s ease-out; }
+@keyframes flash { from { opacity: .75; } to { opacity: 0; } }
+.light-layers .apparition { inset: auto; left: 29%; bottom: 0; height: 80vh; width: auto; fill: #050403; opacity: 0; filter: blur(1px); }
+.light-layers .apparition.seen { opacity: .93; }
+/* Reduce flashing: the stutters soften into a dimming. */
+html.reduce-flashing .light-layers .darkness { transition: opacity .6s ease-in-out; }
+html.reduce-flashing .light-layers .gaze.on { transition-duration: .8s; }
+/* The blue flame, its reflection with it. */
+.office .lamp-flame, .office .lamp-reflection, .office .lamp-glow { transition: filter 1s ease-in-out, scale 1s ease-in-out; }
+.office.blue-flame :is(.desk-lamp .lamp-flame, .room-window .lamp-reflection) { filter: hue-rotate(190deg) saturate(1.6) brightness(.85); scale: .55; }
+.office.blue-flame .lamp-glow { filter: opacity(.3); }
+/* The galvanometer catching the light on a mistake, its cracked glass, the figure in the window. */
+.office .galvanometer.struck { animation: struck 1.4s ease-out; }
+@keyframes struck { from { filter: drop-shadow(0 10px 16px rgb(0 0 0 / .65)) drop-shadow(0 0 22px rgb(var(--glow) / .4)) brightness(1.2); } }
+.office .galvanometer.cracked .glass-crack { opacity: 1; }
+.office .room-window.watched .window-figure { opacity: 1; }
+/* The room jolts as the line snaps. */
+.office.jolt { animation: jolt .4s ease-out; }
+@keyframes jolt { 20% { translate: -7px 3px; } 45% { translate: 6px -4px; } 70% { translate: -3px 2px; } }
+
 /* Narrow screens: one column that scrolls; the window, clock, calendar and lamp are left out. */
 @media (max-width: 1050px) {
   .office { height: auto; min-height: 100vh; grid-template-columns: minmax(0, 1fr); padding: 3rem 12px 0; row-gap: 20px; }

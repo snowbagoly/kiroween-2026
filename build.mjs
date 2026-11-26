@@ -11,6 +11,8 @@ function bundle(file, seen = new Set(), out = []) {
   if (seen.has(file)) return out;
   seen.add(file);
   const src = readFileSync(file, 'utf8');
+  // Namespace imports would be stripped and leave the name undefined in the one scope.
+  if (/^\s*import\s+\*\s+as\s/m.test(src)) throw new Error(`${relative(root, file)}: use named imports, not import * as`);
   const importRe = /^\s*import\s+(?:[^'"]*?\s+from\s+)?['"](\.[^'"]+)['"]\s*;?\s*$/gm;
   for (const m of src.matchAll(importRe)) bundle(resolve(dirname(file), m[1]), seen, out);
   const code = src

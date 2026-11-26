@@ -24,6 +24,10 @@ import { mountMorseChart } from './ui/morse-chart.js';
 import { mountGalvanometer } from './ui/galvanometer.js';
 import { mountOffice, usesOffice } from './office/room.js';
 import { mountForm, mountTape, wordStarts, formatTime } from './office/forms.js';
+import { mountLight } from './office/light.js';
+import { createFaults, strainLevel, CLOSING_DARK } from './director/faults.js';
+import { createDread } from './director/dread.js';
+import { robin, apparition, earRing, flameDrop, flickerBuzz, glassCrack, knock, lineFault, lineSnaps, phantomClick } from './audio/fault-sound.js';
 import { mountTextRow } from './ui/text-row.js';
 import { mountStart, showCard, hudLabel } from './ui/screens.js';
 import { mountOptions } from './ui/options.js';
@@ -120,6 +124,7 @@ const reader = createPressReader({
   // A pattern that is no letter counts as a wrong letter.
   onLetter: (r) => {
     office?.tape.letter(r.letter);
+    lastPattern = r.pattern; // for the line repeating a wrong letter
     saveHand();
     showHand();
     if (inTutorial() && tutor) { tutorResult(tutor.letter(r.letter)); return; }
@@ -398,6 +403,120 @@ function onAction(action) {
   else if (ACTIONS[action]) game.dispatch(ACTIONS[action]);
 }
 
+// ---- the faults and the dread, in the office [R6.4 to R6.7] ---------------------------
+let lastPattern = '';
+let strainNow = 0;
+let dreadWarp = 0;
+const NIGHT_MODES = ['night', 'deadair'];
+const quietNow = () => !reader.pressing && !playingNow() && !reader.pattern;
+const setWarp = () => night.setWarpFloor(Math.max(strainNow, dreadWarp));
+
+function runFaults(actions) {
+  const light = office?.light;
+  if (!light || !NIGHT_MODES.includes(st().mode)) return;
+  for (const a of actions) {
+    if (a.type === 'spit') lineFault(audio, a.severity);
+    else if (a.type === 'gaze') light.gaze(a.severity, a.holdMs);
+    else if (a.type === 'stutter') {
+      const ms = light.flicker(a.strength, { blackout: a.blackout, onBlackout: a.knock ? () => knock(audio, { near: true }) : null });
+      flickerBuzz(audio, ms / 1000);
+      if (a.knock) captions.show('knockNear');
+    } else if (a.type === 'echo') {
+      // The line repeats the wrong letter back, faintly, in the operator's own hand [R6.4].
+      const pattern = lastPattern;
+      setTimeout(() => {
+        const letter = Object.keys(MORSE).find((k) => MORSE[k] === pattern);
+        if (letter && quietNow()) playLetter(audio, letter, { hand: { dot: hand.dot / 1000, dash: hand.dash / 1000, gap: hand.unit / 1000 }, level: 0.07, freq: KEY_TONE_HZ, clicks: false });
+      }, a.delayMs);
+    } else if (a.type === 'strain') { night.setStrain(a.level); strainNow = a.level; setWarp(); }
+    else if (a.type === 'closing') light.closing(a.level);
+    else if (a.type === 'omen') setTimeout(() => omen(), a.delayMs);
+    else if (a.type === 'lastWarning') lastWarning();
+  }
+}
+
+// Clean messages bring lives back, and the room eases with them.
+function easeFaults(lives) {
+  if (!office || !NIGHT_MODES.includes(st().mode)) return;
+  const max = st().maxLives ?? 10;
+  strainNow = strainLevel(lives, max);
+  night.setStrain(strainNow);
+  office.light.closing(strainNow * CLOSING_DARK);
+  setWarp();
+}
+
+// One omen not yet seen today, in a quiet moment [R6.4a].
+function omen() {
+  if (!office || st().screen !== 'playing') return;
+  const name = office.faults.nextOmen({ music: data.settings.music });
+  if (name === 'blueFlame') { office.light.blueFlame(5000); flameDrop(audio); captions.show('flame'); }
+  else if (name === 'heavyAir') { night.heavyAir(1.4, 1.2, 2.6); earRing(audio, 5.2); captions.show('heavy'); }
+  else if (name === 'recordSticks') { night.record.stick(4); captions.show('sticks'); }
+}
+
+// The last warning, at one life left [R6.4b]: the glass cracks, the light goes, three knocks behind,
+// a swell in the dark, and as the light snaps back someone is reflected in the window.
+function lastWarning() {
+  const light = office.light;
+  glassCrack(audio);
+  light.crack(true);
+  setTimeout(() => {
+    if (!office || st().screen !== 'playing') return;
+    const ms = light.flicker(0.8, {
+      blackout: true,
+      blackoutMs: 2700,
+      onBlackout: () => {
+        knock(audio, { near: true });
+        captions.show('knockNear');
+        setTimeout(() => apparition(audio, 1.3), 1400);
+      },
+      onLight: () => {
+        light.watched(true);
+        setTimeout(() => { light.flicker(0.25); light.watched(false); }, 1900);
+      },
+    });
+    flickerBuzz(audio, ms / 1000);
+  }, 1300);
+}
+
+// The dread follows the game clock [R6.7].
+let lastDreadAt = 0;
+function runDread(progress) {
+  const t = now();
+  const seconds = (t - lastDreadAt) / 1000;
+  lastDreadAt = t;
+  if (!office || !NIGHT_MODES.includes(st().mode) || !office.dread) return;
+  const lv = office.dread.levels(progress);
+  night.setWind(lv.wind);
+  night.setHum(lv.hum);
+  dreadWarp = lv.warp;
+  setWarp();
+  if (st().screen !== 'playing' && st().screen !== 'waiting') return;
+  for (const e of office.dread.tick(seconds, progress, { quiet: quietNow() })) {
+    if (e.type === 'flicker' && !office.light.flickering) flickerBuzz(audio, office.light.flicker(e.strength) / 1000);
+    else if (e.type === 'phantom') { phantomClick(audio); office.gauge.twitch?.(); }
+    else if (e.type === 'knock') { knock(audio); captions.show('knock'); }
+  }
+}
+
+// The line dies (Night Shift and Dead Air) [R5.5]: it snaps with a crack and a flash, the room jolts,
+// the needle is flung down, the sounder jams into one long tone while the light stutters out, and in
+// the last flash someone stands in the room. Then dark and silence, and the dead line speaks.
+function lineDies() {
+  const layer = desk.layer;
+  layer.hidden = true;
+  tone?.stop(); tone = null;
+  director.stop(); recv.stop(); reader.reset();
+  lineSnaps(audio, { jam: 1.9, freq: KEY_TONE_HZ });
+  office.light.snap();
+  office.light.lightsOut(() => {
+    night.cutDead();
+    office.light.reset();
+    layer.hidden = false;
+    deadLine();
+  });
+}
+
 // ---- the endings [R5.5, R9.9] ------------------------------------------------
 // The line dies (Night Shift and Dead Air): darkness and silence, then the sounder taps out
 // "THE LINE IS DEAD" by itself in the player's own hand, each letter surfacing as it ends, and then
@@ -465,8 +584,23 @@ bus.on('DAWN', () => {
   director.stop();
   for (let i = 0; i < 6; i++) setTimeout(() => playChurchBell(audio), 1200 + i * 1400);
   captions.show('church');
+  // When the bell has finished, a robin sings outside, and again a little later.
+  for (const at of [10500, 14000]) setTimeout(() => { if (st().screen === 'dayStats') { robin(audio); captions.show('robin'); } }, at);
+  night.setMusic(false); // the music fades
 });
-bus.on('DAY_STARTED', () => { office?.office.classList.remove('at-dawn'); deadTimers.forEach(clearTimeout); });
+bus.on('DAY_STARTED', ({ max }) => {
+  office?.office.classList.remove('at-dawn');
+  deadTimers.forEach(clearTimeout);
+  if (!office) return;
+  office.faults = createFaults({ max });
+  office.dread = createDread({ day: st().day, mode: st().mode });
+  office.light.reset({ newDay: true });
+  night.setStrain(0);
+  night.setWind(0);
+  night.setHum(0);
+  night.setWarpFloor(0);
+  night.setMusic(data.settings.music);
+});
 
 // A finished message: after a moment to see the stamp (or the card), the next one starts by itself.
 // It waits while the Options menu is open.
@@ -521,6 +655,9 @@ function buildDesk(s) {
     else office.codebookSpot.innerHTML = '<div class="bare-wall" aria-hidden="true"><i></i><i></i></div>'; // Dead Air [R16.5]
     // The message is a telegram form on the desk, and each press goes onto the paper tape [R3.1, R3.4a].
     office.tape = mountTape(office.work);
+    office.light = mountLight(stage, office.office, { calm: () => reduceFlashing() });
+    office.faults = createFaults({ max: s.maxLives });
+    office.dread = createDread({ day: s.day, mode: s.mode });
     row = mountForm(office.formSpot);
     office.hud.append(hud);
     gauge = office.gauge;
@@ -573,7 +710,7 @@ function renderRun(s) {
   }
   showCard(desk.layer, s.screen, { ...card, ...notice, day: s.day, mode: s.mode, office: !!office }, onAction);
   desk.layer.classList.remove('dead-line', 'noticed');
-  if (s.screen === 'gameOver' && office) deadLine();
+  if (s.screen === 'gameOver' && office) lineDies();
   scheduleNextMessage(s.screen);
   if (s.screen === 'playing') {
     // No button keeps focus, so Space and letters go to the game.
@@ -701,17 +838,23 @@ bus.on('LETTER_OK', ({ next }) => {
   recv.idleUsed = false;
   if (next < (st().message?.letters.length ?? 0)) playCurrent(NEXT_LETTER_PAUSE_MS); // R4.3
 });
-bus.on('LETTER_WRONG', () => {
+bus.on('LETTER_WRONG', ({ got }) => {
+  if (role() === 'receive' && MORSE[got]) lastPattern = MORSE[got];
   desk?.row.wrong();
   if (role() === 'send') office?.tape.wrong();
   // A mistake in Night Shift: static and flicker, or a slow fade with "Reduce flashing" [R6.4, R6.6].
-  if (desk?.fx && desk.fx.mistake()) { playStatic(audio); captions.show('static'); }
+  // In the office a mistake is felt through the faults (see LIFE_LOST) [R6.4].
   if (role() === 'receive') playCurrent(NEXT_LETTER_PAUSE_MS); // same letter again, free [R4.4]
 });
 // In the office the needle jolts with a dull tock; the Day Shift dial ticks [R5.2].
-bus.on('LIFE_LOST', ({ lives }) => { desk?.gauge.set(lives); (office ? playTock : playTick)(audio); updateNight(); });
-bus.on('LIFE_REFILLED', ({ lives }) => { desk?.gauge.set(lives); updateNight(); });
-bus.on('LIVES_SET', ({ lives, max }) => { if (desk && desk.gauge.state.max !== max) desk.gauge.setMax(max, lives); else desk?.gauge.set(lives); updateNight(); });
+bus.on('LIFE_LOST', ({ lives, kind }) => {
+  desk?.gauge.set(lives);
+  (office ? playTock : playTick)(audio);
+  if (office) runFaults(office.faults.lifeLost(lives, { kind: kind ?? 'letter', now: now() }));
+  updateNight();
+});
+bus.on('LIFE_REFILLED', ({ lives }) => { desk?.gauge.set(lives); easeFaults(lives); updateNight(); });
+bus.on('LIVES_SET', ({ lives, max }) => { if (desk && desk.gauge.state.max !== max) desk.gauge.setMax(max, lives); else desk?.gauge.set(lives); easeFaults(lives); updateNight(); });
 // A finished form is stamped SENT or RECEIVED with the office's time [R3.7, R4.5b].
 bus.on('MESSAGE_DONE', () => {
   if (!office) return;
@@ -735,6 +878,7 @@ document.addEventListener('visibilitychange', () => { lastTick = now(); });
 // The wall clock, the window's sky toward dawn (from 60% of the night), the HUD time [R9.7, R9.9].
 const DAWN_FROM = 0.6;
 bus.on('CLOCK', ({ minutes, time, progress, waiting }) => {
+  runDread(progress);
   office?.setTime(wallMinutes(minutes));
   office?.office.querySelector('.room-window')?.style.setProperty('--dawn', Math.max(0, (progress - DAWN_FROM) / (1 - DAWN_FROM)).toFixed(3));
   if (desk) desk.hud.textContent = hudLabel(st().mode, st().day) + ` · ${time}`;
