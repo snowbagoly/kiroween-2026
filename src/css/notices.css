@@ -60,7 +60,9 @@
 }
 .card.notice .notice-stats dt { font: 14px "IM Fell English SC", serif; }
 .card.notice .notice-stats dd { margin: 0; font: 500 22px/1.05 "Caveat", cursive; color: #22303f; text-align: right; }
-.card.notice .stats-table { font-size: 13px; }
+.card.notice .notice-sub { margin: 4px 0 0; font: 14px "IM Fell English SC", serif; letter-spacing: .12em; text-align: center; }
+.card.notice .notice-stats.best dd { font-size: 19px; }
+.card.notice .unlock { margin: 6px 0; font: 500 21px/1.1 "Caveat", cursive; color: #8f2a1a; text-align: center; }
 .card.notice .notice-buttons { display: grid; justify-content: stretch; gap: 8px; margin-top: 6px; }
 .card.notice .notice-buttons button {
   display: block;

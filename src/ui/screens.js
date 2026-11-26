@@ -136,7 +136,10 @@ export function cardHtml(screen, info = {}) {
     }
     case 'closing': {
       const t = info.totals;
-      const best = info.best ? statsTable(info.best, `Best ${MODE_NAMES[mode]} run`) : '';
+      // The best run, written on the same form in the same hand.
+      const best = info.best
+        ? `<p class="notice-sub">Best ${MODE_NAMES[mode]} run</p><dl class="notice-stats best">${statsRows(info.best).map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>`
+        : '';
       const unlocked = info.unlocked ? '<p class="unlock">Dead Air is now open on the start screen.</p>' : '';
       return noticeHtml({
         title: 'Your shifts are over',
