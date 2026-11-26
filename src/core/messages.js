@@ -99,6 +99,8 @@ export function checkDay(list, day, mode) {
   if (!list.some((m) => m.length === 'short')) broken.push('short');
   if (!list.some((m) => m.length === 'long')) broken.push('long');
   if (isMonotonic(lens)) broken.push('sorted');
+  // The day gets easier toward 06:00: no long message among the last two [R9.2].
+  if (list.slice(-2).some((m) => m.length === 'long')) broken.push('late-long');
   if (strange < rule.min || strange > rule.max) broken.push('strange-count');
   if (rule.lastOnly && !list[list.length - 1]?.strange) broken.push('strange-last');
   if (day === 1 && list.some((m) => m.role !== 'send')) broken.push('roles');

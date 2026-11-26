@@ -36,3 +36,16 @@ test('messages: Day Shift Day 1 example', () => {
   assert.deepEqual(checkDay(day, 1, 'day'), []);
   assert.ok(day.every((m) => !m.strange && m.role === 'send'));
 });
+
+test('messages: no long message among the last two of any day, for 1000 seeds [R9.2]', async () => {
+  const { createRng } = await import('../src/core/rng.js');
+  const { buildDay } = await import('../src/core/messages.js');
+  for (let seed = 1; seed <= 1000; seed++) {
+    for (const mode of ['night', 'day', 'deadair']) {
+      for (const day of [1, 2, 3]) {
+        const list = buildDay(day, mode, createRng(seed));
+        assert.ok(list.slice(-2).every((m) => m.length !== 'long'), `${seed} ${mode} ${day}`);
+      }
+    }
+  }
+});
