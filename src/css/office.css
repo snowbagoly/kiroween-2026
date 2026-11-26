@@ -492,6 +492,8 @@
 .office .tape { width: 100%; flex: none; }
 .office .on-desk { margin-top: auto; padding-bottom: 60px; display: flex; flex-direction: column; align-items: center; position: relative; z-index: 3; }
 .office .telegram { width: 320px; }
+/* The longest messages (about 50 letters) fit in four lines, so the form stays clear of the galvanometer. */
+.office .tg-body { font-size: 30px; background: repeating-linear-gradient(transparent 0 38px, rgb(58 47 34 / .25) 38px 39px); }
 .office .tg-char.blank { min-width: .55em; border-bottom: 2px solid rgb(34 48 63 / .5); margin: 0 1px; }
 .office .telegram.incoming .tg-char.current { box-shadow: none; border-bottom-color: #8a6626; }
 .office .telegram.strange .tg-body { color: #5a1a12; }
@@ -501,15 +503,21 @@
 @media (max-width: 1050px) {
   .office .on-desk { margin-top: 0; padding-bottom: 0; }
   .office .telegram { width: min(320px, 92vw); }
+  .office .tg-body { font-size: 26px; background-size: auto; }
 }
 
 /* Narrow screens: one column that scrolls; the window, clock, calendar and lamp are left out. */
 @media (max-width: 1050px) {
   .office { height: auto; min-height: 100vh; grid-template-columns: minmax(0, 1fr); padding: 3rem 12px 0; row-gap: 20px; }
-  .office .wall-left, .office .wall-right, .office .centre { grid-column: 1; justify-self: center; }
-  .office .centre { order: 1; }
-  .office .wall-right { order: 2; }
-  .office .wall-left { order: 3; padding-bottom: 2rem; }
+  /* The walls open up so their parts line up in one column, the form right under the tape. */
+  .office .wall-left, .office .wall-right, .office .centre { display: contents; }
+  .office > * > * { grid-column: 1; justify-self: center; }
+  .office .office-hud { order: 1; }
+  .office .office-work { order: 2; }
+  .office .on-desk { order: 3; }
+  .office .station { order: 4; }
+  .office .galvanometer { order: 5; width: 160px; }
+  .office .codebook-spot { order: 6; padding-bottom: 2rem; }
   .office .window-wrap, .office .room-clock, .office .desk-lamp, .office .room-calendar { display: none; }
   .office .station { margin-top: 24px; padding-bottom: 12px; }
   .office .station::before { display: none; }
