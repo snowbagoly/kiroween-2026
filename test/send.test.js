@@ -31,10 +31,10 @@ function harness() {
 
 function tap(h, ms, gap = 100) { h.reader.pressStart(); h.advance(ms); h.reader.pressEnd(); h.advance(gap); }
 
-test('send: dot, dash, then 700 ms gap gives A', () => {
+test("send: dot, dash, then the new player's 720 ms gap gives A", () => {
   const h = harness();
   tap(h, 100); tap(h, 400, 0);
-  h.advance(699);
+  h.advance(719);
   assert.equal(h.letters().length, 0);
   h.advance(1);
   assert.deepEqual(h.letters(), [{ pattern: '.-', letter: 'A' }]);
@@ -42,7 +42,7 @@ test('send: dot, dash, then 700 ms gap gives A', () => {
 
 test('send: a new press cancels the gap timer', () => {
   const h = harness();
-  tap(h, 100, 650); tap(h, 100, 650); tap(h, 100, 700);
+  tap(h, 100, 650); tap(h, 100, 650); tap(h, 100, 720);
   assert.deepEqual(h.letters(), [{ pattern: '...', letter: 'S' }]);
 });
 

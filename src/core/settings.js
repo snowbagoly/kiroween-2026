@@ -1,5 +1,6 @@
 // Settings and saved data in one localStorage key [design 6, R8.4, R13.5].
 // If storage is blocked or full, the game keeps working with the values in memory.
+import { validHand } from './hand.js';
 
 export const STORAGE_KEY = 'deadair.v1';
 export const SAVE_VERSION = 1;
@@ -18,6 +19,7 @@ export function defaultData() {
       showLivesNumber: false,
       tutorial: 'ask',
     },
+    hand: null, // the learned hand { dot, dash }, or null for a new player [R3.3a]
     best: { night: null, day: null, deadair: null },
     deadAirUnlocked: false,
   };
@@ -39,6 +41,7 @@ export function cleanData(raw) {
   const b = isObj(raw.best) ? raw.best : {};
   for (const m of BEST_MODES) d.best[m] = isObj(b[m]) ? b[m] : null;
   d.deadAirUnlocked = bool(raw.deadAirUnlocked, false);
+  d.hand = validHand(raw.hand); // a broken hand is a new player's
   return d;
 }
 
@@ -51,6 +54,11 @@ export function setSetting(data, key, value) {
   const next = cleanData({ ...base, settings: { ...base.settings, [key]: value } });
   if (next.settings[key] !== value) next.settings[key] = base.settings[key];
   return next;
+}
+
+// Returns new data with the learned hand, or null to forget it.
+export function setHand(data, hand) {
+  return { ...cleanData({ ...data, version: SAVE_VERSION }), hand: validHand(hand) };
 }
 
 // Reading `localStorage` itself can throw (blocked cookies, sandboxed frames).

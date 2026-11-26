@@ -19,6 +19,6 @@ test('R3.8: any number of repeat keydowns between keydown and keyup gives exactl
     for (let i = 0; i < repeats; i++) { now += steps[i % (steps.length || 1)] ?? 30; l.keydown(ev(true)); }
     l.keyup(ev(false));
     assert.equal(symbols.length, 1);
-    assert.equal(symbols[0], now < 300 ? '.' : '-');
+    assert.equal(symbols[0], now < 240 ? '.' : '-'); // a new player's hand
   }), RUNS);
 });

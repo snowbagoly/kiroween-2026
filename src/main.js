@@ -3,7 +3,8 @@
 // game events into pictures and sounds.
 import { createBus } from './core/events.js';
 import { createGame } from './core/game.js';
-import { createSettingsStore, setSetting } from './core/settings.js';
+import { createSettingsStore, setSetting, setHand } from './core/settings.js';
+import { createHand } from './core/hand.js';
 import { createAudioEngine } from './audio/engine.js';
 import { playLetter, armDownAt } from './audio/sequencer.js';
 import { createNightMusic } from './audio/music-night.js';
@@ -37,7 +38,17 @@ const bus = createBus();
 const audio = createAudioEngine({ music: data.settings.musicVol, sfx: data.settings.sfxVol, muted: data.settings.mute });
 audio.attachUnlock(window);
 
-const game = createGame({ data, save: (d) => { data = d; store.save(d); }, seed: Date.now() >>> 0, bus, judge });
+// The game saves what it owns (best stats, the unlock, the tutorial choice); the Options settings and
+// the learned hand are kept from main's copy, so neither side overwrites the other's changes.
+const saveFromGame = (d) => {
+  data = { ...data, best: d.best, deadAirUnlocked: d.deadAirUnlocked, settings: { ...data.settings, tutorial: d.settings.tutorial } };
+  store.save(data);
+};
+const game = createGame({ data, save: saveFromGame, seed: Date.now() >>> 0, bus, judge });
+// The player's hand: learned from every press, saved after each letter (not in Judge mode) [R3.3, R3.3a].
+const hand = createHand(data.hand);
+const saveHand = () => { data = setHand(data, hand.saved); store.save(data); };
+const handLine = () => `your hand · ${hand.wpm} words a minute`; // [R3.3b]
 
 const app = document.getElementById('app');
 // Captions follow the setting, and turn on by themselves when the browser blocks sound [R10.3].
@@ -84,12 +95,13 @@ let tutorReadyAt = 0; // the dial sheet takes a key only after the needle has mo
 let meterRaf = 0;
 
 const reader = createPressReader({
+  hand,
   onPressStart: () => {
     lastInputAt = now();
     audio.unlock();
     tone = playTone(audio);
     if (desk) setKeyDown(desk.stage, true);
-    if (inTutorial()) startMeter();
+    startMeter();
     game.dispatch({ type: 'INPUT', t: now() });
   },
   onPressEnd: () => {
@@ -105,6 +117,8 @@ const reader = createPressReader({
   // A pattern that is no letter counts as a wrong letter.
   onLetter: (r) => {
     office?.tape.letter(r.letter);
+    saveHand();
+    showHand();
     if (inTutorial() && tutor) { tutorResult(tutor.letter(r.letter)); return; }
     if (canPlay() && role() === 'send') game.dispatch({ type: 'LETTER', letter: r.letter ?? '?', t: now() });
   },
@@ -210,19 +224,32 @@ function playReceived(letter, speed = 1) {
 
 // ---- tutorial -------------------------------------------------------------
 
-const PRESS_SCALE_MS = 600; // the meter is full at 600 ms; the mark at 300 ms splits dot and dash
+// The hold meter: full at twice the player's threshold, so the mark (where a dot becomes a dash, from
+// the learned hand) sits in the middle [R2.3].
+const meterScale = () => hand.threshold * 2;
+const meterBars = () => [...document.querySelectorAll('.press-meter')];
+function placeMeterMarks() {
+  for (const m of meterBars()) m.querySelector('.press-mark').style.left = `${(hand.threshold / meterScale()) * 100}%`;
+}
+function showHand() {
+  for (const el of document.querySelectorAll('.hand-line')) el.textContent = handLine();
+  placeMeterMarks();
+}
 
 function startMeter() {
   const t0 = now();
   cancelAnimationFrame(meterRaf);
   const step = () => {
-    const bar = desk?.layer.querySelector('.press-bar');
-    const label = desk?.layer.querySelector('.press-label');
-    if (!bar || !reader.pressing) return;
+    if (!reader.pressing) return;
     const ms = now() - t0;
-    bar.style.width = `${Math.min(1, ms / PRESS_SCALE_MS) * 100}%`;
-    bar.classList.toggle('dash', ms >= 300);
-    label.textContent = ms < 300 ? 'dot' : 'dash';
+    const dash = ms >= hand.threshold;
+    for (const m of meterBars()) {
+      const bar = m.querySelector('.press-bar');
+      bar.style.width = `${Math.min(1, ms / meterScale()) * 100}%`;
+      bar.classList.toggle('dash', dash);
+      const label = m.querySelector('.press-label');
+      if (label) label.textContent = dash ? 'dash' : 'dot';
+    }
     meterRaf = requestAnimationFrame(step);
   };
   meterRaf = requestAnimationFrame(step);
@@ -236,6 +263,7 @@ function stopMeter() {
 function drawSheet() {
   if (!desk || !tutor?.sheet) return;
   showCard(desk.layer, 'tutorial', { sheet: tutor.sheet, index: tutor.index, total: 5, hint: tutorHint }, onAction);
+  placeMeterMarks();
   document.activeElement?.blur?.();
   const slot = desk.stage.querySelector('#galvanometer-slot');
   const dial = tutor.sheet.id === 'dial';
@@ -379,6 +407,9 @@ function buildDesk(s) {
     gauge = mountGalvanometer(stage, { max: s.maxLives, lives });
   }
   (office ? office.work : stage.querySelector('.text-row-box')).insertAdjacentHTML('afterend', '<p class="replay-row" hidden><button type="button" class="replay-btn">Replay</button></p>');
+  // The hold meter with the learned dot/dash mark, and the player's speed, under the message [R2.3, R3.3b].
+  (office ? office.work : stage.querySelector('.text-row-box')).insertAdjacentHTML('beforeend',
+    '<div class="press-meter play-meter" aria-hidden="true"><div class="press-bar"></div><span class="press-mark"></span></div><p class="hand-line"></p>');
   const replay = stage.querySelector('.replay-btn');
   replay.addEventListener('click', () => { onReplay(); replay.blur(); });
   recv.counter = createReplayCounter(s.mode);
@@ -390,6 +421,7 @@ function buildDesk(s) {
   const thought = stage.querySelector('.thought-line');
   desk = { mode: s.mode, stage, gauge, row, hud, replay, fx, thought, layer: view.querySelector('.card-layer') };
   applySettings();
+  showHand();
 }
 
 function renderRun(s) {
@@ -657,6 +689,8 @@ options = mountOptions(document.body, {
     applySettings();
   },
   inRun: () => st().screen !== 'start',
+  handLine,
+  onForgetHand: () => { hand.forget(); data = setHand(data, null); store.save(data); showHand(); return handLine(); },
   onEndGame: () => game.dispatch({ type: 'END_GAME' }),
   onOpenChange: (open) => {
     updateNight(); // the director holds its clock while Options is open

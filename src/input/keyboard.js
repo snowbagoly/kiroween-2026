@@ -1,9 +1,12 @@
 // Sending input: Space down and up become dots and dashes, then letters [design 5, R3.2, R3.3, R3.4, R3.8].
 // No browser calls in the press reader: the clock and timers are passed in, so tests can drive it.
-import { classifyPress, decode, LETTER_GAP_MS, MAX_SYMBOLS } from '../core/morse.js';
+import { decode, MAX_SYMBOLS } from '../core/morse.js';
+import { createHand } from '../core/hand.js';
 
 // Shared by keyboard and touch: both call pressStart() and pressEnd().
+// `hand` reads each press and learns from it; its letter gap ends the letter.
 export function createPressReader({
+  hand = createHand(),
   clock = { now: () => performance.now() },
   setTimer = (fn, ms) => setTimeout(fn, ms),
   clearTimer = (id) => clearTimeout(id),
@@ -32,6 +35,7 @@ export function createPressReader({
   return {
     get pressing() { return t0 !== null; },
     get pattern() { return pattern; },
+    get hand() { return hand; },
 
     pressStart() {
       if (t0 !== null) return false; // already down: a repeat, ignore it
@@ -45,12 +49,12 @@ export function createPressReader({
       if (t0 === null) return null;
       const ms = clock.now() - t0;
       t0 = null;
-      const symbol = classifyPress(ms);
+      const symbol = hand.classify(ms);
       pattern += symbol;
       onPressEnd({ ms, symbol });
       onSymbol({ symbol, pattern });
       if (pattern.length > MAX_SYMBOLS) finishLetter(); // no letter is this long: wrong at once
-      else timer = setTimer(finishLetter, LETTER_GAP_MS);
+      else timer = setTimer(finishLetter, hand.letterGap);
       return symbol;
     },
 
@@ -59,7 +63,7 @@ export function createPressReader({
       if (t0 === null) return;
       t0 = null;
       onPressEnd({ ms: 0, symbol: null, cancelled: true });
-      if (pattern) timer = setTimer(finishLetter, LETTER_GAP_MS);
+      if (pattern) timer = setTimer(finishLetter, hand.letterGap);
     },
 
     // Clears everything, for a new message or screen.

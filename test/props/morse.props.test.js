@@ -21,11 +21,11 @@ test('R3: random presses never throw, and patterns over 4 symbols are always wro
   fc.assert(fc.property(junk, (x) => { decode(x); decodePresses(Array.isArray(x) ? x : []); }), RUNS);
 });
 
-test('R3.3: under 300 ms is a dot, 300 ms or more is a dash, whatever came before', () => {
+test('R3.3: with no hand, under 240 ms is a dot and 240 ms or more is a dash, whatever came before', () => {
   fc.assert(fc.property(pressList, pressMs, (before, ms) => {
-    const all = decodePresses([...before.map((p) => ({ ...p, gapAfter: 1000 })), { ms, gapAfter: 1000 }]);
+    const all = decodePresses([...before.map((p) => ({ ...p, gapAfter: 2000 })), { ms, gapAfter: 2000 }]);
     const last = all.at(-1).pattern;
-    assert.equal(last, ms < 300 ? '.' : '-');
+    assert.equal(last, ms < 240 ? '.' : '-');
     assert.equal(classifyPress(ms), last);
   }), RUNS);
 });

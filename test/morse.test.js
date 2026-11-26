@@ -20,16 +20,16 @@ for (const [letter, pattern] of Object.entries(EXPECTED)) {
   });
 }
 
-test('morse: 299 ms is a dot, 300 ms is a dash', () => {
-  assert.equal(classifyPress(299), '.');
-  assert.equal(classifyPress(300), '-');
+test('morse: for a new player, 239 ms is a dot and 240 ms is a dash', () => {
+  assert.equal(classifyPress(239), '.');
+  assert.equal(classifyPress(240), '-');
 });
 
-test('morse: 699 ms gap keeps the letter open, 700 ms ends it', () => {
-  assert.equal(isLetterGap(699), false);
-  assert.equal(isLetterGap(700), true);
-  assert.deepEqual(decodePresses([{ ms: 100, gapAfter: 699 }, { ms: 400, gapAfter: 700 }]).map((r) => r.letter), ['A']);
-  assert.deepEqual(decodePresses([{ ms: 100, gapAfter: 700 }, { ms: 400, gapAfter: 700 }]).map((r) => r.letter), ['E', 'T']);
+test('morse: for a new player, a 719 ms gap keeps the letter open and 720 ms ends it', () => {
+  assert.equal(isLetterGap(719), false);
+  assert.equal(isLetterGap(720), true);
+  assert.deepEqual(decodePresses([{ ms: 100, gapAfter: 719 }, { ms: 400, gapAfter: 720 }]).map((r) => r.letter), ['A']);
+  assert.deepEqual(decodePresses([{ ms: 100, gapAfter: 720 }, { ms: 400, gapAfter: 720 }]).map((r) => r.letter), ['E', 'T']);
 });
 
 test('morse: patterns longer than 4 are wrong', () => {
