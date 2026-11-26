@@ -1,18 +1,17 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { PENTATONIC, CHORDS, notesFor, createDayMusic, BPM } from '../src/audio/music-day.js';
-import { NIGHT_SCALE, DRONE_HZ } from '../src/audio/music-night.js';
+import { HARMONY } from '../src/audio/scores.js';
 import { createAudioEngine } from '../src/audio/engine.js';
 
 const pc = (f) => Math.round(12 * Math.log2(f / 440) + 69) % 12;
 
-test('day music: G major pentatonic (G A B D E), different notes from Night Shift [R7.3]', () => {
+test('day music: G major pentatonic (G A B D E), a different key from the Night Shift waltz [R7.3]', () => {
   assert.deepEqual([...new Set(PENTATONIC.map(pc))].sort((a, b) => a - b), [2, 4, 7, 9, 11]);
-  // Night Shift uses the tritone G# and D#; none of those are in the day scale.
-  const night = new Set(NIGHT_SCALE.map(pc));
-  assert.ok(night.has(8) && night.has(3));
-  assert.ok(PENTATONIC.every((f) => pc(f) !== 8 && pc(f) !== 3));
-  assert.ok(CHORDS.flat().every((f) => f > DRONE_HZ));
+  // The waltz is in Eb minor: its Eb, Gb and Bb are in none of the day's notes.
+  const waltz = new Set(Object.values(HARMONY).flatMap((h) => [h.bass, ...h.chord]).map((m) => m % 12));
+  assert.ok(waltz.has(3) && waltz.has(6) && waltz.has(10));
+  assert.ok(PENTATONIC.every((f) => ![3, 6, 10].includes(pc(f))));
   assert.ok(BPM > 60 && BPM < 100);
 });
 

@@ -115,6 +115,38 @@ export function playChurchBell(engine, { level = 0.16 } = {}) {
   });
 }
 
+// A short burst of band-passed noise with a set rise and fall: the stamp's thud, the paper's rustle.
+function noiseHit(engine, { freq, q, level, rise, length }) {
+  return engine.voice((ctx, out) => {
+    const t = ctx.currentTime;
+    const len = Math.ceil(ctx.sampleRate * (length + 0.05));
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.value = freq;
+    bp.Q.value = q;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(rise ? 0 : level, t);
+    if (rise) g.gain.linearRampToValueAtTime(level, t + rise);
+    g.gain.exponentialRampToValueAtTime(0.001, t + length);
+    src.connect(bp);
+    bp.connect(g);
+    g.connect(out);
+    src.start(t);
+    return { source: src, nodes: [bp, g] };
+  });
+}
+
+// The rubber stamp coming down on a finished form: a dull thud [R3.7, R4.5b].
+export const playStamp = (engine) => noiseHit(engine, { freq: 220 * (0.85 + Math.random() * 0.3), q: 1.4, level: 1.6, rise: 0, length: 0.05 });
+
+// A new form sliding across the desk: paper moving.
+export const playRustle = (engine) => noiseHit(engine, { freq: 2400, q: 0.7, level: 0.12, rise: 0.06, length: 0.4 });
+
 // The office galvanometer's needle jolting in its case when a life is lost: a dull wooden tock,
 // band-passed noise around 520 Hz that dies in 45 ms [R5.2].
 export function playTock(engine, { level = 0.9 } = {}) {

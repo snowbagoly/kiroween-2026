@@ -93,6 +93,7 @@ export function mountForm(parent) {
     // Telegrams waiting on the spike show as more forms under this one [R9.7c].
     setWaiting(n) {
       el.classList.toggle('stacked', n > 0);
+      el.classList.toggle('many', n > 1);
       spike.textContent = n > 0 ? `${n} more waiting on the spike` : '';
     },
     get state() { return { ...cur }; },

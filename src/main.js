@@ -8,7 +8,7 @@ import { createHand } from './core/hand.js';
 import { createAudioEngine } from './audio/engine.js';
 import { playLetter, armDownAt } from './audio/sequencer.js';
 import { MORSE } from './core/morse.js';
-import { createNightMusic } from './audio/music-night.js';
+import { createNightSound, KEY_TONE_HZ } from './audio/office-sound.js';
 import { createDayMusic } from './audio/music-day.js';
 import { HORROR_SOUNDS } from './audio/horror-voices.js';
 import { mountCaptions } from './audio/captions.js';
@@ -16,7 +16,7 @@ import { createHorrorDirector, intensityFor } from './director/horror.js';
 import { createThoughts, SHOW_MS } from './director/thoughts.js';
 import { createTutorial, HEARD_LETTER } from './core/tutorial.js';
 import { createReplayCounter, replayLabel, NEXT_LETTER_PAUSE_MS, IDLE_REPLAY_MS } from './core/receive.js';
-import { playTone, playTick, playTock, playStatic, playBell, playChurchBell } from './audio/voices.js';
+import { playTone, playTick, playTock, playStatic, playBell, playChurchBell, playStamp, playRustle } from './audio/voices.js';
 import { wallMinutes } from './core/day-clock.js';
 import { createPressReader, attachKeyboard } from './input/keyboard.js';
 import { mountScene, setKeyDown, setSounderDown } from './ui/scene.js';
@@ -46,7 +46,7 @@ const saveFromGame = (d) => {
   data = { ...data, best: d.best, deadAirUnlocked: d.deadAirUnlocked, settings: { ...data.settings, tutorial: d.settings.tutorial } };
   store.save(data);
 };
-const game = createGame({ data, save: saveFromGame, seed: Date.now() >>> 0, bus, judge, timed: true });
+const game = createGame({ data, save: saveFromGame, seed: Date.now() >>> 0, bus, judge, timed: true, mustHear: true });
 // The player's hand: learned from every press, saved after each letter (not in Judge mode) [R3.3, R3.3a].
 const hand = createHand(data.hand);
 const saveHand = () => { data = setHand(data, hand.saved); store.save(data); };
@@ -77,6 +77,7 @@ function applySettings() {
   audio.setMusicVolume(s.musicVol);
   audio.setSfxVolume(s.sfxVol);
   audio.setMuted(s.mute);
+  night?.setMusic(s.music); // the "Music" switch turns the record off, not the room [R6.8]
   document.documentElement.classList.toggle('reduce-flashing', s.reduceFlashing);
   desk?.fx?.setReduce(reduceFlashing());
   desk?.gauge.showNumber(s.showLivesNumber);
@@ -101,7 +102,7 @@ const reader = createPressReader({
   onPressStart: () => {
     lastInputAt = now();
     audio.unlock();
-    tone = playTone(audio);
+    tone = playTone(audio, office ? { freq: KEY_TONE_HZ } : {}); // in the office, tuned to the waltz's Eb
     if (desk) setKeyDown(desk.stage, true);
     startMeter();
     game.dispatch({ type: 'INPUT', t: now() });
@@ -239,7 +240,7 @@ function animateArm(schedule, end) {
 // Plays one received letter with the sounder arm. Returns the schedule, or null with no sound.
 function playReceived(letter, speed = 1) {
   audio.unlock();
-  const h = playLetter(audio, letter, { speed });
+  const h = playLetter(audio, letter, office ? { speed, freq: KEY_TONE_HZ } : { speed });
   if (h) {
     recv.busyUntil = h.end;
     animateArm(h.schedule, h.end);
@@ -340,6 +341,7 @@ function playCurrent(delayMs = 0) {
     if (!letter) return;
     const h = playReceived(letter);
     const soundMs = h ? (h.end - audio.ctx.currentTime) * 1000 : 0;
+    heardAfter(soundMs);
     // No input for 15 s: play it once more, free [R4.5a].
     recv.idle = setTimeout(() => {
       if (!receiving() || recv.idleUsed) return;
@@ -348,6 +350,13 @@ function playCurrent(delayMs = 0) {
     }, soundMs + IDLE_REPLAY_MS);
     updateReplay();
   }, Math.max(delayMs, left));
+}
+
+// Typed letters count once the letter's signal has played; with no sound, at once [R4.2].
+function heardAfter(ms) {
+  const { msgIndex, pos } = st();
+  clearTimeout(recv.heardTimer);
+  recv.heardTimer = setTimeout(() => game.dispatch({ type: 'HEARD', msgIndex, index: pos }), Math.max(0, ms));
 }
 
 function updateReplay() {
@@ -578,7 +587,7 @@ function renderRun(s) {
 
 // ---- Night Shift sound bed and the horror director ---------------------------
 
-const night = createNightMusic(audio);
+const night = createNightSound(audio, { music: data.settings.music }); // the office's sound and the record [R6.1, R6.2]
 const dayMusic = createDayMusic(audio);
 const NIGHT_SCREENS = ['dayIntro', 'playing', 'messageDone', 'waiting', 'dayStats', 'gameOver'];
 const director = createHorrorDirector({
@@ -673,6 +682,7 @@ bus.on('MESSAGE_STARTED', ({ message }) => {
   if (th) queueThought(th);
   desk?.row.show(message.text, message.role, message);
   tapeWords = wordStarts(message.text);
+  if (office) playRustle(audio); // the new form slides across the desk
   office?.tape.gap();
   // A strange message looks wrong on the row and makes the night worse while it lasts [R6.3].
   desk?.row.setStrange(!!message.strange && st().mode !== 'day');
@@ -703,7 +713,11 @@ bus.on('LIFE_LOST', ({ lives }) => { desk?.gauge.set(lives); (office ? playTock 
 bus.on('LIFE_REFILLED', ({ lives }) => { desk?.gauge.set(lives); updateNight(); });
 bus.on('LIVES_SET', ({ lives, max }) => { if (desk && desk.gauge.state.max !== max) desk.gauge.setMax(max, lives); else desk?.gauge.set(lives); updateNight(); });
 // A finished form is stamped SENT or RECEIVED with the office's time [R3.7, R4.5b].
-bus.on('MESSAGE_DONE', () => { if (office) desk?.row.stamp?.(formatTime(office.minutes)); });
+bus.on('MESSAGE_DONE', () => {
+  if (!office) return;
+  desk?.row.stamp?.(st().clock?.time ?? formatTime(office.minutes));
+  playStamp(audio);
+});
 // ---- the game clock [R9.7] ---------------------------------------------------
 // Real time goes to the game in small steps while a day runs. It stops while the game is held:
 // Options open, or the tab hidden [R10.1b]. Judge speed runs it faster.
@@ -799,6 +813,7 @@ async function autoSolve(scope = 'message') {
       const after = st();
       if (after.screen !== 'playing' || after.pos !== s.pos || after.msgIndex !== s.msgIndex) break;
       lastInputAt = now();
+      game.dispatch({ type: 'HEARD', msgIndex: s.msgIndex, index: s.pos });
       game.dispatch({ type: 'INPUT', t: now() });
       game.dispatch({ type: 'LETTER', letter: l, t: now() });
     } while (scope === 'message');

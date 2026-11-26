@@ -5,7 +5,9 @@
 export const NIGHT_MINUTES = 480; // 22:00 to 06:00
 export const START_HOUR = 22;
 export const LAST_ARRIVAL = 360; // 04:00
-export const DAY_REAL_MINUTES = { 1: 5, 2: 6, 3: 7 }; // real minutes for the night at 1x [R9.7b]
+// Real minutes for the night at 1x [R9.7b]. Tuned in play: 5 to 7 minutes was too short to finish
+// five messages at a fair pace.
+export const DAY_REAL_MINUTES = { 1: 10, 2: 16, 3: 16 }; // receiving is slower, so Day 2 and 3 get more time
 export const IDLE_SPEED = 4; // nothing waiting on the desk [R9.7d]
 export const DONE_SPEED = 6; // all done, running on to 06:00
 export const LAST_STRETCH_S = 15; // the run to 06:00 after the last message never takes longer

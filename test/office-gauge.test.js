@@ -46,3 +46,12 @@ test('tock: plays through the engine as one voice', () => {
   playTock(engine);
   assert.equal(made, 1);
 });
+
+test('stamp and rustle: each plays as one voice of the engine', async () => {
+  const { playStamp, playRustle } = await import('../src/audio/voices.js');
+  let made = 0;
+  const engine = { voice: () => { made += 1; return null; } };
+  playStamp(engine);
+  playRustle(engine);
+  assert.equal(made, 2);
+});

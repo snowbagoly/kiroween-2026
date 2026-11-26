@@ -14,6 +14,7 @@ export function defaultData() {
       musicVol: 0.8,
       sfxVol: 0.8,
       mute: false,
+      music: true, // the record on the phonograph [R6.8]
       reduceFlashing: false,
       captions: false,
       showLivesNumber: false,
@@ -36,7 +37,7 @@ export function cleanData(raw) {
   const s = isObj(raw.settings) ? raw.settings : {};
   d.settings.musicVol = vol(s.musicVol, d.settings.musicVol);
   d.settings.sfxVol = vol(s.sfxVol, d.settings.sfxVol);
-  for (const k of ['mute', 'reduceFlashing', 'captions', 'showLivesNumber']) d.settings[k] = bool(s[k], d.settings[k]);
+  for (const k of ['mute', 'music', 'reduceFlashing', 'captions', 'showLivesNumber']) d.settings[k] = bool(s[k], d.settings[k]);
   if (TUTORIAL_CHOICES.includes(s.tutorial)) d.settings.tutorial = s.tutorial;
   const b = isObj(raw.best) ? raw.best : {};
   for (const m of BEST_MODES) d.best[m] = isObj(b[m]) ? b[m] : null;
@@ -45,7 +46,7 @@ export function cleanData(raw) {
   return d;
 }
 
-export const SETTING_KEYS = ['musicVol', 'sfxVol', 'mute', 'reduceFlashing', 'captions', 'showLivesNumber', 'tutorial'];
+export const SETTING_KEYS = ['musicVol', 'sfxVol', 'mute', 'music', 'reduceFlashing', 'captions', 'showLivesNumber', 'tutorial'];
 
 // Returns new data with one setting changed. Bad values fall back to the old value.
 export function setSetting(data, key, value) {

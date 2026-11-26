@@ -234,7 +234,7 @@ One localStorage key `nightshift.v1`. Old `deadair.v1` saves are not read.
 **Game clock** (`core/day-clock.js`, pure: it gets `tick(realMs)` calls and returns events) [R9.7]:
 
 ```
-day = { realMinutes: 5 | 6 | 7, arrivals: 5 times from 22:00 to 04:00 }
+day = { realMinutes: 10 | 16 | 16, arrivals: 5 times from 22:00 to 04:00 }
 base speed: 480 game minutes per realMinutes     (22:00 to 06:00 at 1x)
 speed: 1x while a message is in hand
        4x while nothing is waiting

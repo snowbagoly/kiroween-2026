@@ -9,7 +9,7 @@ Status: requirements.md drafted, not approved. design.md and tasks.md not starte
 - [ ] Write tasks.md and approve it
 - [ ] Build the game, one task at a time
 - [ ] Day Shift: draw the office by daylight (the Night Shift room is ported first; Day Shift keeps its old desk until then, see R7.2a). It brings the telegram form with its SENT/RECEIVED stamp and the paper tape to Day Shift; then drop the short "Message sent" card there too
-- [ ] Receiving: ignore typed letters until the current letter's signal has played once, so the player can't guess ahead from the word
+- [x] Receiving: ignore typed letters until the current letter's signal has played once, so the player can't guess ahead from the word
 - [ ] Package it as a Kiro Crew app (newly created in the Submission Period)
 - [ ] Check it runs on the device you show in the video (computer, and phone if you claim it)
 - [ ] Public URL to the working app. If judges need a login, add it in Devpost (the game needs none)
