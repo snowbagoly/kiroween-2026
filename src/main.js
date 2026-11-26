@@ -46,7 +46,7 @@ const saveFromGame = (d) => {
   data = { ...data, best: d.best, deadAirUnlocked: d.deadAirUnlocked, settings: { ...data.settings, tutorial: d.settings.tutorial } };
   store.save(data);
 };
-const game = createGame({ data, save: saveFromGame, seed: Date.now() >>> 0, bus, judge, timed: true });
+const game = createGame({ data, save: saveFromGame, seed: Date.now() >>> 0, bus, judge, timed: true, mustHear: true });
 // The player's hand: learned from every press, saved after each letter (not in Judge mode) [R3.3, R3.3a].
 const hand = createHand(data.hand);
 const saveHand = () => { data = setHand(data, hand.saved); store.save(data); };
@@ -341,6 +341,7 @@ function playCurrent(delayMs = 0) {
     if (!letter) return;
     const h = playReceived(letter);
     const soundMs = h ? (h.end - audio.ctx.currentTime) * 1000 : 0;
+    heardAfter(soundMs);
     // No input for 15 s: play it once more, free [R4.5a].
     recv.idle = setTimeout(() => {
       if (!receiving() || recv.idleUsed) return;
@@ -349,6 +350,13 @@ function playCurrent(delayMs = 0) {
     }, soundMs + IDLE_REPLAY_MS);
     updateReplay();
   }, Math.max(delayMs, left));
+}
+
+// Typed letters count once the letter's signal has played; with no sound, at once [R4.2].
+function heardAfter(ms) {
+  const { msgIndex, pos } = st();
+  clearTimeout(recv.heardTimer);
+  recv.heardTimer = setTimeout(() => game.dispatch({ type: 'HEARD', msgIndex, index: pos }), Math.max(0, ms));
 }
 
 function updateReplay() {
@@ -805,6 +813,7 @@ async function autoSolve(scope = 'message') {
       const after = st();
       if (after.screen !== 'playing' || after.pos !== s.pos || after.msgIndex !== s.msgIndex) break;
       lastInputAt = now();
+      game.dispatch({ type: 'HEARD', msgIndex: s.msgIndex, index: s.pos });
       game.dispatch({ type: 'INPUT', t: now() });
       game.dispatch({ type: 'LETTER', letter: l, t: now() });
     } while (scope === 'message');

@@ -42,7 +42,9 @@ export function runTotals(days, livesLeft = 0) {
 // `seed` makes the messages repeatable. `bus` gets every output event.
 // `timed`: the game clock runs (TICK events), telegrams arrive at set times and the day ends at 06:00
 // [R9.7]. The game always plays timed; without it the messages simply follow each other.
-export function createGame({ data = defaultData(), save = () => {}, seed = 1, bus = null, judge = false, timed = false } = {}) {
+// `mustHear`: a received letter counts only once its signal has played (a HEARD event), so the player
+// cannot type ahead by guessing the word.
+export function createGame({ data = defaultData(), save = () => {}, seed = 1, bus = null, judge = false, timed = false, mustHear = false } = {}) {
   const rng = createRng(seed);
   let saved = data;
   const s = {
@@ -104,6 +106,8 @@ export function createGame({ data = defaultData(), save = () => {}, seed = 1, bu
   function letter(e) {
     const m = message();
     if (!m || typeof e.letter !== 'string') return;
+    // Not heard yet: the letter is ignored, and costs nothing.
+    if (mustHear && m.role === 'receive' && s.heard !== s.pos) { emit('LETTER_IGNORED', { index: s.pos }); return; }
     const t = Number(e.t) || 0;
     const expected = m.letters[s.pos];
     if (e.letter.toUpperCase() === expected) {
@@ -140,6 +144,7 @@ export function createGame({ data = defaultData(), save = () => {}, seed = 1, bu
 
   function nextMessage() {
     s.msgIndex += 1;
+    s.heard = -1;
     s.pos = 0;
     s.msgMistakes = 0;
     if (s.clock) {
@@ -198,7 +203,8 @@ export function createGame({ data = defaultData(), save = () => {}, seed = 1, bu
     emit('CLOCK', { minutes: c.minutes, time: clockTime(c.minutes), progress: c.progress, waiting });
     const lost = s.drain.tick(e.ms, {
       on: drainsLives(s.mode) && c.started,
-      waiting: s.screen === 'playing' || (s.screen === 'waiting' && waiting > 0),
+      // Listening takes the time it takes: idling only counts on messages to send [R9.7f].
+      waiting: s.screen === 'playing' && message()?.role !== 'receive',
       minutes: c.minutes,
       allDone: s.done >= s.messages.length,
     });
@@ -229,6 +235,7 @@ export function createGame({ data = defaultData(), save = () => {}, seed = 1, bu
   }
 
   function startMessage() {
+    s.heard = -1;
     s.pos = 0;
     s.msgMistakes = 0;
     emit('MESSAGE_STARTED', { index: s.msgIndex, message: message() });
@@ -358,6 +365,8 @@ export function createGame({ data = defaultData(), save = () => {}, seed = 1, bu
       },
       LETTER: letter,
       TICK: tick,
+      // The current received letter has been played once [R4.2].
+      HEARD(e) { if (e.msgIndex === s.msgIndex && e.index === s.pos) s.heard = s.pos; },
     },
     messageDone: { NEXT_MESSAGE: nextMessage, TICK: tick },
     waiting: { TICK: tick },

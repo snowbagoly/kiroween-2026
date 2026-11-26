@@ -1,0 +1,72 @@
+- [title] You see the video's name, its length limit and its two prizes at a glance.
+  - what_to_say: This is the storyboard for the Dead Air -- 1873 Kiroween video. It is planned to finish at 2:50, leaving ten seconds before the 3:00 limit.
+  - evidence: Category Resurrection, bonus Best Kiro Crew App, hashtag #KiroweenHackathon26 (video-script.md)
+  - what_to_show: Dark title slide in the game's mood: candle flame, telegraph key line art. Big title "DEAD AIR -- 1873", small line "Video storyboard", prize tags at the bottom. No stock photos.
+  - notes: Add a small note that TODO scenes carry a badge, so the reader knows what it means from the first slide.
+- [timeline] You see all six parts with their times, and which lines to cut first if it runs long.
+  - what_to_say: The video has six parts. The Kiro section gets the most time, and there is a cut list if the recording runs long.
+  - evidence: Hook 0:00-0:12, Why Resurrection 0:12-0:37, What it is 0:37-1:05, How we used Kiro 1:05-2:05, Where it's going 2:05-2:25, Close and end card 2:25-2:50. About 340 spoken words. Cut order: the hook line, then the widget line, then the Issue Radar, Design Critique and PPTX Maker line. (video-script.md)
+  - what_to_show: A horizontal time bar from 0:00 to 3:00 with six blocks sized by length. A marker at 2:50 and a hard line at 3:00. The Kiro block is the widest. Small scissor marks 1, 2, 3 on the cut-order scenes.
+  - notes: Part 4 is the only one with TODO scenes, so mark its block with a TODO badge.
+- [hook] The video opens in the dark with rain, a click and a candle, so the mood is set before anyone speaks.
+  - what_to_say: Voice, 0:00-0:12: "It's 1873, and you're the night telegraph operator. The line's been quiet for hours. Then it starts to answer you."
+  - evidence: Script part 1, Hook, 0:00-0:12 (video-script.md)
+  - what_to_show: Black screen, rain, one telegraph click, then a candle flame appears. At the end, the title card DEAD AIR -- 1873. Storyboard frame: dark panel with a flame sketch, the voice line under it, the time range top right.
+  - notes: Under the 3:00 limit, the hook is the first thing to trim, by one line.
+- [resurrection] The judges see why this fits Resurrection: an old craft made playable again, in the browser, on a phone, with live sound and captions.
+  - what_to_say: Voice, 0:12-0:37: "Morse was once how messages travelled quickly over long distances, but now most of us only know it from old films. We wanted to bring it back as a game that runs in your browser, even on your phone, with live-made sound and captions for players who need them."
+  - evidence: The video script says the game runs in the browser, even on a phone, uses live-made sound with no audio files, and has captions (video-script.md). The Smithsonian records operators reading Morse by ear and explains its nineteenth-century use for wired messages. https://historyexplorer.si.edu/resource/morse-telegraph-register
+  - what_to_show: Your own drawing of a telegraph turns into the game on a phone. The frame shows the drawing on the left, an arrow, and a phone on the right. Three small tags sit under it: "browser", "live sound", "captions".
+  - notes: Phone support and live sound are plans in the script. Check them before recording.
+- [what-play] The viewer sees how the game works: tap Space for dots and dashes, and decode by ear later.
+  - what_to_say: Voice, 0:37-0:51: "This is Dead Air, a little horror game about Morse code. You relay messages from one end of the line to the other. It's a fairly ordinary job, at least until the messages start getting strange."
+  - evidence: Script part 2, What it is (video-script.md). Wording by the user.
+  - what_to_show: Gameplay clip: tapping Space, the telegraph key moving, letters lighting up. The footage shows how to play, so the voice does not explain it. Storyboard frame: gameplay screenshot placeholder, the voice line under it.
+  - notes: The line takes about 12 s of the 28 s slot. Let the footage play on its own for a few seconds, or move time to the next scene. Footage must be the game itself, on its real device.
+- [what-candle] The viewer sees that five lives are a candle and that Cozy mode has no scares.
+  - what_to_say: Voice, 0:51-1:05: "You've got five lives, which show up as a candle that burns down a little every time you make a mistake. There's also a Cozy mode, if you'd like to play without the scares."
+  - evidence: Script part 2, What it is (video-script.md). Spec facts: 5 lives, Horror and Cozy modes (video-script.md, Notes)
+  - what_to_show: The candle burning down after a mistake, then "IT IS IN THE WIRES" with a flicker. Then a quick cut to Cozy mode. Storyboard frame: candle at full height next to a shorter candle, the flicker text, a small Cozy mode thumbnail.
+  - notes: The flicker needs care, since the game has a Reduce flashing setting. Keep the flicker short in the video too.
+- [kiro-spec] The judges see that the work started from a spec, before any code.
+  - what_to_say: Voice, 1:05-2:05: "With Kiro, we started by turning a rough idea into a spec we could actually work from before we wrote any code. It gave us a really useful set of tools for working through the game, keeping track of the details, and changing things as the idea got clearer."
+  - evidence: The .kiro folder and requirements.md. The script says the team started with a spec before code (video-script.md). Wording chosen by the user.
+  - what_to_show: A screen recording opens the project's .kiro folder, then requirements.md. The storyboard frame shows the folder, then the file.
+  - notes: Do not show private files, keys, or browser tabs.
+- [kiro-requirements] The judges see how the spec changed in chat as the game took shape.
+  - what_to_say: Voice, 1:05-2:05: "We went back and forth with Kiro in chat while working on the game. That's where the candle lives came from, and where we worked out the rules for Cozy mode. Kiro also suggested a Reduce flashing setting, so players can turn down the flicker if they need to. Once the requirements were settled, Kiro turned them into a design and task list, so we could build the game one piece at a time."
+  - evidence: The video script says the requirements changed in chat, and names the candle lives and Cozy-mode rules as results (video-script.md). TODO: real design.md and tasks.md, plus completed tasks (video-script.md). The requirements count was removed at the user's request.
+  - what_to_show: requirements.md scrolls. Pause on the candle-lives, Cozy-mode, and Reduce flashing parts. Then show design.md and tasks.md with one completed task. Keep a "TODO - only after these files exist" badge visible for this final shot.
+  - notes: Only show real requirements after approval. Do not say the final sentence or show the design and task files until they exist.
+- [kiro-steering] The judges see that the plan lives in a steering file, so Kiro always knows what's next.
+  - what_to_say: Voice, 1:05-2:05: "We used Kiro to map the project out as a Gantt chart, which gave us a clearer view of the deadline and the parts that could run side by side instead of waiting for each other. We then kept that plan in a steering file, so Kiro had the same view of the work that we did."
+  - evidence: steering/schedule.md and GANTT.md show the deadline and overlapping work (video-script.md)
+  - what_to_show: Show steering/schedule.md, then GANTT.md. Highlight the deadline and overlapping bars.
+  - notes: Use the real plan. Hide private notes.
+- [kiro-widgets] The judges see that sounds and screens were tried as small live widgets first.
+  - what_to_say: Voice, 1:05-2:05: "Kiro Crew became a kind of sketchbook, where we made small live widgets for the sounds and screens before bringing them into the game. It gave us a way to hear and see each idea properly, rather than trying to judge it from a description."
+  - evidence: Telegraph sound, steam train and ambient-drone widget prototypes (video-script.md)
+  - what_to_show: Short clips of the telegraph sound, steam train and ambient-drone widgets.
+  - notes: This is the second item to cut if the video runs long.
+- [kiro-todo-apps] TODO, only if true: the judges see Issue Radar, Design Critique and PPTX Maker used for real.
+  - what_to_say: TODO - only if true. Voice: "Three more Kiro Crew apps came in handy: Issue Radar for following our GitHub issues, Design Critique for looking over the screens, and PPTX Maker for turning this script into a storyboard."
+  - evidence: Show a connected Issue Radar repo, a real Design Critique report with pins, and this storyboard deck (video-script.md)
+  - what_to_show: Issue Radar, then the critique report, then the storyboard deck. Keep the TODO badge visible.
+  - notes: Third item to cut if the video runs long. Do not record this before all three uses are real.
+- [going] The judges see the game as an installable Kiro Crew app on the real device, with open source code.
+  - what_to_say: Voice, 2:05-2:25: "We built Dead Air as a Kiro Crew app, so you can install it and play it for yourself. The code is open source on GitHub, and you can look through the whole project."
+  - evidence: The script says to use "planned" unless the app is really packaged, and only call it a Kiro Crew app when that is true (video-script.md)
+  - what_to_show: Kiro Crew dashboard and the app running on its real device.
+  - notes: Use this voice line only after the app is packaged and the GitHub repo is public. Show the installed app on its real device, then the public GitHub page.
+- [close] The video ends with the candle going out and one last line.
+  - what_to_say: Voice, 2:25-2:45: "Dead Air, 1873. Keep your candle lit."
+  - evidence: Script part 6 (video-script.md)
+  - what_to_show: The candle flame goes out. One telegraph click follows.
+- [endcard] The end card shows the category, the bonus prize and the hashtag for 5 seconds.
+  - what_to_say: No voice. Hold the end card for 5 seconds.
+  - evidence: "Category: Resurrection. Bonus: Best Kiro Crew App. #KiroweenHackathon26" (video-script.md)
+  - what_to_show: A clean dark end card with the category, bonus and hashtag.
+- [rules] You have the contest rules, the honesty notes and the recording steps in one place before you record.
+  - what_to_say: This is a private recording checklist, not part of the video. Check the time, truth of every claim, real-device footage, public YouTube upload, and the Devpost link.
+  - evidence: Contest rules, honesty notes and recording steps in video-script.md.
+  - what_to_show: A plain checklist with done boxes.

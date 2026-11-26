@@ -1,0 +1,38 @@
+# Activity log: Dead Air storyboard deck
+
+2026-11-21
+- Read /Users/zsofiaborbely/private/halloween/.kiro/video-script.md.
+- Created the deck folder: /Users/zsofiaborbely/.config/sdpm/decks/20261121-1859-dead-air-storyboard
+- Wrote specs/brief.md (goal, audience, format, tone, constraints, materials, source material).
+- Tried to init a second deck with a path in the halloween folder. It made a stray empty folder under /Users/zsofiaborbely/.config/sdpm/decks/ (name starts with 20261121-1900-). Safe to delete.
+- My tools cannot write outside the deck folder. Copy this log and the finished files into /Users/zsofiaborbely/private/halloween/.kiro/ by hand.
+- Next: user approves brief, then outline, then art direction, then slides.
+- User allowed rewording of text for a more natural, less AI-sounding voice. Brief updated. Still waiting for explicit approval of the brief.
+- Brief approved by user. Wrote specs/outline.md (17 slides, in video order, TODO scenes marked).
+- Outline approved. Detailing slides one at a time. Slide 1 (title) done, waiting for user.
+- Slides 1-4 detailed. Slide 4 voice line rewritten by the user (ChatGPT text, with 'about' for 'centred around'). Rule from the user: no explaining how to play in the voice. Voice lines must sound natural, not AI-written.
+- Hook voice line changed to drop 'telegraph operator', which now appears only in slide 4 (user's ChatGPT wording kept as is). Lesson: fix overlaps in my own lines, keep the user's wording.
+- Reverted: hook (slide 3) is back to the original script line. Slide 4 dropped its operator sentence instead, so 'telegraph operator' is said once, in the hook. Rest of the user's slide 4 wording kept.
+- Slide 4 voice line set to the user's wording: job description kept, only the repeated 'telegraph operator' removed. Lesson: trim the repeated words, not the whole sentence.
+- Slide 5 (what-candle) detailed. Dropped the 'messages get weirder' sentence, which repeated slide 4.
+- Slide 5 voice line rewritten (version A, chosen by user). Style note from user: flowing sentences, not short punchy ones, and not too casual ('your thing', 'something').
+- Slide 6 (resurrection) detailed and approved in chat. Voice text updated to factual wording after a Smithsonian source check.
+- Slide 7 (kiro-spec) detailed and approved. User chose the warmer first Kiro-spec wording over the more sales-like version.
+- Slide 8 revised: removed the requirements number and the repeated rough-idea claim. It now focuses on changing the spec in chat, leading to candle lives and Cozy-mode rules.
+- Slide 8 voice line set to version A, chosen by user.
+- User asked to move ahead with natural-sounding what_to_say text. Reworked all existing and remaining outline entries. Slide 9-17 details added. TODO slides remain marked and claims remain conditional.
+- User changed the opening order: Resurrection now comes before gameplay. New order: hook 0:00-0:12, resurrection 0:12-0:37, gameplay 0:37-0:51, candle and Cozy 0:51-1:05.
+- Slide 9 voice line set to the user's approved Gantt wording. It explains the Gantt chart first and the steering file second.
+- Slide 10 voice line set to the first rewritten version, chosen by the user.
+- Slide 11 voice line revised by user feedback: removed repeated 'We also', named all three as Kiro Crew apps, and removed the vague word 'here'.
+- User asked to remove slide 12 (kiro-todo-hooks). Removed it from the storyboard outline. Source video-script.md is unchanged because it is outside the deck folder.
+- User approved moving the design-and-tasks scene into slide 8 (kiro-requirements). Removed the standalone kiro-todo-tasks slide. The new final sentence and footage remain TODO until design.md, tasks.md and completed tasks exist.
+- User added the Kiro-recommended Reduce flashing setting to slide 8. It is shown with the candle and Cozy-mode requirements, and stays TODO until it works in the game.
+- Slide 13 (going) voice line set to the user's approved completed-project wording. It remains conditional on a packaged app and public GitHub repo.
+- Final text review: fixed two outline consistency errors. Timeline now reflects the reordered opening, and slide 5 no longer claims it says messages get weirder. No user-approved voice lines changed.
+- User approved all three final text-polish changes: 'spec we could actually work from', widget scene without 'We also', and clearer GitHub closing line.
+- User disliked all library styles. Created a custom no-style art direction: a quiet Victorian field notebook in charcoal, old paper, brass, and muted ember red. Set deck.json to blank-dark with Georgia titles, Calibri body text, and #E8DDC5 default text. Waiting for approval.
+- Created specs/palette-preview.html so the user can see the custom palette as colour swatches instead of hex values.
+- User approved the custom Victorian field-notebook art direction and colour palette. Phase 1 complete. Starting slide composition with three design-consistent groups.
+- Three composer groups completed all 15 storyboard slides. PPTX generation succeeded. Preview and text measurement could not run because LibreOffice/soffice is not installed. Starting cross-slide consistency review.
+- Consistency review completed. Standardized TODO badges, time-range punctuation, title spelling and note typography. output.pptx generated. Visual preview and text-overflow checks remain blocked because LibreOffice/soffice is not installed; no per-slide visual fixes ran without a preview.
