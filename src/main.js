@@ -19,6 +19,8 @@ import { createPressReader, attachKeyboard } from './input/keyboard.js';
 import { mountScene, setKeyDown, setSounderDown } from './ui/scene.js';
 import { mountMorseChart } from './ui/morse-chart.js';
 import { mountGalvanometer } from './ui/galvanometer.js';
+import { mountOffice, usesOffice } from './office/room.js';
+import { mountForm, mountTape, wordStarts, formatTime } from './office/forms.js';
 import { mountTextRow } from './ui/text-row.js';
 import { mountStart, showCard, hudLabel } from './ui/screens.js';
 import { mountOptions } from './ui/options.js';
@@ -48,6 +50,8 @@ for (const ev of ['pointerdown', 'keydown']) window.addEventListener(ev, checkAu
 app.innerHTML = '<div class="view"></div>';
 const view = app.querySelector('.view');
 let desk = null; // { mode, stage, gauge, row, hud, layer } while a run is on screen
+let office = null; // the office's parts, in Night Shift and Dead Air (office/room.js)
+let tapeWords = new Set(); // letter indexes that start a new word, for gaps on the tape
 let options = null;
 let deadAirBefore = data.deadAirUnlocked;
 let card = { role: 'send', stats: null, canRestart: true, totals: null, best: null, unlocked: false };
@@ -94,9 +98,13 @@ const reader = createPressReader({
     if (desk) setKeyDown(desk.stage, false);
     stopMeter();
   },
-  onSymbol: ({ symbol }) => { if (inTutorial() && tutor) tutorResult(tutor.symbol(symbol)); },
+  onSymbol: ({ symbol }) => {
+    office?.tape.symbol(symbol);
+    if (inTutorial() && tutor) tutorResult(tutor.symbol(symbol));
+  },
   // A pattern that is no letter counts as a wrong letter.
   onLetter: (r) => {
+    office?.tape.letter(r.letter);
     if (inTutorial() && tutor) { tutorResult(tutor.letter(r.letter)); return; }
     if (canPlay() && role() === 'send') game.dispatch({ type: 'LETTER', letter: r.letter ?? '?', t: now() });
   },
@@ -117,6 +125,16 @@ window.addEventListener('keydown', (e) => {
   } else if (kind === 'type' && e.key === ' ') {
     e.preventDefault();
   }
+});
+
+// Backspace tears off the paper tape, and drops a half-keyed letter with it [R3.4a].
+// Ignored while a received letter is awaited.
+window.addEventListener('keydown', (e) => {
+  if (e.key !== 'Backspace' || !office || options?.isOpen || role() === 'receive') return;
+  if (!canPlay() && !inTutorial()) return;
+  e.preventDefault();
+  reader.reset();
+  office.tape.tear();
 });
 
 // Keyboard safety net for cards: if nothing has focus while a card is up (focus can drop to the
@@ -322,6 +340,8 @@ function renderStart() {
   recv.stop();
   clearTimeout(thoughtTimer);
   desk = null;
+  office?.unmount();
+  office = null;
   reader.reset();
   document.documentElement.dataset.mode = 'night';
   mountStart(view, {
@@ -334,16 +354,31 @@ function renderStart() {
 
 function buildDesk(s) {
   document.documentElement.dataset.mode = s.mode === 'day' ? 'day' : 'night';
+  office?.unmount();
+  office = null;
   view.innerHTML = '<div class="play"><div class="stage"></div></div><div class="card-layer" hidden></div>';
   const stage = view.querySelector('.stage');
-  mountScene(stage, s.mode === 'day' ? '?mode=day' : ''); // replaces the stage's content
-  mountMorseChart(view.querySelector('.play'), s.mode);
-  const row = mountTextRow(stage);
+  const lives = s.lives ?? s.maxLives;
+  let row, gauge;
   const hud = document.createElement('p');
   hud.className = 'hud-label';
-  stage.prepend(hud);
-  const gauge = mountGalvanometer(stage, { max: s.maxLives, lives: s.lives ?? s.maxLives });
-  stage.querySelector('.text-row-box').insertAdjacentHTML('afterend', '<p class="replay-row" hidden><button type="button" class="replay-btn">Replay</button></p>');
+  if (usesOffice(s.mode)) {
+    // Night Shift and Dead Air are played in the office [R11.4]; Day Shift keeps its desk [R7.2a].
+    office = mountOffice(stage, { max: s.maxLives, lives, day: s.day });
+    mountMorseChart(office.codebookSpot, s.mode);
+    // The message is a telegram form on the desk, and each press goes onto the paper tape [R3.1, R3.4a].
+    office.tape = mountTape(office.work);
+    row = mountForm(office.formSpot);
+    office.hud.append(hud);
+    gauge = office.gauge;
+  } else {
+    mountScene(stage, '?mode=day'); // replaces the stage's content
+    mountMorseChart(view.querySelector('.play'), s.mode);
+    row = mountTextRow(stage);
+    stage.prepend(hud);
+    gauge = mountGalvanometer(stage, { max: s.maxLives, lives });
+  }
+  (office ? office.work : stage.querySelector('.text-row-box')).insertAdjacentHTML('afterend', '<p class="replay-row" hidden><button type="button" class="replay-btn">Replay</button></p>');
   const replay = stage.querySelector('.replay-btn');
   replay.addEventListener('click', () => { onReplay(); replay.blur(); });
   recv.counter = createReplayCounter(s.mode);
@@ -359,6 +394,7 @@ function buildDesk(s) {
 
 function renderRun(s) {
   if (!desk || desk.mode !== s.mode) buildDesk(s);
+  office?.setDay(s.day);
   desk.hud.textContent = hudLabel(s.mode, s.day);
   if (judge) desk.hud.insertAdjacentHTML('afterbegin', '<span class="judge-badge">JUDGE</span> '); // [R13.2]
   if (s.screen === 'tutorial') {
@@ -475,7 +511,9 @@ bus.on('MESSAGE_STARTED', ({ message }) => {
   card.role = message.role;
   const th = thoughts.pick(message);
   if (th) queueThought(th);
-  desk?.row.show(message.text, message.role);
+  desk?.row.show(message.text, message.role, message);
+  tapeWords = wordStarts(message.text);
+  office?.tape.gap();
   // A strange message looks wrong on the row and makes the night worse while it lasts [R6.3].
   desk?.row.setStrange(!!message.strange && st().mode !== 'day');
   director.message(message);
@@ -488,12 +526,14 @@ bus.on('MESSAGE_STARTED', ({ message }) => {
 });
 bus.on('LETTER_OK', ({ next }) => {
   desk?.row.setPos(next);
+  if (role() === 'send' && office && tapeWords.has(next)) office.tape.gap();
   if (role() !== 'receive') return;
   recv.idleUsed = false;
   if (next < (st().message?.letters.length ?? 0)) playCurrent(NEXT_LETTER_PAUSE_MS); // R4.3
 });
 bus.on('LETTER_WRONG', () => {
   desk?.row.wrong();
+  if (role() === 'send') office?.tape.wrong();
   // A mistake in Night Shift: static and flicker, or a slow fade with "Reduce flashing" [R6.4, R6.6].
   if (desk?.fx && desk.fx.mistake()) { playStatic(audio); captions.show('static'); }
   if (role() === 'receive') playCurrent(NEXT_LETTER_PAUSE_MS); // same letter again, free [R4.4]
@@ -501,6 +541,8 @@ bus.on('LETTER_WRONG', () => {
 bus.on('LIFE_LOST', ({ lives }) => { desk?.gauge.set(lives); playTick(audio); updateNight(); });
 bus.on('LIFE_REFILLED', ({ lives }) => { desk?.gauge.set(lives); updateNight(); });
 bus.on('LIVES_SET', ({ lives, max }) => { if (desk && desk.gauge.state.max !== max) desk.gauge.setMax(max, lives); else desk?.gauge.set(lives); updateNight(); });
+// A finished form is stamped SENT or RECEIVED with the office's time [R3.7, R4.5b].
+bus.on('MESSAGE_DONE', () => { if (office) desk?.row.stamp?.(formatTime(office.minutes)); });
 bus.on('DAY_ENDED', ({ stats }) => { card.stats = stats; });
 bus.on('GAME_OVER', ({ canRestart }) => { card.canRestart = canRestart; });
 bus.on('RUN_FINISHED', ({ totals, best, deadAirUnlocked }) => {
