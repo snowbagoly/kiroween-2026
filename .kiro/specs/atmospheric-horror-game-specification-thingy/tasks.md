@@ -165,8 +165,8 @@ Phase 7 (T32 to T42) builds the 1903 office, story and endings from design secti
   Done when: the story runs about 60 to 90 seconds and leads into Day 1; screenshots of each slide. [R17]
 
 - [ ] **T41. Messages and thoughts for 1903, and the name**
-  Needs: T7, T21. Rewrite the pool for 1903 with threads and the Vane telegram as Day 1's last in Night Shift and Dead Air; set the day dates and the calendar. Check every thought is true for 1903 and uses "they". Rename the game to "Night Shift" in the title, README, Judge card and storage key (`nightshift.v1`).
-  Done when: message tests pass for 1000 seeds; no "Dead Air -- 1873" or "1873" is left outside the hard mode's name. [R6.3a, R9.8, R12.4, R12.5, design 6, 17]
+  Needs: T7, T21. Rewrite the pool for 1903 with threads and the Vane telegram as Day 1's last in Night Shift and Dead Air; give every message its To and From, written on the form (design 6); set the day dates and the calendar. Check every thought is true for 1903 and uses "they". Rename the game to "Night Shift" in the title, README, Judge card and storage key (`nightshift.v1`).
+  Done when: message tests pass for 1000 seeds; every message has a To and a From; no "Dead Air -- 1873" or "1873" is left outside the hard mode's name. [R6.3a, R9.8, R12.4, R12.5, design 6, 17]
 
 - [ ] **T42. Judge additions and screenshot script**
   Needs: T24, T38, T40. Add "Dawn" to Jump to day, "Play the story", one button per omen and the last warning; infinite lives covers idling and the late drain; the speed switch speeds the clock. Add `tools/shots.mjs` (always `--mute-audio`).
