@@ -8,6 +8,8 @@ Status: requirements.md drafted, not approved. design.md and tasks.md not starte
 - [ ] Write design.md and approve it
 - [ ] Write tasks.md and approve it
 - [ ] Build the game, one task at a time
+- [ ] Day Shift: draw the office by daylight (the Night Shift room is ported first; Day Shift keeps its old desk until then, see R7.2a)
+- [ ] Receiving: ignore typed letters until the current letter's signal has played once, so the player can't guess ahead from the word
 - [ ] Package it as a Kiro Crew app (newly created in the Submission Period)
 - [ ] Check it runs on the device you show in the video (computer, and phone if you claim it)
 - [ ] Public URL to the working app. If judges need a login, add it in Devpost (the game needs none)
@@ -26,6 +28,7 @@ Answer each point. If you did not use it, skip it. Do not invent.
 - [ ] Which Kiro tools: IDE, CLI, Web, Crew. How they differed
 - [ ] Issue Radar (Kiro Crew app): enable it in Apps, connect the GitHub repo (its pipeline view works with GitHub only), and really use it to track issues. Write down what it did for you
 - [ ] Design Critique (Kiro Crew app): enable it in Apps, then give it screenshots of the game (start screen, send, receive, game over, Cozy). Keep the report and note what you changed because of it
+- [ ] PPTX Maker (Kiro Crew app, already enabled): give it `video-script.md` and make a storyboard deck, one slide per scene. Keep the deck in the repo (for example `docs/storyboard.pptx`). Check each slide against the script and the 3-minute limit
 - [ ] Custom agents: any? Where? What changed?
 - [ ] Hooks: what did they automate? (add at least one real hook in `.kiro/hooks`)
 - [ ] Spec-driven work: how the spec was built, and how it compares to vibe coding
@@ -41,8 +44,7 @@ Answer each point. If you did not use it, skip it. Do not invent.
 - [ ] Say how the project fits Resurrection (Morse and telegraph are dead tech, brought back with today's tools)
 
 ## 5. Video (under 3 minutes)
-- [ ] Write script.
-- [ ] Record it.
+- [ ] Record it. Script is `video-script.md`
 - [ ] Show the app working on the real device
 - [ ] No copyrighted music, no third-party logos. Use the game's own sound
 - [ ] Upload to YouTube, set to Public

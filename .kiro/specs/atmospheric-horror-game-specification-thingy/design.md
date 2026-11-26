@@ -1,11 +1,11 @@
-# Design: Dead Air -- 1873 (Telegraph Operator Game)
+# Design: Night Shift -- 1903 (Telegraph Operator Game)
 
-This document explains how the requirements in `requirements.md` are built. Requirement numbers (R1 to R16) are written in brackets.
+This document explains how the requirements in `requirements.md` are built. Requirement numbers (R1 to R17) are written in brackets.
 
 ## 1. Overview
 
-- One browser page. Vanilla JavaScript (ES modules), SVG, CSS, and the Web Audio API. No libraries, no external files [R11]. The only package in the project is the dev-only test library `fast-check`.
-- Source lives in `src/`. A small Node script, `build.mjs`, with no packages, copies everything into one file, `dist/index.html`. That file is what gets published [R11.1, R14.1].
+- One browser page. Vanilla JavaScript (ES modules), SVG, CSS, and the Web Audio API. No libraries, no files from other sites [R11]. The only package in the project is the dev-only test library `fast-check`.
+- Source lives in `src/`. A small Node script, `build.mjs`, with no packages, copies everything into one file, `dist/index.html`. That file is what gets published [R11.1, R14.1]. The three fonts in `fonts/` are inlined into it as base64 `@font-face` rules [R11.2].
 - All game rules live in plain JavaScript with no browser calls. The browser parts (keys, SVG, audio) sit around it. This lets us test the rules with `node --test` and no browser.
 - Time and random numbers are passed in (a `clock` and a seeded `rng`). Tests and Judge mode can then control them.
 
@@ -13,15 +13,23 @@ This document explains how the requirements in `requirements.md` are built. Requ
 
 ```
 index.html              page shell, loaded by dev server and inlined by the build
-build.mjs               inlines src/ into dist/index.html
+build.mjs               inlines src/ and fonts/ into dist/index.html
+fonts/                  Special Elite, IM Fell English SC, Caveat (.woff2), fonts.css, licences  [R11.2]
 src/
   main.js               boots the app, wires everything
   core/                 pure rules, no DOM, no audio
-    morse.js            letter table, press and gap classifier, decoder
-    messages.js         message data and day builder
+    util.js             clamp and other small shared helpers
+    morse.js            letter table, decoder
+    hand.js             learns the player's hand: threshold, letter gap, wpm     [R3.3]
+    send.js             sending flow (uses hand.js)
+    receive.js          receiving flow
+    day-clock.js        game clock, arrivals, spike, speed-ups, dawn             [R9.7]
+    idle.js             lives lost while idling                                  [R9.7f]
+    messages.js         message data, threads and day builder
     lives.js            lives, streak, refill
     stats.js            counters, wpm, rank
     game.js             state machine (screens and day flow)
+    tutorial.js         instruction sheets
     settings.js         settings and saved data
     rng.js              seeded random numbers
   input/
@@ -30,25 +38,44 @@ src/
   audio/
     engine.js           AudioContext, buses, compressor, mute, volume
     voices.js           telegraph tone, sounder, tick, knock, thunder, crow, scream, rain, static
-    music-night.js      drone, hoo tones, heartbeat, tension
+    office-sound.js     room tone, wind, wires, the line spitting, the snap, bells, robin
+    phonograph.js       period record sound: needle, warp, crackle, reverb, sticking
+    piano.js            plain piano for the story's nocturne
+    scores.js           the waltz and the nocturne as note data
+    story-sound.js      each slide's sound picture
     music-day.js        soft music and birdsong
     sequencer.js        plays a letter as tones on the audio clock
     captions.js         sound name to caption text
   director/
-    horror.js           intensity and random effect scheduling
+    horror.js           intensity and random one-shot scheduling
+    dread.js            unease that builds through the night                      [R6.7]
+    faults.js           what a mistake does, by lives left; omens; last warning   [R6.4]
     thoughts.js         character thoughts and fact picking
+  office/               the Night Shift room                                      [R6, R11.4]
+    drawings.js         calendar, clock, window, lamp, galvanometer, key, figure (drawn once)
+    scenery.js          grass, reeds, trees, raindrops grown from a seed
+    room.js             builds the room, fitRoom(), room-hidden
+    forms.js            telegram form, spike, SENT/RECEIVED stamp, paper tape, codebook card
+    galvanometer.js     springy needle driven by lives
+    light.js            lamp light, stutter, dim-around-the-needle, dark corners, dawn light
+  story/                the magic-lantern show                                    [R17]
+    intro.js            slide player, letter writer, Space / Esc
+    letter.js           the letter's lines per slide
+    slides/             hall.js, room.js, advert.js, train.js, station.js, office.js
   ui/
-    scene.js            desk SVG: key, sounder, paper, galvanometer
-    galvanometer.js     dial and needle
-    morse-chart.js      left side chart
-    screens.js          start, dialog, day intro, stats, game over, closing
-    options.js          Options menu
-    text-row.js         target text and blanks row
-    effects-fx.js       flicker, vignette, static overlay
+    scene.js            Day Shift desk SVG                                        [R7.2a]
+    galvanometer.js     Day Shift dial
+    morse-chart.js      Day Shift chart
+    text-row.js         Day Shift target text and blanks row
+    screens.js          start card, story offer, dialog, title card, notices
+    endings.js          game over sequence and dawn                               [R5.5, R9.9]
+    options.js          Options menu and "Line Held"
+    effects-fx.js       one-shot overlays (static)
+  css/                  base, office, forms, endings, story, menu (colours as variables)
   judge/
     judge.js            Judge panel, cheats, demo reel, auto-play
-test/                   node:test unit tests
-docs/                   README, video script
+test/                   node:test unit tests and property tests
+tools/shots.mjs         headless Chrome screenshots (always --mute-audio)
 ```
 
 ## 3. Architecture
@@ -57,57 +84,87 @@ docs/                   README, video script
  input (keys, touch)            audio (Web Audio)
         |                              ^
         v                              |
-   +----------+   events    +----------------------+
-   |  game.js | ----------> | director + ui + audio |
-   |  (rules) | <---------- | (listen and show)     |
-   +----------+   input     +----------------------+
+   +----------+   events    +----------------------------------+
+   |  game.js | ----------> | directors + office/ui + audio     |
+   |  (rules) | <---------- | (listen and show)                 |
+   +----------+   input     +----------------------------------+
         |
         v
-   core/lives, stats, messages, morse
+   core/lives, stats, messages, morse, hand, day-clock, idle
 ```
 
-- `game.js` owns one state object and one function, `dispatch(event)`. Input turns into events such as `PRESS_END`, `LETTER_TYPED`, `NEXT_DAY`. The rules change the state and emit output events such as `LETTER_OK`, `LETTER_WRONG`, `LIFE_LOST`, `DAY_ENDED`.
-- UI, audio and the horror director only listen to output events. They never change the rules. This keeps Judge mode simple: cheats are just extra input events.
+- `game.js` owns one state object and one function, `dispatch(event)`. Input turns into events such as `PRESS_END`, `LETTER_TYPED`, `TICK`, `NEXT_DAY`. The rules change the state and emit output events such as `LETTER_OK`, `LETTER_WRONG`, `LIFE_LOST`, `ARRIVED`, `MESSAGE_DONE`, `DAWN`, `DAY_ENDED`.
+- UI, audio and the directors only listen to output events. They never change the rules. This keeps Judge mode simple: cheats are just extra input events.
 - A tiny event bus (`on`, `emit`) connects the parts. No framework.
+- **One desk interface, two desks.** The office (Night Shift, Dead Air) and the Day Shift desk implement the same small object: `{ mount(root), unmount(), keyDown(on), sounderArm(down), showMessage(msg), markLetter(i, ok), stamp(kind, time), setWaiting(n), setLives(n, max) }`. `main.js` picks one by mode. When the office by daylight is drawn (TODO.md), Day Shift switches to the office and `ui/scene.js` goes away.
+- **One scope.** The bundler puts all modules in one scope, so top-level names must be unique across modules (the build checks this). The office's galvanometer class is `OfficeGalvanometer` and its sound class is `OfficeSound`, so they do not clash with the Day Shift ones.
 
-## 4. Screens and flow [R1, R2, R5, R8, R9, R16]
+## 4. Screens and flow [R1, R2, R5, R8, R9, R16, R17]
 
 ```
-boot -> start -> (tutorial dialog) -> (tutorial) -> dayIntro -> playing
-playing -> messageDone -> (next message) ... -> dayStats -> dayIntro (next day) | closing
-playing -> gameOver -> (Restart this day -> dayIntro) | (Main menu -> start)
+boot -> start -> (storyOffer) -> (story) -> (tutorialDialog) -> (tutorial) -> dayTitle -> playing
+playing -> (forms arrive, are done, the next slides in) ... -> dawn (Night Shift) -> dayNotice
+dayNotice -> dayTitle (next day) | closing
+playing (0 lives, or 06:00 with work left) -> gameOver sequence -> notice (Restart this day -> dayTitle) | (Main menu -> start)
 Options "End game" -> confirm -> start
 ```
 
 | State | What it shows | Leaves when |
 |---|---|---|
-| `start` | Night Shift, Day Shift, Dead Air (locked or open), Kiroween Judge, Options | a mode is picked |
+| `start` | company card over the empty office: name, Station 7, roster, mode buttons, Judge | a mode is picked |
+| `storyOffer` | "Read the letter", "Go straight to the desk", tick "Always go straight to the desk" | a button |
+| `story` | the lantern show | last slide ends, or Esc |
 | `tutorialDialog` | "Start tutorial", "Not now", "Never" | a button is pressed |
-| `tutorial` | desk with instruction sheets | all sheets done or skipped |
-| `dayIntro` | short card (Day 2 and 3 explain receiving, and sending plus receiving) | any key or click |
-| `playing` | desk, message, galvanometer, chart | last message done or 0 lives |
-| `dayStats` | statistics and rank | "Next day" |
-| `gameOver` | "Restart this day" and "Main menu" (Dead Air: "Main menu" only) | a button |
-| `closing` | end screen and best stats | any key |
+| `tutorial` | the desk with instruction sheets | all sheets done or skipped |
+| `dayTitle` | "Day 1 · Wednesday, 4 November 1903", plus the Day 2 / Day 3 line | any key or click |
+| `playing` | office, form, spike, tape, galvanometer, codebook, wall clock | `DAWN`, 0 lives, or `TIME_UP` |
+| `dawn` | the dawn (Night Shift and Dead Air only) | about 12 s, then the notice |
+| `dayNotice` | "SHIFT ENDED 06:00" company notice with stats and rank, "Next day" | "Next day" |
+| `gameOver` | snap, dark, "THE LINE IS DEAD", dismissal telegram with buttons | a button |
+| `closing` | closing company notice and best stats | any key |
 
-Checkpoint [R5.6a]: when a day starts, `game.js` keeps a copy of the state (`checkpoint = {day, modeStats}`) in memory only. "Restart this day" restores it with full lives and zeroed stats for that day. Nothing is written for it, so a reload drops the run [R5.6b].
+Skipping rules: `storyOffer` and `story` are skipped when "Always skip the story" is on, in Dead Air, and in Judge mode [R16.8, R13.5]. `dawn` is skipped in Day Shift; the notice comes straight away.
+
+Day dates: Day 1 is Wednesday, 4 November 1903 (the newspaper on slide 3 is dated Tuesday, 3 November). Day 2 and Day 3 follow. The calendar on the wall is crossed off up to the day before [R9.8].
+
+Checkpoint [R5.6a]: when a day starts, `game.js` keeps a copy of the state (`checkpoint = {day, modeStats}`) in memory only. "Restart this day" restores it with full lives, zeroed stats for that day and a fresh clock at 22:00. Nothing is written for it, so a reload drops the run [R5.6b]. The learned hand is not part of the checkpoint; it keeps learning.
 
 ## 5. Morse engine [R3]
 
 **Letter table.** An object `A..Z` to strings of `.` and `-`.
 
-**Sending input** (`core/morse.js` and `input/keyboard.js`):
+**The hand** (`core/hand.js`) [R3.3]:
 
-1. On `keydown` of Space with `event.repeat === false` and no press active, store `t0 = clock.now()`, start the tone, animate the key [R3.2, R3.8]. Ignore `event.repeat === true` events completely, because a held key sends many `keydown`s [R3.8].
-2. On `keyup`, compute `d = now - t0`. `d < 300` is a dot, otherwise a dash [R3.3]. Stop the tone. Append to the current pattern. Start a 700 ms letter-gap timer [R3.4].
-3. A new press cancels the timer. When the timer fires, `decode(pattern)` returns a letter or `null`.
+```
+state: { dot, dash, recent[] }          new player: dot 120, dash 360
+threshold = (dot + dash) / 2            new player: 240 ms
+unit      = (dot + dash / 3) / 2        new player: 120 ms
+letterGap = clamp(unit * 6, 450, 1600)  new player: 720 ms
+wpm       = round(1200 / unit)
+classify(ms): push clamp(ms, 30, 2000) to recent (keep last 20);
+              if recent has 4 or more, learn(); return ms >= threshold ? '-' : '.'
+learn(): sort the logs of recent; pick the split that best separates two groups
+         (largest n1 * n2 * (mean1 - mean2)^2); short = median of group 1, long = median of group 2;
+         if long / short >= 1.8: dot = short, dash = long
+         else: one kind only; move whichever symbol it resembles, keep the other at least 2x apart
+```
+
+Medians keep one stray press (a key held for seconds) from throwing the hand off. The hand is pure: no clock, no storage. `main.js` loads `{dot, dash}` from settings at boot and saves it after each letter (not in Judge mode) [R3.3a]. "Forget my hand" resets it to the new player's hand.
+
+**Sending input** (`core/send.js` and `input/keyboard.js`):
+
+1. On `keydown` of Space with `event.repeat === false` and no press active, store `t0 = clock.now()`, start the tone, press the key [R3.2, R3.8]. Ignore `event.repeat === true` events completely [R3.8].
+2. On `keyup`, compute `d = now - t0`. `hand.classify(d)` gives the dot or dash and learns from it. Stop the tone. Append to the current pattern and to the tape. Start a letter-gap timer of `hand.letterGap` [R3.4].
+3. A new press cancels the timer. When the timer fires, `decode(pattern)` returns a letter or `null`. The tape pencils the letter (or a red `?`) under the group [R3.4a].
 4. If `pattern.length > 4` the pattern is decoded at once as wrong, since no letter has more than 4 symbols.
 5. The window `blur` event cancels any running press, so a held key never gets stuck.
-6. Compare with the expected letter. Right: mark it, move on [R3.5]. Wrong: `LIFE_LOST`, show the mistake, same letter again [R3.6].
+6. Compare with the expected letter. Right: the letter fades on the form, move on [R3.5]. Wrong: `LIFE_LOST`, red strike on the tape, red tally on the form, same letter again [R3.6].
 
-**Touch** (`input/pointer.js`) uses `pointerdown` and `pointerup` on the on-screen Morse key with the same 300 ms rule [R15.1]. Both inputs call the same `pressStart()` and `pressEnd()` functions.
+The hold meter shows the current press growing, with a mark at `hand.threshold`, during the tutorial and in play [R2.3].
 
-**Receiving** [R4]: `audio/sequencer.js` plays one letter at a time using the audio clock (`ctx.currentTime`), not `setTimeout`, so the tones stay in step. Timings: dot 120 ms, dash 360 ms, 120 ms between symbols.
+**Touch** (`input/pointer.js`) uses `pointerdown` and `pointerup` on the on-screen Morse key and the same `hand.classify` [R15.1]. Both inputs call the same `pressStart()` and `pressEnd()` functions.
+
+**Receiving** [R4]: `audio/sequencer.js` plays one letter at a time using the audio clock (`ctx.currentTime`). Timings stay fixed at dot 120 ms, dash 360 ms, 120 ms between symbols: the other station has its own hand, not the player's.
 
 ```
 play letter -> wait for typed letter
@@ -117,270 +174,303 @@ play letter -> wait for typed letter
    Replay button: replays; counts 1 of 3 in Night Shift, free in Day Shift, free after a mistake
 ```
 
-The sounder arm and the "click" and "clack" are scheduled from the same list of tone start and end times as the tones. The arm moves with `requestAnimationFrame` reading the audio clock, so picture and sound stay together [R4.1].
+The sounder arm and the "click" and "clack" are scheduled from the same list of tone times as the tones [R4.1]. In the office the received message fills a blank telegram form [R4.2], stamped RECEIVED at the end [R4.5b].
 
-Typed letters come from `keydown` (A to Z, any case) or from the on-screen keys. There is no Enter key [R4.3].
+**Tape.** Backspace tears the tape off [R3.4a]. The tape keeps at most 120 items. Backspace is ignored while the game waits for a typed letter.
 
 ## 6. Data
 
 ### Messages [R9, R12.5, R6.3]
 
-`core/messages.js` holds plain data. Each message:
+`core/messages.js` holds plain data, written for 1903: routine traffic (births, deaths, freight prices), people's lives, quiet small-hours telegrams that are faintly off, threads (small stories in parts) and strange messages. Each message:
 
 ```js
-{ id: "d1-03", text: "ARRIVING TUESDAY TRAIN STOP", day: 1 | 2 | 3,
+{ id: "d1-03", to: "J. Pell, Harbour Office", from: "Capt. Wren",
+  text: "ARRIVING TUESDAY TRAIN STOP", day: 1 | 2 | 3,
   kind: "send" | "receive" | "either",
-  strange: false, abbreviations: false }
+  strange: false, abbreviations: false, thread: null | { id: "ship", part: 1 } }
 ```
 
-Derived: `letters` (spaces removed), `length` class: `short` (up to 10 letters), `long` (20 or more), else `medium`.
+`to` and `from` are written on the form; only `text` is keyed. Derived: `letters` (spaces removed), `length` class: `short` (up to 10 letters), `long` (20 or more), else `medium`.
 
-**Day builder** `buildDay(day, mode, rng)` picks 5 messages:
+**Day builder** `buildDay(day, mode, rng)` picks 5 messages and their arrival times:
 
 1. Choose from the pool of that day and mode (Day Shift uses `strange: false` only [R7.2]).
-2. Rules to satisfy: at least one short and one long [R9.2]; lengths not sorted (the sequence must not be ascending or descending) [R9.2]; Night Shift strange counts: Day 1 only the 5th, Day 2 at least 2, Day 3 at least 3 [R6.3, R6.7]; Day 3 at least 2 send and 2 receive [R9.2]; Dead Air uses Day 3 strange counts on all days [R16.1].
-3. Shuffle with the seeded `rng` and retry (up to 200 times) until all rules hold. The pool is big enough that this always ends; a test checks this for 1000 seeds.
+2. Rules to satisfy: at least one short and one long [R9.2]; lengths not sorted [R9.2]; Night Shift strange counts: Day 1 only the 5th, Day 2 at least 2, Day 3 at least 3 [R6.3, R6.7]; Day 3 at least 2 send and 2 receive [R9.2]; Dead Air uses Day 3 strange counts on all days [R16.1].
+3. The 5th message of Day 1 in Night Shift and Dead Air is the fixed telegram to "Mr E. Vane, Station 7": `WHY HAVE YOU NOT REPORTED` (it counts as strange and long) [R6.3a]. In Day Shift it is a normal message.
+4. A day may hold one thread, and its parts keep their order [R12.5].
+5. Arrival times: the first at 22:00, the rest spread to 04:00 with a little seeded jitter, in order [R9.7b].
+6. Shuffle with the seeded `rng` and retry (up to 200 times) until all rules hold. A test checks this for 1000 seeds.
 
-Pool size: at least 12 messages per day (about 5 short, 5 medium, 4 long, 5 strange) so repeat plays differ. Messages are written in 1870s telegram style [R12.5].
+Pool size: at least 12 messages per day. Text is at most 30 letters on Day 1.
 
 ### Thoughts [R12]
 
+As before, plus: every fact is checked to be true for 1903 (some lines were written for 1873), the operator is "they", and up to 2 thoughts may compare the work to music [R12.1a, R12.4].
+
+### Story [R17]
+
+`story/letter.js` holds the six slides as data: `{ scene, lines[], sounds[], at: { lineIndex: event } }`. Events are the one-off moments on a slide (the hall's light going out, the candle dipping). `story/slides/*.js` each export a function that returns the slide's SVG.
+
+### Saved data [R8.4, R2, R16.3, R3.3a]
+
+One localStorage key `nightshift.v1`. Old `deadair.v1` saves are not read.
+
 ```js
-{ id: "paid-per-word", text: "Each word costs money... that is why everyone writes so short.",
-  trigger: "fact" | "long-message" | "cryptic-message" | "tutorial-sheet-3" }
-```
-
-At least 6 facts and 4 message reactions, each at most 20 words. `director/thoughts.js` picks at most 2 per day. A reaction is allowed only when its trigger fits the current message (`length === "long"` or `abbreviations === true`). Each thought has one version, the same in every mode [R12.6]. Thoughts show as text at the bottom of the desk, fade after 8 s, never take focus, and are blocked while Space is down or the player is typing [R12.2, R12.3].
-
-### Saved data [R8.4, R2, R16.3]
-
-One localStorage key `deadair.v1`:
-
-```js
-{ settings: { musicVol, sfxVol, mute, reduceFlashing, captions,
-              showLivesNumber, tutorial: "ask" | "never" },
+{ version: 1,
+  settings: { musicVol, sfxVol, mute, music: true, reduceFlashing, captions,
+              showLivesNumber, skipStory: false, tutorial: "ask" | "never" },
+  hand: { dot: 120, dash: 360 },
   best: { night: Stats|null, day: Stats|null, deadair: Stats|null },
   deadAirUnlocked: false }
 ```
 
-`settings.js` wraps storage in `load()` and `save()`. In Judge mode `save()` does nothing, so Judge mode never writes [R13.5]. If localStorage is blocked or full, the game keeps working with defaults in memory. The saved object has a `version`; an unknown version is ignored.
+`settings.js` wraps storage in `load()` and `save()`. In Judge mode `save()` does nothing [R13.5]. If localStorage is blocked or full, the game keeps working with defaults in memory.
 
-## 7. Lives, stats, rank [R5, R8]
+## 7. Lives, stats, rank, game clock, idling [R5, R8, R9.7]
 
-`core/lives.js`:
+`core/lives.js` and `core/stats.js` are unchanged (max 10 or 5, refill after 3 clean messages, wpm, rank).
 
-- `max` is 10, or 5 in Dead Air. `lives` starts at `max` each day [R5.1, R9.6].
-- `loseLife()` returns `{ lives, dead }`. `dead` is true when `lives` reaches 0 [R5.5].
-- `messageDone(clean)`: if no mistake in that message, `cleanStreak += 1`, else it resets to 0. When `cleanStreak` reaches 3, `lives = min(max, lives + 1)` and `cleanStreak = 0` [R5.4].
+**Game clock** (`core/day-clock.js`, pure: it gets `tick(realMs)` calls and returns events) [R9.7]:
 
-`core/stats.js` counts messages, letters correct, mistakes, longest streak without a mistake, and active time. Active time counts only from the first input of a message to its last letter, so thinking pauses between messages do not slow the speed.
+```
+day = { realMinutes: 5 | 6 | 7, arrivals: 5 times from 22:00 to 04:00 }
+base speed: 480 game minutes per realMinutes     (22:00 to 06:00 at 1x)
+speed: 1x while a message is in hand
+       4x while nothing is waiting
+       6x once all 5 are done, until 06:00
+events: ARRIVED(message) -> counter bell; to the desk, or onto the spike if busy
+        DAWN             -> all 5 done; the clock runs on at 6x to 06:00
+        TIME_UP          -> 06:00 with a message in hand or waiting: the day is lost
+state:  minutes, waiting[], started, held
+```
 
-- **Words per minute** = `(lettersCorrect / 5) / activeMinutes`. A "word" is 5 letters.
-- **Rank** [R8.2]: accuracy rank (below 70% Apprentice, 70 to 94% Operator, 95% or more Master) and speed rank (below 3, 3 to 5.9, 6 or more). The final rank is the lower of the two.
-- Best stats compare by rank first, then accuracy, then speed.
+The clock starts on the first key press or typed letter of the day, and stops while held [R9.7a]. The stamp on a finished form uses the current time [R3.7]. The day always ends at 06:00 [R9.7e]. `game.js` treats `TIME_UP` like 0 lives: the game over plays, with "TELEGRAMS NOT SENT" on the dismissal telegram [R9.7g].
 
-## 8. Visuals [R1, R3, R4, R5, R7]
+**Late drain** (in `core/idle.js`) [R9.7h]: past 04:00 with a message not done, it emits `LATE_LIFE_LOST` every 20 s of real time, every 10 s from 05:00. It stops while held, and is off in Day Shift. It runs beside the idle rule; both count, so a slow, idle player loses lives fast. `game.js` treats it like `IDLE_LIFE_LOST`.
 
-The desk is one inline SVG, 16:9 inside a responsive box. Parts are grouped so each can animate on its own:
+**Idling** (`core/idle.js`, pure: `tick(realMs, { waiting, started, mode, held })`) [R9.7f]: after 6 s with no press or typed letter while a message waits, it emits `IDLE_LIFE_LOST`, then again every 17 s. Any press or typed letter resets it. It is off in Day Shift, while held, and before the first input of the day. The 15 s receive auto-replay [R4.5a] is not input, so it does not reset the idle time. `game.js` treats `IDLE_LIFE_LOST` like a mistake for lives, the clean streak and the faults, but not for the stats' mistake count.
 
-| Part | Job |
+## 8. Visuals [R1, R3, R4, R5, R7, R9, R11.4]
+
+### The office (Night Shift and Dead Air) [R11.4]
+
+Laid out at a 900 px design height and scaled as a whole with one CSS `transform: scale()` (`fitRoom()`, on load and resize). Design width is from the screen's aspect, up to 1700 px.
+
+| Area | What is there |
 |---|---|
-| Telegraph key | lever tilts while Space is down [R3.2] |
-| Sounder | arm drops and lifts with tones [R4.1] |
-| Galvanometer | round dial, 10 ticks (5 in Dead Air), needle with CSS transition, tremble near the red zone [R5.1-5.3] |
-| Paper | instruction sheets in the tutorial [R2.2] |
-| Thought text | bottom line, fades [R12] |
-| Window with rain | Night Shift only; Day Shift shows a bright window |
+| Left wall | the window (rain, the marsh, the pole the wires run to, a bare tree; clinging drops as an HTML layer), the codebook card below it |
+| Centre | the calendar, the paper tape, the hold meter, the key on the desk |
+| Right wall | the wall clock (regulator, swinging pendulum), the galvanometer, the telegram form and the spike on the desk |
+| Front left | the oil lamp, the largest thing in the room; the room's light comes from it |
 
-The left side holds the Morse chart, a 2 column list (A to M, then N to Z) with dots and dashes [R3.1a]. It is not drawn in Dead Air [R16.5]. The text row above the desk shows the message letters. In sending mode the next letter is highlighted [R3.1]. In receiving mode it shows blanks that fill in [R4.2].
+Below 1050 px wide the room becomes one scrolling column without the window, clock, calendar and lamp. This is also the phone layout [R15.3]. There the game clock is shown as text.
 
-**Palette** is a set of CSS variables per mode: Night Shift is cold, dark green and grey with sepia paper; Day Shift is warm yellow and cream. All text pairs are checked for 4.5:1 [R10.4].
+**Codebook** (`office/forms.js`): a printed card, 2 columns (A to M, N to Z) [R3.1a]. Click enlarges it to the middle of the screen; click again or Esc puts it back. No letter shortcut. In Dead Air it is not drawn; the wall shows two pin marks [R16.5].
 
-**Screen effects** (`effects-fx.js`): a vignette layer, a static-noise canvas that is shown for 300 ms, and a flicker done with an opacity animation. With "Reduce flashing" on, flicker and static are replaced by a 600 ms fade and no change faster than 3 times a second [R6.6]. Day Shift loads none of these layers [R7.1].
+**Telegram form**: a Marsh & Western form in IM Fell English SC, with `to`, `from` and the text in Caveat handwriting. Words never break across lines. The next letter is underlined in pencil; sent letters fade; a wrong letter gets a red tally mark. A finished form gets a red SENT or RECEIVED stamp with the time and slides off; the next waiting form slides in [R3.1, R3.7, R4.5b, R9.7c]. Waiting forms show as a stack on the spike.
 
-## 9. Audio [R4, R6, R7]
+**Galvanometer** (`office/galvanometer.js`): a springy needle driven by `lives / max`. The dial has 10 marked steps (5 in Dead Air) and a red zone. The needle trembles more near the red zone. Each step down jolts it with a "tock"; 0 lives flings it against the zero stop [R5.1-5.3]. Its glass can carry the crack [R6.4b].
+
+**Light** (`office/light.js`): the lamplight is a gradient layer. It can stutter, dim the room except the galvanometer (a cut-out around it), close the dark in from the corners, go out, and at dawn give way to the window's light shaft. With "Reduce flashing" every stutter is a 600 ms fade [R6.6].
+
+**Window sky**: from 60% of the night (the game clock from 22:00 to 06:00 as 0 to 1) it lightens toward dawn [R9.9].
+
+**Room hidden**: while the start card or the story covers the office, `body.room-hidden` stops drawing it and pauses its animations [R11.6].
+
+### The start card [R1.1]
+
+A second copy of the story's office slide (drawn with its own id prefix), dimmed, drifting sideways at one zoom (zooming made Chrome flicker on a busy graphics card). Over it, a printed company card with the roster. The mode buttons are printed lines on the card. The Options button stays in the upper right.
+
+### The Day Shift desk [R7.2a]
+
+`ui/scene.js`, `ui/galvanometer.js`, `ui/morse-chart.js` and `ui/text-row.js` stay as they are, with the warm palette. Waiting messages show as a small count beside the text row.
+
+**Palette**: CSS variables per mode. All text pairs are checked for 4.5:1 [R10.4], including the new ones (ink on the form, pencil on the tape, the notices, the letter under the slides).
+
+## 9. Audio [R4, R6, R7, R17]
 
 All sound is synthesized. No sample files.
 
 **Engine** (`audio/engine.js`):
 
 ```
-voices -> sfxBus ----+
-                     +-> compressor -> masterGain -> destination
-music  -> musicBus --+
+voices, office-sound -> sfxBus -----+
+                                    +-> compressor -> masterGain -> destination
+phonograph, piano, music -> musicBus+
 ```
 
-- One `AudioContext`, created on the first click or touch (the mode button), because browsers block sound before that [R1.3, R15.5]. If the context is `suspended` it is resumed on every user event.
-- Separate volume for `musicBus` and `sfxBus`, and one mute switch [R6.8]. Values come from settings.
-- A "voice budget": at most 8 effect voices at once; extra ones are dropped. Every voice disconnects its nodes when it ends, so nothing leaks.
+Every sound module takes `{ ctx, sfxBus, musicBus }` from `engine.js`, so one volume, one mute and one "Music" switch rule everything [R6.8].
 
-**Voices** (`audio/voices.js`). Each is a function `play(params)` that builds nodes and schedules them:
+**Office voices** (`audio/office-sound.js`): room tone (rumble and mains hum), wind gusts, singing wires, the counter bell, the line spitting (crackle on the sounder, a dull "tock", a low sour swell on E♭ with a tritone), the sour drone, the line repeating a wrong letter, the snap (crack, thump, jammed tone), the church bell striking six, the robin, and the last warning's swell and glassy cluster.
 
-| Voice | Recipe |
+**Music** [R6.2]:
+
+- Night Shift: `phonograph.js` plays the waltz in E♭ minor from `scores.js` through the period sound (needle, crackle, warp, reverb), as if from the next room. The key's tone is tuned to E♭.
+- `music-night.js` (drone, hoo tones, heartbeat) is removed: its notes sit around D, a half step off the waltz's E♭, and the record and the room tone fill that space.
+- The record can wobble, sag, drag flat and stick (one 0.8 s turn repeated 4 times), on calls from `dread.js` and `faults.js`.
+- Story: `piano.js` plays the nocturne from the hall to the station, then fades [R17.4].
+- Day Shift: `music-day.js`, unchanged [R7.3].
+
+**Captions** [R10.3]: each new voice gets a caption ("[the counter bell]", "[the line crackles]", "[a knock behind you]", "[a church bell strikes six]", "[the record sticks]").
+
+## 10. Directors [R6, R16]
+
+**Horror** (`director/horror.js`): unchanged. `intensity` from day and lives; random one-shots (thunder, crow, scream, knocking) at least 8 s apart (4 s on Day 3), never while a key is down or a letter is being keyed.
+
+**Dread** (`director/dread.js`) [R6.7]: effects fade in at set points of the night (the game clock as 0 to 1) and grow until dawn. Day 1 uses the points below, Day 2 starts each effect at 70% of them, and Day 3 and Dead Air have every effect at full strength from 22:00.
+
+| From (Day 1) | Effect |
 |---|---|
-| Telegraph tone | sine around 600 Hz with a fast attack and release so it does not click; plays for as long as the key is down |
-| Sounder click, clack | two short filtered noise bursts with a low thump, clack a bit higher |
-| Galvanometer tick | very short high band-pass noise |
-| Knock | 2 to 3 low sine thuds with a short low-pass |
-| Thunder | long noise through a falling low-pass, slow swell |
-| Crow | 2 to 3 sawtooth bursts with a pitch glide and a formant band-pass |
-| Distant scream | detuned saws gliding upward, low-pass and delayed echo so it sounds far away |
-| Static | white noise with a band-pass, 300 ms |
-| Rain | looped noise buffer through band-pass and low-pass, always on in Night Shift |
+| 15% | the light stutters (late on, a second of near-total dark) |
+| 30% | wind gusts against the window |
+| 50% | a second hum throbs against the mains |
+| 55% | the record wobbles and sags |
+| 60% | the sounder clicks once by itself, the needle twitches |
+| 75% | something knocks, far off in the building |
 
-**Music.**
+Dread one-offs share the one-shot gap with the horror director, so two never come together.
 
-- Night Shift (`music-night.js`): low drone (D1), a slow "hoo" (sine with vibrato and a vowel-like filter), a heartbeat kick whose tempo follows tension (38 to 160 bpm), creaking notes from a tritone-heavy scale. Tension rises as lives fall [R6.2]. This reuses the idea of the earlier Dead Air music prototype.
-- Day Shift (`music-day.js`): soft plucked notes from a pentatonic scale, a slow pad, and birdsong made of short FM chirps at random times [R7.3]. It has its own file so it can be cut without touching the rest.
+**Faults** (`director/faults.js`) [R6.4]: listens to `LIFE_LOST`, `IDLE_LIFE_LOST` and `LATE_LIFE_LOST`.
 
-**Captions** [R10.3]: each voice call emits `{caption: "[thunder]"}`. If "Captions" is on, `captions.js` shows the text near the top for 2 s.
+| Lives (of 10) | Of 5 (Dead Air) | Adds |
+|---|---|---|
+| any | any | line spits, light stutters, room dims around the needle; all stronger the lower |
+| below 7 | below 4 | sour drone, dark closing in (while lives stay low) |
+| below 5 | below 3 | the line repeats the wrong letter, faint, in the player's hand (not on idling) |
+| below 3 | below 2 | the light goes out after the stutter; three knocks behind |
+| first fall to 7, 5, 3 | to 4, 3, 2 | one omen not yet seen today, 2.5 to 5 s later, in a quiet moment |
+| fall to 1 | fall to 1 | the last warning; the crack stays until the day ends |
 
-## 10. Horror director [R6, R16]
+Omens: blue flame, heavy air, record sticks (only if music is on). Nothing touches the key, tape, codebook or form [R6.4c].
 
-`director/horror.js` computes one number, `intensity` from 0 to 1:
-
-```
-intensity = clamp( dayBase[day] + livesPressure * 0.3 )
-dayBase  = { 1: 0.15, 2: 0.45, 3: 0.8 }        // Dead Air: 0.8 from Day 1
-livesPressure = 1 - lives / max
-judge scare dial overrides the result
-```
-
-It drives:
-
-- Music tension, drone loudness, rain loudness.
-- A scheduler for random effects. It picks a random time `gap = lerp(20 s, 8 s, intensity)` (on Day 3 the lower bound is 4 s) [R6.5, R6.7]. At the time it picks an effect from a weighted list, with a screams-and-knocks share that grows with intensity. It then checks that no key is down and no letter is being played; if a key is down it tries again in 500 ms. The gap between any two effects is never below the minimum (8 s, 4 s on Day 3) [R6.5].
-- Static burst and flicker on every mistake [R6.4].
-- Which messages are strange comes from the day builder, not from here.
-
-Day Shift: the director is never started [R7.1].
+Day Shift starts none of the directors [R7.1].
 
 ## 11. Options and settings [R10]
 
-The Options button (upper right) and Esc open the same panel as a modal dialog (`role="dialog"`, focus trapped, Esc closes). Content: music and effects sliders, mute, "Reduce flashing", "Captions", "Show lives as a number", "Start with tutorial" (Ask on start / Never), and "End game" during a run. While open, game time pauses: the letter-gap timer, the 15 s timer, the director and the music tension stop; audio is not stopped except effects in progress.
+The Options button and Esc open one panel (`role="dialog"`, focus trapped, Esc closes), drawn as a company card. Content: music and effects sliders, mute, "Music", "Reduce flashing", "Captions", "Show lives as a number", "Always skip the story", "Full screen", "Forget my hand", "Start with tutorial", and "End game" during a run [R10.1a].
+
+During a run the card reads "Line Held" and the game is held: the game clock, idling, the letter-gap timer, the 15 s timer, the directors, the clock's hands, the record and all sound stop (the `AudioContext` is suspended). Leaving the tab does the same [R10.1b]. Closing the card resumes it.
 
 ## 12. Tutorial [R2]
 
-A list of 5 sheets as data: `{ id, text, check(state) }`. The `check` function looks at the events the player produced. For example, sheet 1 passes on one dot, sheet 2 on one dash, sheet 3 on a full letter (pattern then a 700 ms gap), sheet 4 on any key press after the galvanometer pulses, sheet 5 on typing one letter heard. A failed check keeps the sheet. No lives are lost in the tutorial: `loseLife` is switched off in that state [R2.4]. "Put the sheets away" ends it at any time. The tutorial never starts the horror director [R2.6].
+As before: 5 sheets as data. The sheet for the letter gap uses `hand.letterGap`. The hold meter is shown with the threshold mark. The sheets lie on the office desk in Night Shift and on the Day Shift desk in Day Shift. The game clock and idling do not run in the tutorial. Tutorial presses teach the hand [R2.7].
 
 ## 13. Kiroween Judge mode [R13]
 
-- **Entry:** the "Kiroween Judge" button, or `?judge=1` on load. The query string is read once at boot.
-- **Safe by design:** Judge mode sets `ctx.judge = true`. Storage writes are switched off [R13.5], and the tutorial is skipped.
-- **Cheats are events:** the panel only calls `dispatch` with normal events plus a few extra ones (`JUDGE_JUMP_DAY`, `JUDGE_AUTOSOLVE`, `JUDGE_SET_LIVES`, `JUDGE_INFINITE`, `JUDGE_FORCE_GAMEOVER`, `JUDGE_SHOW_STATS`). The rule modules handle them. Normal play never emits them [R13.8].
-- **Auto-solve and auto-play:** they call the same sequencer used by the player, so sounds and animation are real. Auto-play types or sends the expected letter for the current message with human-like timing, scaled by the speed switch (x1, x2, x4) [R13.4e, R13.4f].
-- **Demo reel:** a list of timed steps (an array of `{ at: ms, run: fn }`) that runs on its own timer and is stopped by Esc or any step error [R13.4d]:
+As before, with these changes:
 
-  | Time | Step |
-  |---|---|
-  | 0 s | Day Shift, Day 1, auto-send a short message |
-  | 8 s | switch to Night Shift without restart |
-  | 11 s | thunder, then a crow |
-  | 16 s | a strange message and a thought |
-  | 22 s | one mistake: needle swings, static |
-  | 27 s | stats screen with rank |
-
-- **Scare dial, effect buttons, Show a thought, Captions on:** set the director's override, call the voices, call `thoughts.showNext()`, or set the setting in memory only [R13.4b, c, g, h].
-- **Welcome card** on `?judge=1`, and "Click anywhere to enable sound" until the first click [R13.6, R13.7].
-- **Dead Air** is unlocked in Judge mode without saving [R16.9].
+- Jump to day adds "Dawn" (plays the dawn, then the notice) [R13.3a].
+- "Play the story" starts the story at slide 1 [R13.3g].
+- Trigger effect adds one button per omen and one for the last warning [R13.4c].
+- Infinite lives also covers idling. The speed switch (x1, x2, x4) also speeds the game clock.
+- The learned hand is used but not saved [R13.5].
+- The story and the tutorial are skipped [R13.5].
+- Dev query strings for checks: `?story=5` (slide 5), `?dawn` (ten to six, work done), `?dread=0.9` (late-night room at once). They are not shown to players.
 
 ## 14. Accessibility and phones [R10, R15]
 
-- **Keyboard only:** every control is a real `button` or `input`, reachable with Tab; Esc opens Options; dialogs trap focus [R10.1].
-- **Screen readers:** the galvanometer has `role="img"` and an `aria-label` such as "3 of 10 lives", updated on every change and drawn nowhere visible [R5.7]. The message row has `aria-live="polite"`. Thoughts use `role="status"`.
-- **Show lives as a number:** an extra text element beside the dial, hidden by default [R5.8].
-- **Contrast:** colors are CSS variables; a test script computes the contrast of each text pair and fails the build under 4.5:1 [R10.4].
-- **Phone** (optional) [R15]: `<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">`, `touch-action: none` on the Morse key and typewriter keys, `user-select: none`, `contextmenu` prevented on them. The typewriter keyboard is a 3 row grid (10, 9, 7 keys) with `min-width: 32px; min-height: 44px`. It shows only when `matchMedia("(pointer: coarse)")` is true and a letter is awaited. Layout uses CSS grid with `clamp()` and a container that keeps the 16:9 desk; at 360 px wide the chart collapses to a slide-in drawer, because the left column does not fit [R15.3].
+As before. New: the story's letter is real text with `aria-live="polite"`, so a screen reader reads each line. The counter bell, the figure, the omens and the dawn have captions. The phone layout is the office's one-column layout [R15.3].
 
 ## 15. Errors and edge cases
 
 | Case | Behavior |
 |---|---|
-| Tab loses focus during a press | press is cancelled, no symbol is added |
+| Tab loses focus during a press | press is cancelled, no symbol is added, the game is held |
 | Audio blocked or unsupported | game runs silent; captions on by default; one small notice |
-| localStorage blocked | defaults in memory, no crash |
+| localStorage blocked | defaults in memory, no crash; the hand is learned fresh each visit |
+| A saved hand is broken (NaN, out of range) | reset to a new player's hand |
 | Two keys at once (Space and a letter) | Space is ignored while the game waits for a typed letter, and letters are ignored while it waits for Morse |
-| Window resized or rotated | SVG scales; no state change |
-| Page reload | run is dropped; settings and best stats stay [R5.6b] |
+| Window resized or rotated | `fitRoom()` rescales; no state change |
+| Page reload | run is dropped; settings, hand and best stats stay [R5.6b] |
 | `AudioContext` suspended (iOS) | resumed on the next touch |
+| A very long tick (laptop asleep) | the clock and idling cap one tick at 1 s, so no lives vanish at once |
 
 ## 16. Testing
 
-**Unit tests** (`node --test`, no packages):
+**Unit tests** (`node --test`), new and changed:
 
-- `morse.test.js`: all 26 letters decode; dot and dash edge at 299 ms and 300 ms; gap at 699 ms and 700 ms; patterns longer than 4 are wrong.
-- `messages.test.js`: for 1000 seeds, every built day meets R9.2, R6.3 and R6.7 rules in both modes and in Dead Air.
-- `lives.test.js`: loss, 3 clean messages refill, caps at 10 and at 5, game over at 0.
-- `stats.test.js`: wpm and every rank boundary; the final rank is the lower of the two.
-- `game.test.js`: day flow; checkpoint restores the day; Dead Air has no restart; unlock after Night Shift Day 3; Judge mode writes nothing to storage.
-- `a11y.test.js`: contrast of all palette pairs.
-- Example tests stay for the exact edge values (299 ms, 300 ms, 699 ms, 700 ms). Property tests cover everything in between.
+- `hand.test.js`: a new hand has threshold 240 and letter gap 720; after 20 presses of 100 and 300 ms the threshold is 200; one stray 2 s press does not move it much; "forget" resets; letter gap is clamped to 450 and 1600.
+- `day-clock.test.js`: starts at 22:00 only on the first input; 1x, 4x and 6x speeds; arrivals go to the spike while busy; dawn when all done, at 06:00; `TIME_UP` at 06:00 with a message left, never later; held stops it.
+- `idle.test.js`: first life after 6 s, then every 17 s; input resets; off in Day Shift, while held and before the first input; a long tick is capped; late drain every 20 s past 04:00 and every 10 s past 05:00, only while work is left.
+- `messages.test.js`: adds the Vane telegram as Day 1's 5th in Night Shift and Dead Air, threads in order, arrival times in order from 22:00 to 04:00.
+- `faults.test.js`: which effects are on for each lives count, for max 10 and max 5; each omen at most once a day; the last warning only at 1.
+- `dread.test.js`: start points per day; Day 3 full from 22:00; nothing fires while a key is down.
+- `story.test.js`: six slides, each with at least one line; Esc ends; skip rules for Dead Air and Judge.
+- `settings.test.js`: new key; a broken hand resets.
+- `build.test.js`: the fonts are inlined; no `http://` or `https://` link to another site [R11.2].
+- The old 299/300 ms and 699/700 ms edge tests are replaced by edges at the hand's threshold and letter gap.
 
-**Property-based tests** (`test/props/*.test.js`) use the `fast-check` package. It is a dev dependency used only by tests; it is never put into `dist/index.html`, so R11.2 still holds. Each test runs 200 random cases by default and prints the seed when it fails, so a failure can be replayed. The properties:
+**Property-based tests** (`fast-check`), changed and new:
 
 | Property (for any random input) | Covers |
 |---|---|
-| Encoding a letter to Morse and decoding it gives the same letter, for all A to Z | R3.4 |
-| A random list of press lengths and gaps never makes the decoder throw, and a pattern longer than 4 symbols is always wrong | R3 |
-| A press under 300 ms is always a dot and 300 ms or more is always a dash, whatever the other presses were | R3.3 |
-| Any number of `keydown` repeat events between one `keydown` and `keyup` gives exactly one symbol | R3.8 |
-| For any seed, mode, day, and Dead Air on or off, `buildDay` returns 5 messages that obey every length, strange-count, and send/receive rule, and is not sorted by length | R9.2, R6.3, R6.7 |
-| Day Shift days never contain a strange message | R7.1 |
-| `buildDay` with the same seed gives the same result | tests and Judge |
-| For any random list of right and wrong messages, lives are never below 0 or above the max (10, or 5 in Dead Air), and refill happens exactly after each run of 3 clean messages | R5.4 |
-| `dead` is true exactly when lives reach 0 | R5.5 |
-| For any random run, the checkpoint restore gives full lives, zero stats for that day, and leaves earlier days unchanged | R5.6a |
-| Accuracy is always from 0 to 100, speed is never negative or NaN, and the final rank is never above either of the two ranks | R8.2 |
-| Rank is monotonic: more accuracy or more speed never gives a lower rank | R8.2 |
-| For any random event sequence, the game state machine only moves along the allowed screen arrows and never reaches an undefined screen | section 4 |
-| For any random event sequence in Judge mode, nothing is written to storage | R13.5 |
-| For any random effect times from the director, no two effects are closer than 8 s (4 s on Day 3), and none fires while a key is down | R6.5 |
-| For any random text, the thought picker returns at most 2 thoughts per day, each at most 20 words, and a reaction only when its trigger fits | R12.2, R12.4a |
-| For any random typed letters in receiving, a right letter advances by exactly one, and a wrong letter removes exactly one life and does not advance | R4.3, R4.4 |
+| For any hand, a press below its threshold is a dot and at or above it is a dash | R3.3 |
+| For any steady hand (dot d from 60 to 300 ms, dash at 2.5 to 4 times d, with 10% jitter), after 20 presses the threshold lies between d and the dash | R3.3 |
+| For any list of presses, the dash is always at least 1.8 times the dot, and neither is NaN | R3.3 |
+| The letter gap is always between 450 and 1600 ms | Glossary |
+| For any list of tick lengths and inputs, the game clock never goes back, messages arrive in order, and the day never ends with a message left | R9.7 |
+| For any idle run in Night Shift, lives lost = 0 before 6 s, then 1 + floor((t - 6) / 17) | R9.7f |
+| For any run, no late life is lost before 04:00 or once all 5 are done | R9.7h |
+| For any run of lives lost and refilled, each omen plays at most once a day and the last warning only on reaching 1 | R6.4a, R6.4b |
+| All earlier properties, with the 300 ms rule replaced by the hand's threshold | as before |
 
-Two ways to keep these tests useful: the random generators are small and written once in `test/props/arbitraries.js` (press lists, event lists, seeds, mode and day), and each property is named after its requirement so a failure points straight to it.
+**Screenshots** (`tools/shots.mjs`): headless Chrome with `--mute-audio`, `--no-sandbox` and a fresh `--user-data-dir`. It freezes every animation at a set moment (`document.getAnimations()` paused at a set time) and shoots: the start card, each story slide, the office at Day 1 start, late at night (`?dread=0.9`), the last warning, the game over notice, the dawn, the dawn notice, the one-column layout at 360 px, and the Day Shift desk. Shots are taken before and after each visual task.
 
-**Manual checklist** (`docs/test-checklist.md`), each item tied to a requirement number: sound on all three browsers, phone tests on two screen sizes [R15.6], full play through of both modes and Dead Air, Judge mode demo reel, "Reduce flashing", captions.
-
-**Smoke test with the Judge mode:** because `?judge=1` can jump to any day and auto-solve, one short script (Playwright, optional) loads the page, plays the demo reel and checks that the stats screen appears.
+**Manual checklist** as before, plus: the story with sound, the dawn with sound, "Reduce flashing" through the snap and the last warning, a slow day that runs out at 06:00.
 
 ## 17. Build, publish, repository [R14]
 
-- `node build.mjs` writes `dist/index.html` (inline CSS and JS, no network calls). The test script fails if the output contains `http://` or `https://` links to other sites [R11.2].
+- `node build.mjs` writes `dist/index.html`: inline CSS, JS and fonts (base64 woff2), no network calls. The build fails on any link to another site [R11.2].
+- The font licences (SIL Open Font License for IM Fell English SC and Caveat, Apache 2.0 for Special Elite) are kept in `fonts/` and named in the README.
 - Publish `dist/` to a static host (GitHub Pages) [R14.1].
-- The repository is public with an open-source license and a README. `.kiro/` is committed and not in `.gitignore` [R14.2, R14.3].
-- `docs/video-script.md` follows the existing `.kiro/video-script.md` [R14.4].
+- The game is called "Night Shift" in the page title, the start card, the README, the Judge welcome card and the storage key. The hard mode keeps the name "Dead Air".
 
 ## 18. Order of work and cuts
 
-Follows `.kiro/steering/schedule.md`: audio engine and logic skeleton first, then Morse, sending, lives, tutorial, receiving, days, then Night Shift effects, Day Shift, stats, accessibility, tests.
+Build in this order, each step ending with something playable:
+
+1. Fonts, CSS, `drawings.js`, `scenery.js`, `room.js`: the empty office behind the game (Night Shift only).
+2. The hand: `hand.js` replaces the 300 / 700 ms rules.
+3. Forms, spike, tape, codebook, galvanometer: the desk works in the office.
+4. Game clock, arrivals, idling, wall clock, window sky.
+5. Office sound and the phonograph waltz.
+6. Faults, omens, last warning, dread.
+7. Game over sequence and dawn, company notices.
+8. Start card and "Line Held".
+9. The story.
+10. Messages for 1903; thoughts checked; the name.
+11. Judge additions, accessibility pass, screenshots.
 
 If late, cut in this order:
 
-1. Horror one-shot sounds (crow, scream, knocking, thunder) [R6.1]. The drone, rain and static stay.
-2. Day Shift music (the mode then plays with only the sounder and key sounds) [R7.3].
-3. Phone support [R15].
-4. Dead Air [R16] (it only turns off the chart, cuts lives to 5 and removes the restart).
+1. Story slides 1 to 5 (keep slide 6, the office, as a short opening) [R17].
+2. Dread's second hum, record wobble and phantom clicks [R6.7]; the light's stutter stays.
+3. Horror one-shot sounds (crow, scream, knocking, thunder) [R6.1].
+4. Day Shift music [R7.3].
+5. Phone support [R15].
+6. Dead Air [R16].
 
-Never cut: Morse sending, receiving, lives, Judge mode (R13), and the story thoughts (R12).
+Never cut: Morse sending, receiving, lives, the hand, the game clock, the office, the game over, the dawn, Judge mode (R13), and the story thoughts (R12).
 
 ## 19. Requirement coverage
 
 | Req | Where in this design |
 |---|---|
-| R1 | 4 Screens, 6 Saved data, 9 Engine (audio unlock) |
+| R1 | 4 Screens, 8 Start card, 9 Engine (audio unlock) |
 | R2 | 4, 12 Tutorial |
-| R3 | 5 Morse engine, 8 Visuals |
-| R4 | 5 Receiving, 9 Voices (sounder) |
-| R5 | 4 (checkpoint), 7 Lives, 8 Galvanometer |
-| R6 | 9 Audio, 10 Horror director |
-| R7 | 8 Palette, 9 Day music, 10 |
-| R8 | 7 Stats and rank |
-| R9 | 6 Messages and day builder |
-| R10 | 11 Options, 14 Accessibility |
-| R11 | 1 Overview, 17 Build |
-| R12 | 6 Thoughts |
+| R3 | 5 Morse engine and the hand, 8 Forms and codebook |
+| R4 | 5 Receiving, 8 Forms, 9 Voices (sounder) |
+| R5 | 4 (checkpoint), 7 Lives, 8 Galvanometer, 18 step 7 (game over) |
+| R6 | 9 Audio, 10 Directors |
+| R7 | 3 Two desks, 8 Day Shift desk, 9 Day music |
+| R8 | 7 Stats and rank, 4 Notices |
+| R9 | 4 Day dates, 6 Messages and arrivals, 7 Game clock and idling, 8 Window sky |
+| R10 | 11 Options and Line Held, 14 Accessibility |
+| R11 | 1 Overview, 8 Office, 17 Build |
+| R12 | 6 Messages and thoughts |
 | R13 | 13 Judge mode |
 | R14 | 17 Build and repository |
-| R15 | 5 Touch, 14 Phones |
-| R16 | 4, 6, 7, 10 (Dead Air notes) |
+| R15 | 5 Touch, 8 One column, 14 Phones |
+| R16 | 4, 6, 8 (no codebook), 10 (faults for 5 lives) |
+| R17 | 4 Story states, 6 Story data, 9 Piano, 18 step 9 |
