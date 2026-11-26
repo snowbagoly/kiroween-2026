@@ -46,8 +46,19 @@ export const PAGES = [
   ['dev/night.html', 'dev/night.js', 'dev-night.html'],
 ];
 
+// A stylesheet inlined as <style>, with each url(./file) it names (the fonts) as a base64 data URI,
+// so the page loads nothing else [R11.2].
+export function inlineCss(cssFile) {
+  const dir = dirname(cssFile);
+  const css = readFileSync(cssFile, 'utf8').replace(/url\((\.\/[^)]+\.woff2)\)/g, (_, f) =>
+    `url(data:font/woff2;base64,${readFileSync(resolve(dir, f)).toString('base64')})`);
+  return `<style>\n${css}\n</style>`;
+}
+
 export function buildPage(htmlFile, entryFile, outFile) {
   let html = readFileSync(resolve(root, htmlFile), 'utf8');
+  const htmlDir = dirname(resolve(root, htmlFile));
+  html = html.replace(/<link rel="stylesheet" href="([^"]+)">/g, (_, href) => inlineCss(resolve(htmlDir, href)));
   const js = bundle(resolve(root, entryFile)).join('\n\n').replace(/<\/script/gi, '<\\/script');
   const dup = findDuplicateNames(js);
   if (dup.length) throw new Error(`${entryFile}: these top-level names are declared in more than one module: ${dup.join(', ')}`);

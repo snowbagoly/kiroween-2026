@@ -19,6 +19,7 @@ import { createPressReader, attachKeyboard } from './input/keyboard.js';
 import { mountScene, setKeyDown, setSounderDown } from './ui/scene.js';
 import { mountMorseChart } from './ui/morse-chart.js';
 import { mountGalvanometer } from './ui/galvanometer.js';
+import { mountOffice, usesOffice } from './office/room.js';
 import { mountTextRow } from './ui/text-row.js';
 import { mountStart, showCard, hudLabel } from './ui/screens.js';
 import { mountOptions } from './ui/options.js';
@@ -48,6 +49,7 @@ for (const ev of ['pointerdown', 'keydown']) window.addEventListener(ev, checkAu
 app.innerHTML = '<div class="view"></div>';
 const view = app.querySelector('.view');
 let desk = null; // { mode, stage, gauge, row, hud, layer } while a run is on screen
+let office = null; // the office's parts, in Night Shift and Dead Air (office/room.js)
 let options = null;
 let deadAirBefore = data.deadAirUnlocked;
 let card = { role: 'send', stats: null, canRestart: true, totals: null, best: null, unlocked: false };
@@ -322,6 +324,8 @@ function renderStart() {
   recv.stop();
   clearTimeout(thoughtTimer);
   desk = null;
+  office?.unmount();
+  office = null;
   reader.reset();
   document.documentElement.dataset.mode = 'night';
   mountStart(view, {
@@ -334,15 +338,28 @@ function renderStart() {
 
 function buildDesk(s) {
   document.documentElement.dataset.mode = s.mode === 'day' ? 'day' : 'night';
+  office?.unmount();
+  office = null;
   view.innerHTML = '<div class="play"><div class="stage"></div></div><div class="card-layer" hidden></div>';
   const stage = view.querySelector('.stage');
-  mountScene(stage, s.mode === 'day' ? '?mode=day' : ''); // replaces the stage's content
-  mountMorseChart(view.querySelector('.play'), s.mode);
-  const row = mountTextRow(stage);
+  const lives = s.lives ?? s.maxLives;
+  let row, gauge;
   const hud = document.createElement('p');
   hud.className = 'hud-label';
-  stage.prepend(hud);
-  const gauge = mountGalvanometer(stage, { max: s.maxLives, lives: s.lives ?? s.maxLives });
+  if (usesOffice(s.mode)) {
+    // Night Shift and Dead Air are played in the office [R11.4]; Day Shift keeps its desk [R7.2a].
+    office = mountOffice(stage, { max: s.maxLives, lives, day: s.day });
+    mountMorseChart(office.codebookSpot, s.mode);
+    row = mountTextRow(office.work);
+    office.hud.append(hud);
+    gauge = office.gauge;
+  } else {
+    mountScene(stage, '?mode=day'); // replaces the stage's content
+    mountMorseChart(view.querySelector('.play'), s.mode);
+    row = mountTextRow(stage);
+    stage.prepend(hud);
+    gauge = mountGalvanometer(stage, { max: s.maxLives, lives });
+  }
   stage.querySelector('.text-row-box').insertAdjacentHTML('afterend', '<p class="replay-row" hidden><button type="button" class="replay-btn">Replay</button></p>');
   const replay = stage.querySelector('.replay-btn');
   replay.addEventListener('click', () => { onReplay(); replay.blur(); });
@@ -359,6 +376,7 @@ function buildDesk(s) {
 
 function renderRun(s) {
   if (!desk || desk.mode !== s.mode) buildDesk(s);
+  office?.setDay(s.day);
   desk.hud.textContent = hudLabel(s.mode, s.day);
   if (judge) desk.hud.insertAdjacentHTML('afterbegin', '<span class="judge-badge">JUDGE</span> '); // [R13.2]
   if (s.screen === 'tutorial') {

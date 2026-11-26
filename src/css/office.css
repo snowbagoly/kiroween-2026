@@ -1,0 +1,310 @@
+/* The office at night (Night Shift and Dead Air) [design 8, R11.4]. Laid out at a 900 px design height
+   in plain pixels and scaled as a whole by mountOffice (office/room.js). */
+
+.office-stage { position: relative; }
+.office {
+  --o-paper: #dccda3;
+  --o-paper-dark: #b6a476;
+  --o-ink: #1b120a;
+  --o-dim: #9a8a6a;
+  --o-text: #e0d3b0;
+  --glow: 255 214 150;
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+  margin: 0 auto;
+  height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 640px) minmax(0, 1fr);
+  justify-items: center;
+  column-gap: 32px;
+  padding: 36px 16px 0;
+  overflow: hidden;
+  color: var(--o-text);
+  font-family: "Special Elite", "Courier New", monospace;
+  background:
+    radial-gradient(ellipse 50% 55% at 12% 72%, rgb(var(--glow) / .08), transparent 70%),
+    linear-gradient(#161310, #0d0b09 70%);
+}
+.office *, .office *::before, .office *::after { box-sizing: border-box; }
+
+.office .wall-left, .office .wall-right {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  min-height: 0;
+}
+.office .wall-left { grid-column: 1; justify-self: end; }
+.office .wall-right { grid-column: 3; justify-self: start; }
+.office .centre {
+  grid-column: 2;
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ---- Window, clock, lamp, calendar ---- */
+.office .room-window, .office .room-clock {
+  display: block;
+  flex: none;
+  height: 235px;
+  width: auto;
+  filter: drop-shadow(0 10px 16px rgb(0 0 0 / .6));
+}
+.office .window-wrap { position: relative; flex: none; line-height: 0; }
+.office .window-rain rect { animation: window-rain .7s linear infinite; }
+@keyframes window-rain { to { translate: -38px 140px; } }
+.office .window-dawn { opacity: var(--dawn, 0); }
+.office .window-morning { opacity: 0; transition: opacity 6s ease-in-out; }
+.office .lamp-smoke { opacity: 0; }
+
+.office .desk-lamp {
+  position: absolute;
+  left: 8px;
+  bottom: 6px;
+  z-index: 3;
+  height: 360px;
+  width: auto;
+}
+.office .room-calendar {
+  position: absolute;
+  left: 18px;
+  bottom: 300px;
+  width: 120px;
+  rotate: -2deg;
+  filter: drop-shadow(4px 8px 10px rgb(0 0 0 / .55));
+}
+
+.office .lamp-glow {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 45% 60% at 7% 70%, rgb(var(--glow) / .16), transparent 70%),
+    radial-gradient(ellipse 60% 45% at 50% 45%, rgb(var(--glow) / .05), transparent 70%);
+  animation: lamp-flicker 9s infinite steps(1);
+}
+@keyframes lamp-flicker {
+  0%, 100% { opacity: 1; }
+  38% { opacity: .55; }
+  39% { opacity: 1; }
+  40% { opacity: .35; }
+  41% { opacity: .9; }
+  73% { opacity: .8; }
+  74% { opacity: 1; }
+}
+
+/* Reeds and trees sway; the pendulum swings; the lamp's flame flickers. */
+.office .reeds, .office .tree {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: sway 4.5s ease-in-out infinite alternate;
+}
+@keyframes sway {
+  from { transform: skewX(calc(var(--sway, 2.5deg) * -1)); }
+  to { transform: skewX(var(--sway, 2.5deg)); }
+}
+.office .clock .pendulum {
+  transform-box: fill-box;
+  transform-origin: 50% 0;
+  animation: pendulum 1s ease-in-out infinite alternate;
+}
+@keyframes pendulum {
+  from { transform: rotate(-4deg); }
+  to { transform: rotate(4deg); }
+}
+.office .clock .hour-hand, .office .clock .minute-hand { transform-box: view-box; transform-origin: 50px 62px; transition: transform 2s ease-in-out; }
+.office .clock .hour-hand { transform: rotate(var(--hour, 0deg)); }
+.office .clock .minute-hand { transform: rotate(var(--minute, 0deg)); }
+.office .lamp-flame {
+  transform-box: fill-box;
+  transform-origin: 50% 80%;
+  animation: oil-flame 6s infinite;
+}
+@keyframes oil-flame {
+  0%, 100% { opacity: 1; }
+  45% { opacity: .85; }
+  46% { opacity: .65; }
+  48% { opacity: .92; }
+  80% { opacity: .95; }
+}
+
+/* Drops clinging to the window glass (clingDrops in scenery.js): only transform and opacity move,
+   so the graphics card moves them without repainting the window. */
+.office .cling > * { transform-origin: 50% 0; animation: var(--dur) linear var(--delay) infinite; }
+.office .cling-drop { animation-name: cling; transform-origin: 50% var(--middle); }
+.office .cling-trail { animation-name: cling-trail; }
+.office .cling-layer { position: absolute; inset: 0; pointer-events: none; }
+.office .cling-layer .cling, .office .cling-layer .cling > * { position: absolute; }
+.office .cling-layer .cling > * { top: 0; }
+.office .cling-layer .cling-drop { left: 0; width: 100%; height: 100%; }
+.office .cling-layer .cling-drop svg { display: block; width: 100%; height: auto; overflow: visible; }
+.office .cling-layer .cling-trail {
+  height: 100%;
+  border-radius: 1px;
+  background: linear-gradient(rgb(207 195 166 / 0), rgb(207 195 166 / .14) 70%);
+}
+@keyframes cling {
+  0% { opacity: 0; transform: translateY(0) scale(.3); animation-timing-function: ease-out; }
+  25% { opacity: 1; transform: translateY(0) scale(1); }
+  70% { transform: translateY(0) scale(1); animation-timing-function: ease-in-out; }
+  73% { transform: translateY(1%) scale(1.06, 1.12); }
+  75% { transform: translateY(1%) scale(1.06, 1.12); animation-timing-function: ease-in; }
+  80% { transform: translateY(45%) scale(.95, 1.12); animation-timing-function: ease-out; }
+  82% { transform: translateY(48%) scale(1, 1.05); animation-timing-function: ease-in; }
+  86% { opacity: 1; transform: translateY(100%) scale(.95, 1); }
+  90%, 100% { opacity: 0; transform: translateY(100%) scale(.7, .4); }
+}
+@keyframes cling-trail {
+  0%, 75% { opacity: 1; transform: scaleY(0); animation-timing-function: ease-in; }
+  80% { transform: scaleY(.45); animation-timing-function: ease-out; }
+  82% { transform: scaleY(.48); animation-timing-function: ease-in; }
+  86% { opacity: 1; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+
+/* ---- The desk, the key and the sounder ---- */
+.office .station {
+  position: relative;
+  margin-top: auto;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 18px;
+  width: 100%;
+  padding-bottom: 40px;
+}
+/* The desk surface runs behind the key's base and past both sides of the screen. */
+.office .station::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: 62%;
+  left: 50%;
+  width: 6000px;
+  height: 1200px;
+  translate: -50% 0;
+  pointer-events: none;
+  background:
+    linear-gradient(#5a3a22, #5a3a22) top / 100% 2px no-repeat,
+    radial-gradient(ellipse 450px 360px at calc(50% - 640px) 0, rgb(var(--glow) / .12), transparent 70%),
+    repeating-linear-gradient(178.6deg, transparent 0 9px, rgb(0 0 0 / .12) 9px 10px, transparent 10px 23px),
+    linear-gradient(#2c1b0f, #160c06 45%, #0c0704);
+  box-shadow: 0 -6px 18px rgb(0 0 0 / .5);
+}
+.office .office-key { width: 400px; height: auto; overflow: visible; }
+.office .office-sounder { width: 200px; height: auto; overflow: visible; margin-bottom: 8px; }
+.office #key .lever { transform-box: view-box; transform-origin: 283px 123px; transition: transform .05s ease-out; }
+.office #key .lever.down { transform: rotate(-3deg); }
+.office #key .contact-spark { opacity: 0; }
+.office #key:has(.lever.down) .contact-spark { animation: contact-spark .16s ease-out; }
+@keyframes contact-spark { from { opacity: 1; } to { opacity: 0; } }
+.office #sounder .arm { transform-box: view-box; transform-origin: 197px 43px; transition: transform 12ms linear; }
+.office #sounder .arm.down { transform: rotate(-5deg); }
+
+/* ---- The galvanometer on the right wall ---- */
+.office .galvanometer {
+  position: relative;
+  margin: 0;
+  width: 200px;
+  filter: drop-shadow(0 10px 16px rgb(0 0 0 / .65));
+}
+.office .galvanometer svg { display: block; width: 100%; height: auto; }
+.office .galvanometer .needle, .office .galvanometer .needle-shadow {
+  transform-box: view-box;
+  transition: transform .45s cubic-bezier(.3, 1.5, .5, 1);
+}
+.office .galvanometer .needle-tremble {
+  transform-box: view-box;
+  transform-origin: 130px 128px;
+  animation: tremble .11s infinite alternate ease-in-out;
+}
+.office .lives-num {
+  display: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -30px;
+  text-align: center;
+  font: 20px "IM Fell English SC", serif;
+  color: var(--o-text);
+}
+.office .galvanometer.show-num .lives-num { display: block; }
+.office .pulse { animation: dial-pulse 1s ease-in-out 3; }
+@media (prefers-reduced-motion: reduce) {
+  .office .galvanometer .needle-tremble { animation: none; }
+  .office .pulse { animation: none; outline: 2px solid #c9a35a; }
+}
+
+/* ---- The codebook card on the left wall ---- */
+.office .codebook-spot { position: relative; z-index: 3; }
+.office .morse-chart {
+  width: 300px;
+  margin: 0;
+  padding: 24px 20px 16px;
+  font-size: 16px;
+  color: var(--o-ink);
+  background: linear-gradient(160deg, #ddd0aa, #c4b283);
+  border: 0;
+  border-radius: 0;
+  box-shadow: 0 12px 28px rgb(0 0 0 / .7), inset 0 0 30px rgb(110 80 30 / .35);
+  transform: rotate(-1.5deg);
+}
+.office .morse-chart::before {
+  content: '';
+  position: absolute;
+  top: 7px;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #f0d79a, #7a5a1e);
+  box-shadow: 1px 2px 2px rgb(0 0 0 / .6);
+}
+.office .morse-chart h2 { font: 18px "IM Fell English SC", serif; letter-spacing: .15em; border-bottom-color: rgb(27 18 10 / .4); }
+.office .morse-chart i { background: var(--o-ink); }
+
+/* ---- The work: the HUD line and the message (forms come in T34) ---- */
+.office .office-hud { margin: 0 0 18px; }
+.office .hud-label {
+  margin: 0;
+  font-size: 15px;
+  letter-spacing: .3em;
+  text-transform: uppercase;
+  color: var(--o-dim);
+  text-align: center;
+}
+.office .office-work { position: relative; z-index: 3; width: 100%; }
+.office .text-row-box { padding: 14px 10px 8px; min-height: 0; }
+.office .text-row { font-size: 38px; color: var(--o-text); }
+.office .text-row.receive { font-size: 30px; }
+.office .row-role { font-size: 14px; color: var(--o-dim); }
+.office .replay-row { margin: 6px 0 0; }
+.office-stage .thought-line {
+  position: absolute;
+  left: 50%;
+  bottom: 2.4rem;
+  translate: -50% 0;
+  margin: 0;
+}
+
+/* Narrow screens: one column that scrolls; the window, clock, calendar and lamp are left out. */
+@media (max-width: 1050px) {
+  .office { height: auto; min-height: 100vh; grid-template-columns: minmax(0, 1fr); padding: 3rem 12px 0; row-gap: 20px; }
+  .office .wall-left, .office .wall-right, .office .centre { grid-column: 1; justify-self: center; }
+  .office .centre { order: 1; }
+  .office .wall-right { order: 2; }
+  .office .wall-left { order: 3; padding-bottom: 2rem; }
+  .office .window-wrap, .office .room-clock, .office .desk-lamp, .office .room-calendar { display: none; }
+  .office .station { margin-top: 24px; padding-bottom: 12px; }
+  .office .station::before { display: none; }
+  .office .office-key { width: min(400px, 62vw); }
+  .office .office-sounder { width: min(200px, 30vw); }
+  .office .text-row { font-size: clamp(1.2rem, 6vw, 2rem); }
+  .office .morse-chart { width: min(300px, 92vw); }
+}
