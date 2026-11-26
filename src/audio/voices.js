@@ -61,6 +61,32 @@ export function playTick(engine, { level = 0.5 } = {}) {
   });
 }
 
+// The office galvanometer's needle jolting in its case when a life is lost: a dull wooden tock,
+// band-passed noise around 520 Hz that dies in 45 ms [R5.2].
+export function playTock(engine, { level = 0.9 } = {}) {
+  return engine.voice((ctx, out) => {
+    const t = ctx.currentTime;
+    const len = Math.ceil(ctx.sampleRate * 0.06);
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.value = 520 * (0.85 + Math.random() * 0.3);
+    bp.Q.value = 1.4;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(level, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.045);
+    src.connect(bp);
+    bp.connect(g);
+    g.connect(out);
+    src.start(t);
+    return { source: src, nodes: [bp, g] };
+  });
+}
+
 // Static burst on a mistake in Night Shift: band-passed white noise, 300 ms [design 9, R6.4].
 export function playStatic(engine, { level = 0.22, duration = 0.3 } = {}) {
   return engine.voice((ctx, out) => {

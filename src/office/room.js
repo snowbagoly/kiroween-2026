@@ -109,7 +109,7 @@ export function mountOffice(stage, { max = 10, lives = max, day = 1, minutes = 2
       clock.style.setProperty('--hour', `${hour}deg`);
       clock.style.setProperty('--minute', `${minute}deg`);
     },
-    unmount() { window.removeEventListener('resize', fit); },
+    unmount() { window.removeEventListener('resize', fit); gauge.stop(); },
   };
   api.setDay(day);
   api.setTime(minutes);
