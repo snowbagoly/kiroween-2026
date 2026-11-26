@@ -11,10 +11,10 @@ import { createLifeDrain, drainsLives } from './idle.js';
 
 // `waiting`: the desk is empty, the next telegram has not been handed in yet, or the day's work is done
 // and the clock runs on to 06:00 [R9.7].
-export const SCREENS = ['start', 'tutorialDialog', 'tutorial', 'dayIntro', 'playing', 'messageDone', 'waiting', 'dayStats', 'gameOver', 'closing'];
+export const SCREENS = ['start', 'storyOffer', 'story', 'tutorialDialog', 'tutorial', 'dayIntro', 'playing', 'messageDone', 'waiting', 'dayStats', 'gameOver', 'closing'];
 export const MODES = ['night', 'day', 'deadair'];
 export const LAST_DAY = 3;
-const RUN_SCREENS = ['tutorialDialog', 'tutorial', 'dayIntro', 'playing', 'messageDone', 'waiting', 'dayStats', 'gameOver'];
+const RUN_SCREENS = ['storyOffer', 'story', 'tutorialDialog', 'tutorial', 'dayIntro', 'playing', 'messageDone', 'waiting', 'dayStats', 'gameOver'];
 export const CLOCK_SCREENS = ['playing', 'messageDone', 'waiting'];
 
 // Numbers for the Judge "Show stats" button: a good, believable day [R13.3f].
@@ -44,7 +44,8 @@ export function runTotals(days, livesLeft = 0) {
 // [R9.7]. The game always plays timed; without it the messages simply follow each other.
 // `mustHear`: a received letter counts only once its signal has played (a HEARD event), so the player
 // cannot type ahead by guessing the word.
-export function createGame({ data = defaultData(), save = () => {}, seed = 1, bus = null, judge = false, timed = false, mustHear = false } = {}) {
+// `story`: offer the story before a run [R17.6]; `skipStory()` says whether the player always skips it.
+export function createGame({ data = defaultData(), save = () => {}, seed = 1, bus = null, judge = false, timed = false, mustHear = false, story = false, skipStory = () => false } = {}) {
   const rng = createRng(seed);
   let saved = data;
   const s = {
@@ -92,7 +93,13 @@ export function createGame({ data = defaultData(), save = () => {}, seed = 1, bu
     s.mode = mode;
     s.lives = createLives(maxLivesFor(mode));
     emit('RUN_STARTED', { mode });
-    const ask = saved.settings.tutorial === 'ask' && mode !== 'deadair' && !judge;
+    // The story first, unless it is always skipped; never in Dead Air or Judge mode [R17.6, R16.8, R13.5].
+    if (story && mode !== 'deadair' && !judge && !skipStory()) go('storyOffer');
+    else afterStory();
+  }
+
+  function afterStory() {
+    const ask = saved.settings.tutorial === 'ask' && s.mode !== 'deadair' && !judge;
     if (ask) go('tutorialDialog');
     else startDay(1);
   }
@@ -340,6 +347,10 @@ export function createGame({ data = defaultData(), save = () => {}, seed = 1, bu
         startRun(e.mode);
       },
     },
+    storyOffer: {
+      STORY_CHOICE(e) { if (e.choice === 'read') go('story'); else afterStory(); },
+    },
+    story: { STORY_DONE: afterStory },
     tutorialDialog: {
       TUTORIAL_CHOICE(e) {
         if (e.choice === 'start') go('tutorial');

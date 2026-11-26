@@ -73,3 +73,7 @@
   cursor: pointer;
 }
 .options-dialog .opt-buttons .end-game-btn, .options-dialog .opt-buttons .confirm-end { color: #fff; background: #8a1f1a; border-color: #8a1f1a; }
+
+/* The story offer, on the start card's office [R17.6]. */
+.card-layer.story-offer { z-index: 15; }
+.card .always-skip { display: block; margin-top: .8rem; font-size: .95rem; }

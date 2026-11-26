@@ -1,0 +1,476 @@
+/* The story [R17]: the magic-lantern show and its slides' motion. */
+.intro { --dim: #9a8a6a; --text: #e0d3b0; --brass: #c9a35a; --paper: #dccda3; --ink: #1b120a; }
+
+/* ---------- Intro: a magic-lantern show ---------- */
+
+.intro {
+  position: fixed;
+  inset: 0;
+  z-index: 6;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3vh;
+  padding: 16px;
+  background: #050403;
+  transition: opacity 2.2s ease-in;
+}
+.intro.active { display: flex; }
+.intro.leaving { opacity: 0; }
+/* The film grain and vignette lie over the show as well. */
+
+.intro-title {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  transition: opacity 1.5s;
+}
+.intro.started .intro-title { opacity: 0; pointer-events: none; }
+.intro-title h1 {
+  margin: 0 0 5vh;
+  font: clamp(40px, 8vw, 96px)/1 "IM Fell English SC", serif;
+  letter-spacing: .12em;
+  color: #cfc6ad;
+  text-shadow: 0 0 30px rgb(207 198 173 / .3);
+}
+.intro-title p { margin: 0; color: var(--dim); animation: breathe 3s ease-in-out infinite; }
+@keyframes breathe { 50% { opacity: .45; } }
+
+/* The picture thrown on the wall: soft at the edges, and flickering with the lamp inside the lantern. */
+.lantern {
+  position: relative;
+  width: min(100%, 105vh);
+  aspect-ratio: 16 / 9;
+  opacity: 0;
+  transition: opacity 2.5s;
+  /* soft on every edge, like the edge of a projected slide */
+  mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent),
+    linear-gradient(to bottom, transparent, #000 9%, #000 91%, transparent);
+  mask-composite: intersect;
+  animation: lantern 9s infinite;
+}
+.intro.started .lantern { opacity: 1; }
+@keyframes lantern {
+  0%, 100% { filter: sepia(.2) brightness(1); }
+  31% { filter: sepia(.2) brightness(1); }
+  32% { filter: sepia(.2) brightness(.9); }
+  34% { filter: sepia(.2) brightness(1); }
+  70% { filter: sepia(.2) brightness(.96); }
+  71% { filter: sepia(.2) brightness(.88); }
+  73% { filter: sepia(.2) brightness(1); }
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 1.6s ease; /* fading out: SLIDE_FADE_OUT_MS in intro.js */
+}
+.slide.shown { opacity: 1; transition-duration: 2.2s; } /* coming up: SLIDE_FADE_IN_MS */
+.lantern-defs { position: absolute; }
+.slide.blank { background: radial-gradient(ellipse at 50% 50%, #2a2219, #0d0a07 75%); }
+
+/* The slow push in on each picture, toward --focus; a slide can push in further with --zoom. It holds where it got to while the slide fades out. */
+.slide .camera {
+  transform-box: view-box;
+  transform-origin: var(--focus, 50% 50%);
+  animation: camera 26s ease-out forwards;
+}
+/* A slide only moves while it's showing, so the one-off moments in it are timed from when it comes up. */
+.intro .slide:not(.shown) * { animation-play-state: paused; }
+@keyframes camera { to { transform: scale(var(--zoom, 1.08)); } }
+
+/* Small things that keep moving, so a slide is never quite still. */
+.slide .clouds { animation: drift 70s ease-in-out infinite alternate; --drift: 140px; }
+.slide .fog { animation: drift 34s ease-in-out infinite alternate; --drift: 120px; }
+.slide .fog-mid { animation-duration: 23s; animation-direction: alternate-reverse; }
+.slide .reeds-mid { animation-duration: 6s; animation-delay: -2s; }
+.slide .reeds-right { animation-delay: -1.5s; }
+.slide .tree { animation-duration: 6.5s; --sway: .4deg; }
+.slide .smoke { animation: smoke 7s ease-out infinite; }
+/* A chimney's plume: each puff leaves the stack, swells and drifts off, the next one close behind. */
+.slide .plume ellipse {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: puff var(--dur) linear var(--delay) infinite;
+}
+.slide .plume-far { --dur: 14s; --dx: 60px; --dy: -34px; }
+.slide .plume-near { --dur: 4.8s; --dx: 120px; --dy: -64px; }
+@keyframes puff {
+  from { transform: translate(0, 0) scale(.6); opacity: 0; }
+  5% { opacity: .9; }
+  to { transform: translate(var(--dx), var(--dy)) scale(3.2, 2.2); opacity: 0; }
+}
+.slide .sails { transform-box: fill-box; transform-origin: center; animation: turn 26s linear infinite; }
+.slide .lamp-window, .slide .lamp-halo { animation: lamp 6s infinite; }
+@keyframes lamp {
+  0%, 100% { opacity: 1; }
+  45% { opacity: .85; }
+  46% { opacity: .6; }
+  48% { opacity: .9; }
+  80% { opacity: .95; }
+}
+.slide .glimmer { animation: glimmer 3s ease-in-out infinite alternate; }
+.slide .leaf {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: blow var(--dur, 7s) linear var(--delay, 0s) infinite;
+}
+@keyframes drift {
+  from { transform: translateX(calc(var(--drift) * -.5)); }
+  to { transform: translateX(calc(var(--drift) * .5)); }
+}
+@keyframes smoke {
+  from { transform: translate(-10px, 8px); opacity: 0; }
+  30% { opacity: 1; }
+  to { transform: translate(40px, -24px); opacity: 0; }
+}
+@keyframes turn { to { transform: rotate(360deg); } }
+.slide .drizzle rect { animation: drizzle .8s linear infinite; }
+.slide .drizzle-near rect { animation: drizzle-near .55s linear infinite; }
+/* Each moves by exactly one tile of its rain pattern, so the loop doesn't jump. */
+@keyframes drizzle { to { translate: -76px 280px; } }
+@keyframes drizzle-near { to { translate: -121.6px 448px; } }
+
+/* The hall: the last light upstairs, over the piano, goes out as the letter writes "piano" (5.75 s in),
+   its reflection in the road with it. The gas lamp breathes, and the torn corner of the bill lifts in the wind. */
+.slide .hall-light { animation: last-light 1.6s ease-in 5.5s forwards; }
+@keyframes last-light {
+  30% { opacity: .5; }
+  42% { opacity: .85; }
+  100% { opacity: 0; }
+}
+.slide .gaslight { animation: lamp 5s ease-in-out infinite; }
+.slide .poster-flap {
+  transform-box: fill-box;
+  transform-origin: 0 0;
+  animation: flap-corner 2.3s ease-in-out infinite alternate;
+}
+@keyframes flap-corner { to { transform: rotate(-16deg) scaleY(.85); } }
+
+/* The rented room: the candle flickers, and as the letter says "It will not last me the month" (6.2 s in),
+   a draught bends the flame and the light dips. */
+.slide .candle { animation: lamp 4s ease-in-out infinite, candle-dip 1.6s ease-in-out 6s; }
+@keyframes candle-dip {
+  25% { opacity: .55; }
+  60% { opacity: .85; }
+}
+.slide .candle-flame { animation: flame 1.3s ease-in-out infinite alternate; }
+@keyframes flame { to { transform: scale(.92, 1.08) skewX(3deg); } }
+.slide .flame-dip { animation: flame-dip 1.6s ease-in-out 6s; }
+@keyframes flame-dip { 25% { transform: skewX(-26deg) scaleY(.7); } }
+
+/* The advert: as the letter says "I saw it" (2.5 s in), a pencil rings the advertisement. The pencil's
+   sound (SOUND_SETTINGS.pencil in ambience.js) lasts as long. The daylight comes and goes a little as clouds pass. */
+.slide .pencil-ring {
+  stroke-dasharray: 1 1.05;
+  stroke-dashoffset: 1.02;
+  animation: ring-drawn 1.2s cubic-bezier(.45, .1, .55, .95) 2.5s forwards;
+}
+@keyframes ring-drawn { to { stroke-dashoffset: 0; } }
+.slide .daylight { animation: daylight 11s ease-in-out infinite alternate; }
+@keyframes daylight { to { opacity: .55; } }
+
+/* The station: just as the letter says "though they told me the office stood empty", something dark
+   drifts up to the lit window and the lamp dims. Then the lamp goes out for half a second, its reflection
+   with it, and when it sputters back the shape is gone. A moment later a crow takes fright. */
+.slide .window-shadow {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: at-the-window 4.4s ease-in-out 5.4s both;
+}
+.slide .lamp-dim { animation: lamp-out 4.4s ease-in-out 5.4s both; }
+.slide .crow-perched { animation: gone 0s 9s forwards; }
+.slide .crow-flight { opacity: 0; animation: fly-off 3.5s cubic-bezier(.4, 0, .7, 1) 9s forwards; }
+.slide .wings { transform-box: fill-box; transform-origin: center; animation: flap .2s ease-in-out infinite alternate; }
+.slide .wire-span { animation: bob 1.4s ease-out 9s; }
+@keyframes at-the-window {
+  from { transform: translateX(-14px) scale(.85); opacity: 0; }
+  30% { transform: translateX(-4px) scale(.95); opacity: .3; }
+  50%, 66% { transform: translateX(0) scale(1.15); opacity: .5; }
+  67%, to { transform: translateX(0) scale(1.15); opacity: 0; }
+}
+@keyframes lamp-out {
+  50%, 66% { opacity: .7; }
+  67%, 78% { opacity: 0; }
+  79% { opacity: .5; }
+  80% { opacity: .15; }
+  83% { opacity: 1; }
+}
+@keyframes gone { to { opacity: 0; } }
+@keyframes fly-off {
+  0% { opacity: 1; transform: translate(0, 0); }
+  15% { transform: translate(14px, -16px); }
+  100% { opacity: 1; transform: translate(620px, -430px) scale(.5); }
+}
+@keyframes flap { to { transform: scaleY(-.5); } }
+@keyframes bob {
+  20% { transform: translateY(-2px); }
+  45% { transform: translateY(1.2px); }
+  70% { transform: translateY(-.6px); }
+}
+@keyframes glimmer {
+  from { opacity: .5; transform: translateX(-2px); }
+  to { opacity: .9; transform: translateX(2px); }
+}
+@keyframes blow {
+  from { transform: translate(-60px, var(--y)) rotate(0); }
+  50% { transform: translate(800px, calc(var(--y) - 50px)) rotate(400deg); }
+  to { transform: translate(1700px, calc(var(--y) + 40px)) rotate(900deg); }
+}
+
+/* The train: the marsh slides past the window, nearer things faster; each layer is drawn so that
+   moving it by exactly its loop length looks the same, so it can repeat without a jump. The view
+   jolts a little at every rail joint (RAIL_JOINT_MS in audio.js), and rain runs back across the glass. */
+.slide .pass-far { animation: pass-far 40s linear both; }
+.slide .pass-mid { animation: pass-mid 24s linear infinite; }
+.slide .pass-poles { animation: pass-poles 1.1s linear infinite; }
+.slide .pass-near { animation: pass-near .6s linear infinite; }
+.slide .outside { animation: rail-joint 1.4s ease-out infinite; }
+.slide .run { animation: run-back var(--dur) linear var(--delay) infinite; }
+@keyframes pass-far { to { transform: translateX(-420px); } }
+@keyframes pass-mid { to { transform: translateX(-1600px); } }
+@keyframes pass-poles { to { transform: translateX(-700px); } }
+@keyframes pass-near { to { transform: translateX(-800px); } }
+@keyframes rail-joint {
+  0%, 100% { transform: translateY(0); }
+  6% { transform: translateY(1.5px); }
+  14% { transform: translateY(-.5px); }
+  22% { transform: translateY(0); }
+}
+@keyframes run-back {
+  from { transform: translate(0, 0); opacity: 0; }
+  10% { opacity: 1; }
+  80% { opacity: 1; }
+  to { transform: translate(-260px, 110px); opacity: 0; }
+}
+
+/* The office: the clock ticks, his tea still steams, the lamp flickers. When the letter sets the
+   needle down (the needle-down cue from intro.js), the tone arm lowers and the record turns; when it
+   breaks off (clatter), the sounder's lever starts to chatter and the clock strikes ten. */
+.slide .steam { transform-box: fill-box; transform-origin: 50% 100%; animation: steam 4s ease-out infinite; }
+.slide .steam-late { animation-delay: -2s; }
+.slide .lamp-glow-room { animation: lamp 6s infinite; }
+.slide .tone-arm {
+  transform-box: fill-box;
+  transform-origin: 96% 6%; /* the pivot, where the arm meets the horn */
+  transform: rotate(-16deg);
+  transition: transform .4s ease-in;
+}
+.intro.needle-down .tone-arm { transform: rotate(0); }
+.slide .record-turn { transform-box: fill-box; transform-origin: center; animation: turn 1.8s linear infinite paused; }
+.intro.needle-down .slide.shown .record-turn { animation-play-state: running; }
+.slide .sounder-arm { transform-box: fill-box; transform-origin: 93% 50%; }
+.intro.clatter .slide.shown .sounder-arm { animation: clatter .12s steps(2) infinite; }
+.slide .needle-tremble { transform-box: view-box; transform-origin: 130px 128px; animation: tremble 1.3s ease-in-out infinite alternate; }
+@keyframes tremble {
+  from { transform: rotate(-1.2deg); }
+  60% { transform: rotate(.6deg); }
+  to { transform: rotate(1.4deg); }
+}
+/* The office clock stands at one minute to ten; its minute hand ticks onto the hour as it strikes. */
+.slide .clock { --hour: 299.5deg; --minute: 354deg; }
+.slide .clock .minute-hand { transition: transform .12s ease-out; }
+.intro.clatter .slide .clock { --minute: 360deg; }
+@keyframes steam {
+  from { transform: translate(0, 4px); opacity: 0; }
+  35% { opacity: .5; }
+  to { transform: translate(3px, -16px) skewX(-10deg); opacity: 0; }
+}
+
+@keyframes clatter { 50% { transform: rotate(-4deg); } }
+
+/* The letter, written out a line at a time underneath the picture. */
+.intro-letter {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: min(100%, 90vh);
+  min-height: 6.5em;
+  font: clamp(19px, 2.3vw, 30px)/1.3 "Caveat", cursive;
+  color: #d8c9a4;
+  text-shadow: 0 0 12px rgb(216 201 164 / .25);
+  transition: opacity 1.2s ease;
+}
+.intro.between .intro-letter { opacity: 0; }
+.intro-letter p {
+  margin: 0;
+  clip-path: inset(0 100% 0 0);
+  animation: write var(--write) linear forwards;
+}
+@keyframes write { to { clip-path: inset(0 0 0 0); } }
+
+.intro-hint {
+  position: absolute;
+  bottom: 2.5vh;
+  margin: 0;
+  font-size: 12px;
+  color: #5c513e;
+  opacity: 0;
+  transition: opacity 2s 3s;
+}
+.intro.started .intro-hint { opacity: 1; }
+.intro-hint kbd { color: #8a7a5c; border-color: #2f271c; }
+
+
+/* Motion shared by the slides (grown by office/scenery.js). */
+/* Motion shared by the painted scenes, the intro's slides and the room, and by the objects in
+   drawings.js that appear in both. */
+
+/* Grass, reeds and bare trees sway in the wind (grown by scenery.js). */
+.intro .reeds, .intro .tree {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: sway 4.5s ease-in-out infinite alternate;
+}
+@keyframes sway {
+  from { transform: skewX(calc(var(--sway, 2.5deg) * -1)); }
+  to { transform: skewX(var(--sway, 2.5deg)); }
+}
+
+/* Rain on a window pane. */
+.intro .drip { animation: drip-fade var(--dur) linear var(--delay) infinite; }
+.intro .drip .trail { stroke-dasharray: 22 400; }
+.intro .drip .drop { transform-box: fill-box; transform-origin: 50% 85%; }
+.intro .drip-a .drop { animation: drip-a var(--dur) ease-in-out var(--delay) infinite; }
+.intro .drip-a .trail { animation: trail-a var(--dur) ease-in-out var(--delay) infinite; }
+.intro .drip-b .drop { animation: drip-b var(--dur) ease-in-out var(--delay) infinite; }
+.intro .drip-b .trail { animation: trail-b var(--dur) ease-in-out var(--delay) infinite; }
+
+/* Drops clinging to a window (clingDrops in scenery.js). Each .cling is one drop's path down the pane:
+   the drop runs down it by 100% of its height, and its streak stretches down behind it. Only transform
+   and opacity move, so on an HTML layer (the room's window) the graphics card does it alone. */
+.intro .cling > * { transform-origin: 50% 0; animation: var(--dur) linear var(--delay) infinite; }
+.intro .cling-drop { animation-name: cling; transform-origin: 50% var(--middle); }
+.intro .cling-trail { animation-name: cling-trail; }
+/* Drawn inside a picture, each part is measured by its own box (an invisible rect the size of its path). */
+.intro g.cling > * { transform-box: fill-box; }
+/* As an HTML layer over the picture. The streak is faint, and dries first at the top. */
+.intro .cling-layer { position: absolute; inset: 0; pointer-events: none; }
+.intro .cling-layer .cling, .intro .cling-layer .cling > * { position: absolute; }
+.intro .cling-layer .cling > * { top: 0; }
+.intro .cling-layer .cling-drop { left: 0; width: 100%; height: 100%; }
+.intro .cling-layer .cling-drop svg { display: block; width: 100%; height: auto; overflow: visible; }
+.intro .cling-layer .cling-trail {
+  height: 100%;
+  border-radius: 1px;
+  background: linear-gradient(rgb(207 195 166 / 0), rgb(207 195 166 / .14) 70%);
+}
+/* It gathers slowly from the mist on the glass, clings for most of its life, swells until it gives,
+   runs, catches for a moment, runs on into the water on the bar, and is gone. */
+@keyframes cling {
+  0% { opacity: 0; transform: translateY(0) scale(.3); animation-timing-function: ease-out; }
+  25% { opacity: 1; transform: translateY(0) scale(1); }
+  70% { transform: translateY(0) scale(1); animation-timing-function: ease-in-out; }
+  73% { transform: translateY(1%) scale(1.06, 1.12); }
+  75% { transform: translateY(1%) scale(1.06, 1.12); animation-timing-function: ease-in; }
+  80% { transform: translateY(45%) scale(.95, 1.12); animation-timing-function: ease-out; }
+  82% { transform: translateY(48%) scale(1, 1.05); animation-timing-function: ease-in; }
+  86% { opacity: 1; transform: translateY(100%) scale(.95, 1); }
+  90%, 100% { opacity: 0; transform: translateY(100%) scale(.7, .4); }
+}
+/* The wet streak keeps up with the drop, then dries. */
+@keyframes cling-trail {
+  0%, 75% { opacity: 1; transform: scaleY(0); animation-timing-function: ease-in; }
+  80% { transform: scaleY(.45); animation-timing-function: ease-out; }
+  82% { transform: scaleY(.48); animation-timing-function: ease-in; }
+  86% { opacity: 1; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+
+/* A drop on the window forms at the top, then slides in fits and starts, wobbling a little, with a
+   short wet streak behind it, all the way down its pane (--fall), where it shrinks into the water
+   gathered on the bar or the frame; then a new one forms. drip-a and drip-b are two different paths
+   (each trail path in index.html follows the same points, scaled to its fall). */
+@keyframes drip-fade {
+  0% { opacity: 0; }
+  6%, 92% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes drip-a {
+  0% { transform: translate(0, 0) scale(.25); }
+  10% { transform: translate(0px, calc(var(--fall) * 0.000)); }
+  20% { transform: translate(1px, calc(var(--fall) * 0.129)); }
+  34% { transform: translate(1px, calc(var(--fall) * 0.157)); }
+  44% { transform: translate(-2px, calc(var(--fall) * 0.357)); }
+  58% { transform: translate(-2px, calc(var(--fall) * 0.386)); }
+  70% { transform: translate(1px, calc(var(--fall) * 0.714)); }
+  82% { transform: translate(1px, calc(var(--fall) * 0.743)); }
+  94% { transform: translate(0px, calc(var(--fall) * 1.000)); }
+  100% { transform: translate(0px, var(--fall)) scale(.4); }
+}
+@keyframes trail-a {
+  0% { stroke-dashoffset: 22; }
+  10% { stroke-dashoffset: 22; }
+  20% { stroke-dashoffset: 9; }
+  34% { stroke-dashoffset: 6; }
+  44% { stroke-dashoffset: -14; }
+  58% { stroke-dashoffset: -17; }
+  70% { stroke-dashoffset: -49; }
+  82% { stroke-dashoffset: -52; }
+  94% { stroke-dashoffset: -78; }
+  100% { stroke-dashoffset: -78; }
+}
+@keyframes drip-b {
+  0% { transform: translate(0, 0) scale(.25); }
+  10% { transform: translate(0px, calc(var(--fall) * 0.000)); }
+  20% { transform: translate(-1px, calc(var(--fall) * 0.214)); }
+  34% { transform: translate(-1px, calc(var(--fall) * 0.243)); }
+  44% { transform: translate(2px, calc(var(--fall) * 0.500)); }
+  58% { transform: translate(2px, calc(var(--fall) * 0.529)); }
+  70% { transform: translate(0px, calc(var(--fall) * 0.786)); }
+  82% { transform: translate(0px, calc(var(--fall) * 0.807)); }
+  94% { transform: translate(-1px, calc(var(--fall) * 1.000)); }
+  100% { transform: translate(-1px, var(--fall)) scale(.4); }
+}
+@keyframes trail-b {
+  0% { stroke-dashoffset: 22; }
+  10% { stroke-dashoffset: 22; }
+  20% { stroke-dashoffset: 1; }
+  34% { stroke-dashoffset: -2; }
+  44% { stroke-dashoffset: -28; }
+  58% { stroke-dashoffset: -31; }
+  70% { stroke-dashoffset: -57; }
+  82% { stroke-dashoffset: -59; }
+  94% { stroke-dashoffset: -78; }
+  100% { stroke-dashoffset: -78; }
+}
+
+/* The wall clock (drawClock): the pendulum swings once a second, and the hands point where the
+   clock's --hour and --minute say. */
+.intro .clock .pendulum {
+  transform-box: fill-box;
+  transform-origin: 50% 0;
+  animation: pendulum 1s ease-in-out infinite alternate;
+}
+@keyframes pendulum {
+  from { transform: rotate(-4deg); }
+  to { transform: rotate(4deg); }
+}
+.intro .clock .hour-hand, .intro .clock .minute-hand { transform-box: view-box; transform-origin: 50px 62px; }
+.intro .clock .hour-hand { transform: rotate(var(--hour, 0deg)); }
+.intro .clock .minute-hand { transform: rotate(var(--minute, 0deg)); }
+
+/* The oil lamp's flame (drawLamp) flickers now and then. */
+.intro .lamp-flame {
+  transform-box: fill-box;
+  transform-origin: 50% 80%;
+  animation: oil-flame 6s infinite;
+}
+@keyframes oil-flame {
+  0%, 100% { opacity: 1; }
+  45% { opacity: .85; }
+  46% { opacity: .65; }
+  48% { opacity: .92; }
+  80% { opacity: .95; }
+}
+.intro .lamp-smoke { opacity: 0; }
+
+/* A window's sky only lightens where something sets --dawn (the room, toward morning). */
+.intro .window-dawn { opacity: var(--dawn, 0); }
+.intro .window-morning { opacity: 0; transition: opacity 6s ease-in-out; }
