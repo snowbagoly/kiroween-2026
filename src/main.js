@@ -8,7 +8,7 @@ import { createHand } from './core/hand.js';
 import { createAudioEngine } from './audio/engine.js';
 import { playLetter, armDownAt } from './audio/sequencer.js';
 import { MORSE } from './core/morse.js';
-import { createNightMusic } from './audio/music-night.js';
+import { createNightSound, KEY_TONE_HZ } from './audio/office-sound.js';
 import { createDayMusic } from './audio/music-day.js';
 import { HORROR_SOUNDS } from './audio/horror-voices.js';
 import { mountCaptions } from './audio/captions.js';
@@ -77,6 +77,7 @@ function applySettings() {
   audio.setMusicVolume(s.musicVol);
   audio.setSfxVolume(s.sfxVol);
   audio.setMuted(s.mute);
+  night?.setMusic(s.music); // the "Music" switch turns the record off, not the room [R6.8]
   document.documentElement.classList.toggle('reduce-flashing', s.reduceFlashing);
   desk?.fx?.setReduce(reduceFlashing());
   desk?.gauge.showNumber(s.showLivesNumber);
@@ -101,7 +102,7 @@ const reader = createPressReader({
   onPressStart: () => {
     lastInputAt = now();
     audio.unlock();
-    tone = playTone(audio);
+    tone = playTone(audio, office ? { freq: KEY_TONE_HZ } : {}); // in the office, tuned to the waltz's Eb
     if (desk) setKeyDown(desk.stage, true);
     startMeter();
     game.dispatch({ type: 'INPUT', t: now() });
@@ -239,7 +240,7 @@ function animateArm(schedule, end) {
 // Plays one received letter with the sounder arm. Returns the schedule, or null with no sound.
 function playReceived(letter, speed = 1) {
   audio.unlock();
-  const h = playLetter(audio, letter, { speed });
+  const h = playLetter(audio, letter, office ? { speed, freq: KEY_TONE_HZ } : { speed });
   if (h) {
     recv.busyUntil = h.end;
     animateArm(h.schedule, h.end);
@@ -578,7 +579,7 @@ function renderRun(s) {
 
 // ---- Night Shift sound bed and the horror director ---------------------------
 
-const night = createNightMusic(audio);
+const night = createNightSound(audio, { music: data.settings.music }); // the office's sound and the record [R6.1, R6.2]
 const dayMusic = createDayMusic(audio);
 const NIGHT_SCREENS = ['dayIntro', 'playing', 'messageDone', 'waiting', 'dayStats', 'gameOver'];
 const director = createHorrorDirector({

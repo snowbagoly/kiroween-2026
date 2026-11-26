@@ -1,6 +1,6 @@
 // Manual check page for T17, T22 and T23. Built to dist/dev-night.html.
 import { createAudioEngine } from '../src/audio/engine.js';
-import { createNightMusic, bpmFor } from '../src/audio/music-night.js';
+import { createNightSound } from '../src/audio/office-sound.js';
 import { HORROR_SOUNDS } from '../src/audio/horror-voices.js';
 import { createDayMusic } from '../src/audio/music-day.js';
 import { playStatic } from '../src/audio/voices.js';
@@ -8,13 +8,13 @@ import { mountCaptions } from '../src/audio/captions.js';
 
 const audio = createAudioEngine();
 audio.attachUnlock(window);
-const night = createNightMusic(audio);
+const night = createNightSound(audio);
 const day = createDayMusic(audio);
 const $ = (id) => document.getElementById(id);
 
 function status() {
   $('status').textContent = night.running
-    ? `Playing. Heartbeat ${Math.round(bpmFor(night.tension))} beats per minute.`
+    ? `Playing the office at night: rain, wind, wires, room tone and the waltz (${night.record.barsPlayed} bars so far).`
     : day.running ? 'Playing Day Shift music.' : 'Not playing';
 }
 

@@ -12,6 +12,7 @@ export function optionsHtml() {
       <label class="opt-row">Music volume <input type="range" name="musicVol" min="0" max="1" step="0.05"></label>
       <label class="opt-row">Effects volume <input type="range" name="sfxVol" min="0" max="1" step="0.05"></label>
       <label class="opt-row opt-check"><input type="checkbox" name="mute"> Mute</label>
+      <label class="opt-row opt-check"><input type="checkbox" name="music"> Music</label>
       <label class="opt-row opt-check"><input type="checkbox" name="reduceFlashing"> Reduce flashing</label>
       <label class="opt-row opt-check"><input type="checkbox" name="captions"> Captions</label>
       <label class="opt-row opt-check"><input type="checkbox" name="showLivesNumber"> Show lives as a number</label>
