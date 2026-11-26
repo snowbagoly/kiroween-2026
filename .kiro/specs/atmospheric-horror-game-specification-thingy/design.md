@@ -196,7 +196,7 @@ The sounder arm and the "click" and "clack" are scheduled from the same list of 
 **Day builder** `buildDay(day, mode, rng)` picks 5 messages and their arrival times:
 
 1. Choose from the pool of that day and mode (Day Shift uses `strange: false` only [R7.2]).
-2. Rules to satisfy: at least one short and one long [R9.2]; lengths not sorted [R9.2]; Night Shift strange counts: Day 1 only the 5th, Day 2 at least 2, Day 3 at least 3 [R6.3, R6.7]; Day 3 at least 2 send and 2 receive [R9.2]; Dead Air uses Day 3 strange counts on all days [R16.1].
+2. Rules to satisfy: at least one short and one long [R9.2]; lengths not sorted [R9.2]; no long message among the last two [R9.2]; Night Shift strange counts: Day 1 only the 5th, Day 2 at least 2, Day 3 at least 3 [R6.3, R6.7]; Day 3 at least 2 send and 2 receive [R9.2]; Dead Air uses Day 3 strange counts on all days [R16.1].
 3. The 5th message of Day 1 in Night Shift and Dead Air is the fixed telegram to "Mr E. Vane, Station 7": `WHY HAVE YOU NOT REPORTED` (it counts as strange and long) [R6.3a]. In Day Shift it is a normal message.
 4. A day may hold one thread, and its parts keep their order [R12.5].
 5. Arrival times: the first at 22:00, the rest spread to 04:00 with a little seeded jitter, in order [R9.7b].

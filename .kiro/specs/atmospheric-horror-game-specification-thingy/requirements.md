@@ -137,7 +137,7 @@ Acceptance criteria:
 ### R9. Days and progression
 Acceptance criteria:
 1. The game SHALL have 3 days: Day 1 is sending only, Day 2 is receiving only, Day 3 mixes sending and receiving.
-2. Each day SHALL have 5 messages in a mixed order of length: short and long messages SHALL NOT be sorted, so the player may get a long message first, then a short one, then a longer one. Each day SHALL include at least one short message (up to 10 letters) and at least one long message (20 letters or more). On Day 3 the messages SHALL be a random mix of "send" and "receive", with at least 2 of each.
+2. Each day SHALL have 5 messages in a mixed order of length: short and long messages SHALL NOT be sorted, so the player may get a long message first, then a short one, then a longer one. Each day SHALL include at least one short message (up to 10 letters) and at least one long message (20 letters or more). The last two messages of a day SHALL NOT be long, so the long work comes early and the last minutes before 06:00 stay fair. On Day 3 the messages SHALL be a random mix of "send" and "receive", with at least 2 of each.
 3. WHEN a day ends without game over THEN the system SHALL start the next day after the player clicks "Next day".
 4. The system SHALL always start a new game at Day 1 and SHALL NOT offer a day picker in normal play. After game over, the player can only restart the current day (R5.6a) or go to the main menu.
 5. WHEN Day 3 starts THEN the system SHALL show a short intro explaining that the player now both sends and receives.

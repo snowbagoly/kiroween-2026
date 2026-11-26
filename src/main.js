@@ -875,10 +875,16 @@ bus.on('MESSAGE_STARTED', ({ message }) => {
   recv.idleUsed = false;
   if (message.role === 'receive') playCurrent(700);
 });
-bus.on('LETTER_OK', ({ next }) => {
+bus.on('LETTER_OK', ({ next, letter }) => {
   desk?.row.setPos(next);
   if (role() === 'send' && office && tapeWords.has(next)) office.tape.gap();
   if (role() !== 'receive') return;
+  // A received letter goes onto the tape only once it is decoded, so the tape never gives it away.
+  if (office && MORSE[letter]) {
+    for (const sym of MORSE[letter]) office.tape.symbol(sym);
+    office.tape.letter(letter);
+    if (tapeWords.has(next)) office.tape.gap();
+  }
   recv.idleUsed = false;
   if (next < (st().message?.letters.length ?? 0)) playCurrent(NEXT_LETTER_PAUSE_MS); // R4.3
 });
