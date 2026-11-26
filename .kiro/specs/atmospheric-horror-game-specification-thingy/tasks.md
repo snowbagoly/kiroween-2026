@@ -171,6 +171,9 @@ Phase 7 (T32 to T42) builds the 1903 office, story and endings from design secti
 - [ ] **T42. Judge additions and screenshot script**
   Needs: T24, T38, T40. Add "Dawn" to Jump to day, "Play the story", one button per omen and the last warning; infinite lives covers idling and the late drain; the speed switch speeds the clock. Add `tools/shots.mjs` (always `--mute-audio`).
   Done when: every new Judge button works with sound off; `tools/shots.mjs` writes the full shot list from design 16. [R13.3a, R13.3g, R13.4c, R13.5]
+- [ ] **T43. The office by daylight for Day Shift**
+  Needs: T32, T34. Draw the office by day in the same drawings: the window shows the marsh in daylight with clouds drifting, sunlight falls through the panes as a patch on the desk with dust in the beam, no lamp flame. Now and then a bird flies past in front of the window. Day Shift then uses the office: the telegram form with its SENT/RECEIVED stamp, the paper tape and the codebook. Drop the old desk (`ui/scene.js`, `ui/galvanometer.js`, `ui/morse-chart.js`, `ui/text-row.js`) and the short "Message sent" card. Open: whether the story's slides get a day version.
+  Done when: Day Shift plays Day 1 to Day 3 in the daylight office; the bird flies past at random, never while a letter is being keyed and not with reduced motion; screenshots at 1440, 1920 and 360 px. [R7.2, R7.2a, R11.4, design 8]
 
 ## Phase 6. Finish (29.11 to 01.12)
 
