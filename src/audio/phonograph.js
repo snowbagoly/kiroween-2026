@@ -20,7 +20,8 @@ export function beatFor(i, bars = WALTZ.length) {
   return WALTZ_BEAT_SECONDS * (fromEnd === 0 ? 1.35 : fromEnd === 1 ? 1.15 : 1);
 }
 
-export function createPhonograph(engine, { on = true, rng = Math.random, setTimer = (f, ms) => setTimeout(f, ms), clearTimer = clearTimeout } = {}) {
+// `destination()` gives the node the record plays into (default: the music bus).
+export function createPhonograph(engine, { on = true, rng = Math.random, setTimer = (f, ms) => setTimeout(f, ms), clearTimer = clearTimeout, destination = () => engine.musicBus } = {}) {
   let ctx = null;
   let out = null;
   let input = null;
@@ -67,7 +68,7 @@ export function createPhonograph(engine, { on = true, rng = Math.random, setTime
     out = keep(ctx.createGain());
     out.gain.value = 0;
     out.gain.setTargetAtTime(level(), ctx.currentTime, 4);
-    out.connect(engine.musicBus);
+    out.connect(destination());
     input = keep(ctx.createGain());
     const highpass = keep(ctx.createBiquadFilter());
     highpass.type = 'highpass';
@@ -257,6 +258,8 @@ export function createPhonograph(engine, { on = true, rng = Math.random, setTime
       musicOn = !!v;
       if (out) out.gain.setTargetAtTime(level(), ctx.currentTime, 0.4);
     },
+    // Everything stops at once, when the line dies [R5.5].
+    cut() { if (out) { out.gain.cancelScheduledValues(ctx.currentTime); out.gain.setValueAtTime(0, ctx.currentTime); } },
     // How warped the record sounds, 0 (normal) to 1 (badly) [R6.7].
     setWarp(w) {
       if (wowDepth) wowDepth.gain.setTargetAtTime(WOW_DEPTH + Math.min(1, Math.max(0, w)) * 0.005, ctx.currentTime, 2);

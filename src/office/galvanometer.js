@@ -95,6 +95,8 @@ export function mountOfficeGauge(figure, {
       drawNeedle();
     },
     showNumber(on) { figure.classList.toggle('show-num', !!on); },
+    // A jolt with no cause on the line: the needle jumps and settles back [R6.7].
+    twitch() { needle.velocity += (Math.random() < 0.5 ? -1 : 1) * (0.6 + Math.random() * 0.6); },
     stop() { if (frameId !== null) cancel(frameId); frameId = null; },
     get needle() { return { ...needle }; },
     get state() { return { ...cur }; },
