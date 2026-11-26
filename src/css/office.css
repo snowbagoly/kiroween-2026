@@ -214,15 +214,7 @@
   filter: drop-shadow(0 10px 16px rgb(0 0 0 / .65));
 }
 .office .galvanometer svg { display: block; width: 100%; height: auto; }
-.office .galvanometer .needle, .office .galvanometer .needle-shadow {
-  transform-box: view-box;
-  transition: transform .45s cubic-bezier(.3, 1.5, .5, 1);
-}
-.office .galvanometer .needle-tremble {
-  transform-box: view-box;
-  transform-origin: 130px 128px;
-  animation: tremble .11s infinite alternate ease-in-out;
-}
+/* The needle is moved by its spring in office/galvanometer.js, not by CSS. */
 .office .lives-num {
   display: none;
   position: absolute;
@@ -236,13 +228,34 @@
 .office .galvanometer.show-num .lives-num { display: block; }
 .office .pulse { animation: dial-pulse 1s ease-in-out 3; }
 @media (prefers-reduced-motion: reduce) {
-  .office .galvanometer .needle-tremble { animation: none; }
   .office .pulse { animation: none; outline: 2px solid #c9a35a; }
 }
 
 /* ---- The codebook card on the left wall ---- */
+.office .morse-chart { cursor: zoom-in; }
+/* Enlarged: a copy of the card held up close [R3.1a]. */
+.codebook-zoom {
+  position: fixed;
+  inset: 0;
+  z-index: 26;
+  display: grid;
+  place-items: center;
+  background: rgb(0 0 0 / .65);
+  cursor: zoom-out;
+  font-family: "Special Elite", "Courier New", monospace;
+  --o-ink: #1b120a;
+}
+.codebook-zoom .morse-chart { position: relative; zoom: 1.6; cursor: zoom-out; animation: lift .2s ease-out; }
+@keyframes lift { from { opacity: 0; transform: scale(.8) rotate(-1.5deg); } }
+@media (max-width: 1050px) { .codebook-zoom .morse-chart { zoom: 1.1; } }
+/* Dead Air: the card is gone, two pin marks are left on the wall [R16.5]. */
+.office .bare-wall { position: relative; width: 300px; height: 380px; }
+.office .bare-wall i { position: absolute; top: 12px; width: 4px; height: 4px; border-radius: 50%; background: #050403; box-shadow: 0 1px 0 rgb(255 255 255 / .06); }
+.office .bare-wall i:first-child { left: 148px; }
+.office .bare-wall i:last-child { left: 156px; top: 15px; }
+
 .office .codebook-spot { position: relative; z-index: 3; }
-.office .morse-chart {
+:is(.office, .codebook-zoom) .morse-chart {
   width: 300px;
   margin: 0;
   padding: 24px 20px 16px;
@@ -254,7 +267,7 @@
   box-shadow: 0 12px 28px rgb(0 0 0 / .7), inset 0 0 30px rgb(110 80 30 / .35);
   transform: rotate(-1.5deg);
 }
-.office .morse-chart::before {
+:is(.office, .codebook-zoom) .morse-chart::before {
   content: '';
   position: absolute;
   top: 7px;
@@ -266,8 +279,8 @@
   background: radial-gradient(circle at 35% 35%, #f0d79a, #7a5a1e);
   box-shadow: 1px 2px 2px rgb(0 0 0 / .6);
 }
-.office .morse-chart h2 { font: 18px "IM Fell English SC", serif; letter-spacing: .15em; border-bottom-color: rgb(27 18 10 / .4); }
-.office .morse-chart i { background: var(--o-ink); }
+:is(.office, .codebook-zoom) .morse-chart h2 { font: 18px "IM Fell English SC", serif; letter-spacing: .15em; border-bottom-color: rgb(27 18 10 / .4); }
+:is(.office, .codebook-zoom) .morse-chart i { background: var(--o-ink); }
 
 /* ---- The work: the HUD line, the tape and the replay button ---- */
 .office .office-hud { margin: 0 0 18px; }

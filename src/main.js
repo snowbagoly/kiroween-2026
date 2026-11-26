@@ -15,7 +15,7 @@ import { createHorrorDirector, intensityFor } from './director/horror.js';
 import { createThoughts, SHOW_MS } from './director/thoughts.js';
 import { createTutorial, HEARD_LETTER } from './core/tutorial.js';
 import { createReplayCounter, replayLabel, NEXT_LETTER_PAUSE_MS, IDLE_REPLAY_MS } from './core/receive.js';
-import { playTone, playTick, playStatic } from './audio/voices.js';
+import { playTone, playTick, playTock, playStatic } from './audio/voices.js';
 import { createPressReader, attachKeyboard } from './input/keyboard.js';
 import { mountScene, setKeyDown, setSounderDown } from './ui/scene.js';
 import { mountMorseChart } from './ui/morse-chart.js';
@@ -140,6 +140,29 @@ window.addEventListener('keydown', (e) => {
     e.preventDefault();
   }
 });
+
+// The codebook card: a click holds it up close, a click or Esc puts it back [R3.1a]. No letter key,
+// since the letters are needed for typing received messages.
+let codebookZoom = null;
+function toggleCodebook(open = !codebookZoom) {
+  codebookZoom?.remove();
+  codebookZoom = null;
+  const card = office?.codebookSpot.querySelector('.morse-chart');
+  if (!open || !card) return;
+  codebookZoom = document.createElement('div');
+  codebookZoom.className = 'codebook-zoom';
+  codebookZoom.setAttribute('aria-hidden', 'true'); // the card on the wall stays the readable copy
+  codebookZoom.append(card.cloneNode(true));
+  codebookZoom.addEventListener('click', () => toggleCodebook(false));
+  document.body.append(codebookZoom);
+}
+// Esc puts the card back before it reaches the Options menu.
+window.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape' || !codebookZoom) return;
+  e.preventDefault();
+  e.stopImmediatePropagation();
+  toggleCodebook(false);
+}, true);
 
 // Backspace tears off the paper tape, and drops a half-keyed letter with it [R3.4a].
 // Ignored while a received letter is awaited.
@@ -364,7 +387,25 @@ function onAction(action) {
   else if (ACTIONS[action]) game.dispatch(ACTIONS[action]);
 }
 
+// A finished message: after a moment to see the stamp (or the card), the next one starts by itself.
+// It waits while the Options menu is open.
+const NEXT_MESSAGE_MS = 1600;
+let nextTimer = null;
+function scheduleNextMessage(screen) {
+  clearTimeout(nextTimer);
+  nextTimer = null;
+  if (screen !== 'messageDone') return;
+  const fire = () => {
+    if (st().screen !== 'messageDone') return;
+    if (options?.isOpen) { nextTimer = setTimeout(fire, 500); return; }
+    game.dispatch({ type: 'NEXT_MESSAGE' });
+  };
+  nextTimer = setTimeout(fire, NEXT_MESSAGE_MS);
+}
+
 function renderStart() {
+  scheduleNextMessage(null);
+  toggleCodebook(false);
   recv.stop();
   clearTimeout(thoughtTimer);
   desk = null;
@@ -382,6 +423,7 @@ function renderStart() {
 
 function buildDesk(s) {
   document.documentElement.dataset.mode = s.mode === 'day' ? 'day' : 'night';
+  toggleCodebook(false);
   office?.unmount();
   office = null;
   view.innerHTML = '<div class="play"><div class="stage"></div></div><div class="card-layer" hidden></div>';
@@ -393,7 +435,9 @@ function buildDesk(s) {
   if (usesOffice(s.mode)) {
     // Night Shift and Dead Air are played in the office [R11.4]; Day Shift keeps its desk [R7.2a].
     office = mountOffice(stage, { max: s.maxLives, lives, day: s.day });
-    mountMorseChart(office.codebookSpot, s.mode);
+    const chart = mountMorseChart(office.codebookSpot, s.mode);
+    if (chart) chart.addEventListener('click', () => toggleCodebook());
+    else office.codebookSpot.innerHTML = '<div class="bare-wall" aria-hidden="true"><i></i><i></i></div>'; // Dead Air [R16.5]
     // The message is a telegram form on the desk, and each press goes onto the paper tape [R3.1, R3.4a].
     office.tape = mountTape(office.work);
     row = mountForm(office.formSpot);
@@ -438,7 +482,8 @@ function renderRun(s) {
   }
   tutor = null;
   desk.stage.querySelector('#galvanometer-slot')?.classList.remove('pulse');
-  showCard(desk.layer, s.screen, { ...card, day: s.day, mode: s.mode }, onAction);
+  showCard(desk.layer, s.screen, { ...card, day: s.day, mode: s.mode, office: !!office }, onAction);
+  scheduleNextMessage(s.screen);
   if (s.screen === 'playing') {
     // No button keeps focus, so Space and letters go to the game.
     document.activeElement?.blur?.();
@@ -570,7 +615,8 @@ bus.on('LETTER_WRONG', () => {
   if (desk?.fx && desk.fx.mistake()) { playStatic(audio); captions.show('static'); }
   if (role() === 'receive') playCurrent(NEXT_LETTER_PAUSE_MS); // same letter again, free [R4.4]
 });
-bus.on('LIFE_LOST', ({ lives }) => { desk?.gauge.set(lives); playTick(audio); updateNight(); });
+// In the office the needle jolts with a dull tock; the Day Shift dial ticks [R5.2].
+bus.on('LIFE_LOST', ({ lives }) => { desk?.gauge.set(lives); (office ? playTock : playTick)(audio); updateNight(); });
 bus.on('LIFE_REFILLED', ({ lives }) => { desk?.gauge.set(lives); updateNight(); });
 bus.on('LIVES_SET', ({ lives, max }) => { if (desk && desk.gauge.state.max !== max) desk.gauge.setMax(max, lives); else desk?.gauge.set(lives); updateNight(); });
 // A finished form is stamped SENT or RECEIVED with the office's time [R3.7, R4.5b].

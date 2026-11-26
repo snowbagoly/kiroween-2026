@@ -14,7 +14,8 @@ test('screens: day intros for Day 2 and Day 3 explain receiving and both [R4.6, 
 test('screens: message done says sent or received', () => {
   assert.match(cardHtml('messageDone', { role: 'send' }), /Message sent/);
   assert.match(cardHtml('messageDone', { role: 'receive' }), /Message received/);
-  assert.deepEqual(buttons(cardHtml('messageDone', {})), ['Next message']);
+  assert.deepEqual(buttons(cardHtml('messageDone', {})), []); // the next message starts by itself
+  assert.equal(cardHtml('messageDone', { role: 'send', office: true }), ''); // the stamp says it
 });
 
 test('screens: stats screen shows every R8.1 number and the rank, with Next day [R8.1, R8.2, R8.3]', () => {
