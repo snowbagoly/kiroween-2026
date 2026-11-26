@@ -175,6 +175,10 @@ Phase 7 (T32 to T42) builds the 1903 office, story and endings from design secti
   Needs: T32, T34. Draw the office by day in the same drawings: the window shows the marsh in daylight with clouds drifting, sunlight falls through the panes as a patch on the desk with dust in the beam, no lamp flame. Now and then a bird flies past in front of the window. Day Shift then uses the office: the telegram form with its SENT/RECEIVED stamp, the paper tape and the codebook. Drop the old desk (`ui/scene.js`, `ui/galvanometer.js`, `ui/morse-chart.js`, `ui/text-row.js`) and the short "Message sent" card. Open: whether the story's slides get a day version.
   Done when: Day Shift plays Day 1 to Day 3 in the daylight office; the bird flies past at random, never while a letter is being keyed and not with reduced motion; screenshots at 1440, 1920 and 360 px. [R7.2, R7.2a, R11.4, design 8]
 
+- [ ] **T44. The order on Day 3**
+  Needs: T35, T37, T38, T40. Build `director/order.js` and wire it in: one of five orders per run, received from VN on Day 3 in Night Shift and Dead Air; its sign once, before 05:00; 20 s with the form faded, the order shown again, a heartbeat and the room dimmed, the clock held; the word sent by key or keyboard. Kept: the night goes on. Broken: the figure at the window, darkness, the newspaper advert for a new operator, then the game over notice. Judge buttons for the order, the sign and the failure.
+  Done when: unit and property tests for the order's states and timing pass (the word only counts after the sign, at most once a run, never in Day Shift); both outcomes play through in Chrome with sound off; screenshots of the 20 s and of the advert. [R18]
+
 ## Phase 6. Finish (29.11 to 01.12)
 
 - [ ] **T28. Full test run and bug fixes**
@@ -214,3 +218,4 @@ Phase 7 (T32 to T42) builds the 1903 office, story and endings from design secti
 | R15 | T27 |
 | R16 | T19, T26, T38 |
 | R17 | T40 |
+| R18 | T44 |

@@ -453,7 +453,26 @@ If late, cut in this order:
 
 Never cut: Morse sending, receiving, lives, the hand, the game clock, the office, the game over, the dawn, Judge mode (R13), and the story thoughts (R12).
 
-## 19. Requirement coverage
+## 19. The order on Day 3 [R18]
+
+`director/order.js` (pure) holds the five orders as data: `{ id, text, sign, word }`. `createOrder({ rng })` picks one per run and runs a small state machine:
+
+```
+idle -> given (the order message is done) -> sign (at a set game time before 05:00) -> open (20 s)
+open: a right letter moves on; a wrong one starts the word again
+open -> kept (the whole word in time) -> idle, the day goes on
+open -> broken (20 s pass) -> the scare, the newspaper, the game over (reason 'order')
+```
+
+- `buildDay` gives Day 3 in Night Shift and Dead Air one extra rule: one of its messages is the order, always a received one, strange. Its `from` is "VN".
+- The sign's time is drawn when the order is done: between 10 and 40 s of real time later, and before 05:00 on the game clock.
+- `game.js` treats the 20 s as held time for the clock, idling and the late drain (like "Line Held"), and routes letters (from the key or the keyboard) to the order while it is open.
+- The signs reuse what exists: `knock({ near: true })` made heavier (a door thud: low boom, a rattle of the latch), the blue flame, `phantomClick()` three times, `ring` 13 times on the clock's gong, and the office sound with the rain and wires faded to nothing. On that day the faults' blue flame omen and the dread's phantom clicks are held back.
+- The 20 s in the office: the form fades to 0, an `order-card` in VN's ink takes its place showing the order and the letters sent so far, a heartbeat (two low thumps, from 50 to 120 beats a minute) on the effects bus, the light layer dims the room around the key and the codebook.
+- The scare and the ending reuse the light (`watched`, `lightsOut`), the window figure drawn close against the glass, and the story's advert slide with a later date and a slow push-in.
+
+
+## 20. Requirement coverage
 
 | Req | Where in this design |
 |---|---|
@@ -474,3 +493,4 @@ Never cut: Morse sending, receiving, lives, the hand, the game clock, the office
 | R15 | 5 Touch, 8 One column, 14 Phones |
 | R16 | 4, 6, 8 (no codebook), 10 (faults for 5 lives) |
 | R17 | 4 Story states, 6 Story data, 9 Piano, 18 step 9 |
+| R18 | 19 The order |
