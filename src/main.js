@@ -7,6 +7,7 @@ import { createSettingsStore, setSetting, setHand } from './core/settings.js';
 import { createHand } from './core/hand.js';
 import { createAudioEngine } from './audio/engine.js';
 import { playLetter, armDownAt } from './audio/sequencer.js';
+import { MORSE } from './core/morse.js';
 import { createNightMusic } from './audio/music-night.js';
 import { createDayMusic } from './audio/music-day.js';
 import { HORROR_SOUNDS } from './audio/horror-voices.js';
@@ -15,7 +16,7 @@ import { createHorrorDirector, intensityFor } from './director/horror.js';
 import { createThoughts, SHOW_MS } from './director/thoughts.js';
 import { createTutorial, HEARD_LETTER } from './core/tutorial.js';
 import { createReplayCounter, replayLabel, NEXT_LETTER_PAUSE_MS, IDLE_REPLAY_MS } from './core/receive.js';
-import { playTone, playTick, playTock, playStatic, playBell } from './audio/voices.js';
+import { playTone, playTick, playTock, playStatic, playBell, playChurchBell } from './audio/voices.js';
 import { wallMinutes } from './core/day-clock.js';
 import { createPressReader, attachKeyboard } from './input/keyboard.js';
 import { mountScene, setKeyDown, setSounderDown } from './ui/scene.js';
@@ -388,6 +389,76 @@ function onAction(action) {
   else if (ACTIONS[action]) game.dispatch(ACTIONS[action]);
 }
 
+// ---- the endings [R5.5, R9.9] ------------------------------------------------
+// The line dies (Night Shift and Dead Air): darkness and silence, then the sounder taps out
+// "THE LINE IS DEAD" by itself in the player's own hand, each letter surfacing as it ends, and then
+// the dismissal notice. A key or a click skips to the notice.
+const DEAD_MESSAGE = 'THE LINE IS DEAD';
+const DARKNESS_MS = 2600;
+const NOTICE_DELAY_MS = 2500;
+let deadTimers = [];
+function deadLine() {
+  const layer = desk.layer;
+  deadTimers.forEach(clearTimeout);
+  deadTimers = [];
+  tone?.stop(); tone = null;
+  night.stop(); director.stop(); recv.stop(); reader.reset();
+  layer.classList.add('dead-line');
+  layer.insertAdjacentHTML('afterbegin', '<p class="dead-words" aria-live="assertive"></p>');
+  const words = layer.querySelector('.dead-words');
+  const notice = () => {
+    deadTimers.forEach(clearTimeout);
+    deadTimers = [];
+    window.removeEventListener('keydown', skip, { capture: true });
+    if (layer.classList.contains('noticed')) return;
+    // Skipped: the whole message stands there at once.
+    words.innerHTML = [...DEAD_MESSAGE].map((c) => (c === ' ' ? '<span class="space"></span>' : `<span style="animation: none">${c}</span>`)).join('');
+    layer.classList.add('noticed');
+    layer.querySelector('[data-action]')?.focus();
+  };
+  const skip = (e) => {
+    if (!layer.classList.contains('dead-line') || layer.classList.contains('noticed')) return;
+    if (e.type === 'keydown' && ['Tab', 'Shift', 'Escape'].includes(e.key)) return;
+    e.preventDefault?.();
+    notice();
+  };
+  window.addEventListener('keydown', skip, { capture: true });
+  layer.addEventListener('pointerdown', skip);
+  const handS = { dot: hand.dot / 1000, dash: hand.dash / 1000, gap: hand.unit / 1000 };
+  let at = DARKNESS_MS;
+  for (const c of DEAD_MESSAGE) {
+    if (c === ' ') { at += hand.letterGap * 1.4; deadTimers.push(setTimeout(() => words.insertAdjacentHTML('beforeend', '<span class="space"></span>'), at)); continue; }
+    const pattern = MORSE[c];
+    const len = [...pattern].reduce((n, s) => n + (s === '.' ? hand.dot : hand.dash) + hand.unit, 0);
+    deadTimers.push(setTimeout(() => playLetter(audio, c, { hand: handS, lead: 0.01 }), at));
+    at += len;
+    deadTimers.push(setTimeout(() => {
+      const span = document.createElement('span');
+      span.textContent = c;
+      span.style.setProperty('--tilt', `${(Math.random() * 8 - 4).toFixed(1)}deg`);
+      span.style.setProperty('--drop', `${(Math.random() * 10 - 5).toFixed(1)}px`);
+      words.append(span);
+    }, at));
+    at += hand.letterGap;
+  }
+  deadTimers.push(setTimeout(notice, at + NOTICE_DELAY_MS));
+}
+
+// The dawn (Night Shift and Dead Air): the window's sky goes pale, the lamp gutters out, the light
+// comes in through the window, and a church bell strikes six; then the notice [R9.9].
+const DAWN_NOTICE_MS = 6000;
+let dawnUntil = 0;
+let dawnTimer = null;
+bus.on('DAWN', () => {
+  if (!office) return;
+  dawnUntil = now() + DAWN_NOTICE_MS;
+  office.office.classList.add('at-dawn');
+  director.stop();
+  for (let i = 0; i < 6; i++) setTimeout(() => playChurchBell(audio), 1200 + i * 1400);
+  captions.show('church');
+});
+bus.on('DAY_STARTED', () => { office?.office.classList.remove('at-dawn'); deadTimers.forEach(clearTimeout); });
+
 // A finished message: after a moment to see the stamp (or the card), the next one starts by itself.
 // It waits while the Options menu is open.
 const NEXT_MESSAGE_MS = 1600;
@@ -483,7 +554,17 @@ function renderRun(s) {
   }
   tutor = null;
   desk.stage.querySelector('#galvanometer-slot')?.classList.remove('pulse');
-  showCard(desk.layer, s.screen, { ...card, day: s.day, mode: s.mode, office: !!office }, onAction);
+  const notice = { time: s.clock?.time, total: s.messageCount, stats: s.screen === 'gameOver' ? s.dayStats : card.stats };
+  if (s.screen === 'dayStats' && office && now() < dawnUntil) {
+    // The dawn plays first; the notice comes up while the bell is still striking [R9.9].
+    desk.layer.hidden = true;
+    clearTimeout(dawnTimer);
+    dawnTimer = setTimeout(() => { if (st().screen === 'dayStats') renderRun(st()); }, dawnUntil - now());
+    return;
+  }
+  showCard(desk.layer, s.screen, { ...card, ...notice, day: s.day, mode: s.mode, office: !!office }, onAction);
+  desk.layer.classList.remove('dead-line', 'noticed');
+  if (s.screen === 'gameOver' && office) deadLine();
   scheduleNextMessage(s.screen);
   if (s.screen === 'playing') {
     // No button keeps focus, so Space and letters go to the game.
@@ -514,7 +595,8 @@ function nightTension(s) {
 function updateNight() {
   const s = st();
   const nightMode = s.mode === 'night' || s.mode === 'deadair';
-  const want = nightMode && NIGHT_SCREENS.includes(s.screen);
+  // The dead line is silent: no night sound under it [R5.5].
+  const want = nightMode && NIGHT_SCREENS.includes(s.screen) && s.screen !== 'gameOver';
   if (want && !night.running) { audio.unlock(); night.start(); }
   if (!want && night.running) night.stop();
   // Day Shift has its own calm music on the same screens [R7.3].

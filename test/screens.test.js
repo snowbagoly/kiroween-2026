@@ -35,7 +35,7 @@ test('screens: game over has two buttons, Dead Air only Main menu [R5.5, R16.6]'
 
 test('screens: closing shows the run, best stats and the unlock', () => {
   const html = cardHtml('closing', { mode: 'night', totals: stats, best: stats, unlocked: true });
-  assert.ok(html.includes('This run') && html.includes('Best Night Shift run') && html.includes('Dead Air is now open'));
+  assert.ok(html.includes('THREE NIGHTS AT STATION 7 SERVED') && html.includes('Best Night Shift run') && html.includes('Dead Air is now open'));
   assert.ok(!cardHtml('closing', { mode: 'day', totals: stats, best: null, unlocked: false }).includes('Dead Air is now open'));
 });
 
@@ -48,4 +48,17 @@ test('screens: playing has no card, HUD shows mode and day [R1.2]', () => {
   assert.equal(cardHtml('playing'), '');
   assert.equal(hudLabel('night', 1), 'Night Shift · Day 1');
   assert.equal(hudLabel('deadair', 3), 'Dead Air · Day 3');
+});
+
+test('screens: the end cards are company notices with strips of tape [R8.1, R5.5, R9.7g]', () => {
+  const day = cardHtml('dayStats', { day: 1, stats, time: '06:00' });
+  assert.match(day, /Marsh &amp; Western Telegraph Co\./);
+  assert.match(day, /SHIFT ENDED 06:00 STOP/);
+  assert.match(day, /REPORT AGAIN 22:00 TOMORROW/);
+  assert.match(cardHtml('dayStats', { day: 3, stats }), /REPORT TO HEAD OFFICE/);
+  assert.match(cardHtml('gameOver', { mode: 'night', time: '03:12', stats }), /LINE FROM STATION 7 DEAD AT 03:12/);
+  const late = cardHtml('gameOver', { mode: 'night', reason: 'time', stats });
+  assert.match(late, /Out of time/);
+  assert.match(late, /TELEGRAMS NOT SENT STOP/);
+  assert.doesNotMatch(cardHtml('gameOver', { mode: 'day', stats }), /DEAD/);
 });

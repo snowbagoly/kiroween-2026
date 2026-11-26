@@ -62,6 +62,20 @@ const statsTable = (s, caption) => `<table class="stats-table"><caption>${captio
 
 const btn = (action, label) => `<button type="button" data-action="${action}">${label}</button>`;
 
+// A notice from the company [R8.1, R5.5]: a telegram form with the message pasted on in strips of
+// printed tape, the figures written in by hand, and the buttons printed on the form.
+export function noticeHtml({ title, strips = [], rank = null, rows = [], extra = '', buttons = '' }) {
+  return `<header class="tg-head"><span class="tg-co">Marsh &amp; Western Telegraph Co.</span><span class="tg-title">Telegram</span></header>
+    <h2 class="notice-title">${title}</h2>
+    <dl class="tg-fields"><dt>To</dt><dd>Operator, Station 7</dd><dt>From</dt><dd>District Superintendent</dd></dl>
+    <div class="notice-body">${strips.map((t) => `<span class="tape-strip">${t}</span>`).join('')}</div>
+    ${rows.length ? `<dl class="notice-stats">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}${rank ? `<dt>Rank</dt><dd>${rank}</dd>` : ''}</dl>` : ''}
+    ${extra}
+    <div class="card-buttons notice-buttons">${buttons}</div>`;
+}
+
+export const NOTICE_SCREENS = ['dayStats', 'gameOver', 'closing'];
+
 // One card for each screen that sits over the desk. Returns '' for screens with no card.
 // `info` carries what the card needs: day, mode, role, stats, totals, best, unlocked.
 export function cardHtml(screen, info = {}) {
@@ -93,29 +107,45 @@ export function cardHtml(screen, info = {}) {
       return info.office ? '' : `<h2>${info.role === 'receive' ? 'Message received' : 'Message sent'}</h2>`;
     case 'dayStats': {
       const s = info.stats;
-      return `<h2>End of Day ${day}</h2>
-        <p class="rank">Rank: <strong>${s.rank}</strong></p>
-        ${statsTable(s, `Day ${day}`)}
-        <div class="card-buttons">${btn('next-day', day < 3 ? 'Next day' : 'Finish')}</div>`;
+      const last = day >= 3;
+      return noticeHtml({
+        title: `End of Day ${day}`,
+        strips: [`SHIFT ENDED ${info.time ?? '06:00'} STOP`, 'RELIEF OPERATOR ARRIVED', last ? 'REPORT TO HEAD OFFICE' : 'REPORT AGAIN 22:00 TOMORROW'],
+        rank: s.rank,
+        rows: statsRows(s),
+        buttons: btn('next-day', last ? 'Finish' : 'Next day'),
+      });
     }
     case 'gameOver': {
-      const title = mode === 'day' ? 'Out of lives' : 'The line went dead';
+      // Out of lives, or out of time: 06:00 came with telegrams left [R5.5, R5.6, R9.7g].
       const restart = info.canRestart === false ? '' : btn('restart-day', 'Restart this day');
-      // Out of time: 06:00 came with telegrams left [R9.7g].
-      const why = info.reason === 'time'
-        ? 'RELIEF OPERATOR ARRIVED / TELEGRAMS NOT SENT STOP'
-        : `Day ${day} ended with no lives left.`;
-      return `<h2>${info.reason === 'time' ? 'Out of time' : title}</h2><p>${why}</p>
-        <div class="card-buttons">${restart}${btn('main-menu', 'Main menu')}</div>`;
+      const time = info.time ?? '';
+      const strips = info.reason === 'time'
+        ? ['RELIEF OPERATOR ARRIVED 06:00', 'TELEGRAMS NOT SENT STOP', 'OPERATOR RELIEVED OF DUTY']
+        : mode === 'day'
+          ? [`TOO MANY ERRORS ON THE LINE AT ${time}`.trim(), 'OPERATOR RELIEVED OF DUTY']
+          : [`LINE FROM STATION 7 DEAD AT ${time}`.trim(), 'OPERATOR RELIEVED OF DUTY'];
+      const s = info.stats;
+      const rows = s ? [['Telegrams done', `${s.messages} of ${info.total ?? 5}`], ['Letters right', String(s.lettersCorrect)], ['Mistakes on the line', String(s.mistakes)]] : [];
+      return noticeHtml({
+        title: info.reason === 'time' ? 'Out of time' : mode === 'day' ? 'Out of lives' : 'The line went dead',
+        strips,
+        rows,
+        buttons: `${restart}${btn('main-menu', 'Main menu')}`,
+      });
     }
     case 'closing': {
       const t = info.totals;
       const best = info.best ? statsTable(info.best, `Best ${MODE_NAMES[mode]} run`) : '';
       const unlocked = info.unlocked ? '<p class="unlock">Dead Air is now open on the start screen.</p>' : '';
-      return `<h2>Your shifts are over</h2>
-        <p class="rank">Rank: <strong>${t.rank}</strong></p>
-        ${statsTable(t, 'This run')}${best}${unlocked}
-        <div class="card-buttons">${btn('main-menu', 'Main menu')}</div>`;
+      return noticeHtml({
+        title: 'Your shifts are over',
+        strips: ['THREE NIGHTS AT STATION 7 SERVED', 'COMPANY THANKS OPERATOR STOP'],
+        rank: t.rank,
+        rows: statsRows(t),
+        extra: `${best}${unlocked}`,
+        buttons: btn('main-menu', 'Main menu'),
+      });
     }
     default:
       return '';
@@ -126,7 +156,8 @@ export function cardHtml(screen, info = {}) {
 export function showCard(layer, screen, info, onAction) {
   const html = cardHtml(screen, info);
   layer.hidden = !html;
-  layer.innerHTML = html ? `<div class="card card-${screen}" role="dialog" aria-modal="false" aria-labelledby="card-title">${html.replace('<h2>', '<h2 id="card-title">')}</div>` : '';
+  const notice = NOTICE_SCREENS.includes(screen) ? ' notice' : '';
+  layer.innerHTML = html ? `<div class="card card-${screen}${notice}" role="dialog" aria-modal="false" aria-labelledby="card-title">${html.replace('<h2', '<h2 id="card-title"')}</div>` : '';
   for (const b of layer.querySelectorAll('[data-action]')) b.addEventListener('click', () => onAction(b.dataset.action));
   // On a tutorial sheet Space is the telegraph key, so no button may hold focus there.
   if (screen !== 'tutorial') layer.querySelector('[data-action]')?.focus();
