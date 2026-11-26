@@ -294,6 +294,13 @@
 }
 
 
+/* ---- The hold meter and the speed line under the tape ---- */
+.office .play-meter { width: 260px; height: 10px; margin: 14px auto 0; border: 1px solid #4a3f2e; border-radius: 2px; background: rgb(0 0 0 / .35); }
+.office .play-meter .press-bar { background: #c9a35a; }
+.office .play-meter .press-bar.dash { background: #d0562c; }
+.office .play-meter .press-mark { border-left: 2px solid #cdbf9c; opacity: .7; }
+.office .hand-line { margin: 8px 0 0; text-align: center; font-size: 14px; letter-spacing: .08em; color: var(--o-dim); }
+
 /* ---- The paper tape and the telegram form ---- */
 .office .tape {
   position: relative;

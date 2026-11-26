@@ -17,6 +17,7 @@ export function optionsHtml() {
       <label class="opt-row opt-check"><input type="checkbox" name="showLivesNumber"> Show lives as a number</label>
       <label class="opt-row">Start with tutorial
         <select name="tutorial"><option value="ask">Ask on start</option><option value="never">Never</option></select></label>
+      <div class="opt-row"><span class="hand-now"></span><button type="button" class="forget-hand-btn">Forget my hand</button></div>
       <div class="opt-buttons">
         <button type="button" class="end-game-btn">End game</button>
         <button type="button" class="close-btn">Close</button>
@@ -36,7 +37,8 @@ const FOCUSABLE = 'button:not([hidden]):not([disabled]), input, select';
 
 // `getData()` returns the saved data, `setValue(key, value)` changes one setting,
 // `inRun()` says whether "End game" should show, `onEndGame()` runs after the player confirms.
-export function mountOptions(root, { getData, setValue, inRun = () => false, onEndGame = () => {}, onOpenChange = () => {}, keyTarget = window } = {}) {
+// `onForgetHand()` goes back to a new player's hand and returns the new speed line [R3.3a].
+export function mountOptions(root, { getData, setValue, inRun = () => false, onEndGame = () => {}, onOpenChange = () => {}, onForgetHand = () => '', handLine = () => '', keyTarget = window } = {}) {
   root.insertAdjacentHTML('beforeend', optionsHtml());
   const btn = root.querySelector('.options-btn');
   const dialog = root.querySelector('#options-dialog');
@@ -53,6 +55,7 @@ export function mountOptions(root, { getData, setValue, inRun = () => false, onE
       else el.value = String(s[el.name]);
     }
     endBtn.hidden = !inRun();
+    dialog.querySelector('.hand-now').textContent = handLine();
   }
 
   function visible() {
@@ -99,6 +102,9 @@ export function mountOptions(root, { getData, setValue, inRun = () => false, onE
     endBtn.focus();
   });
   confirm.querySelector('.confirm-end').addEventListener('click', () => { api.close(); onEndGame(); });
+  dialog.querySelector('.forget-hand-btn').addEventListener('click', () => {
+    dialog.querySelector('.hand-now').textContent = onForgetHand() || handLine();
+  });
 
   for (const el of dialog.querySelectorAll('[name]')) {
     const ev = el.type === 'range' ? 'input' : 'change';
