@@ -1,0 +1,27 @@
+/* The three fonts, served with the game rather than from Google, so playing sends nobody's
+   address anywhere. Latin characters only, which covers everything the game writes.
+   Licences beside the files in fonts/. */
+
+@font-face {
+  font-family: 'Special Elite'; /* the typewriter */
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(./special-elite.woff2) format('woff2');
+}
+
+@font-face {
+  font-family: 'IM Fell English SC'; /* printed forms */
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(./im-fell-english-sc.woff2) format('woff2');
+}
+
+@font-face {
+  font-family: 'Caveat'; /* handwriting */
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(./caveat-500.woff2) format('woff2');
+}

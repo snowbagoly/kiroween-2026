@@ -1,10 +1,12 @@
-# Tasks: Dead Air -- 1873
+# Tasks: Night Shift -- 1903
 
 Each task is small enough to become one GitHub issue and one pull request. Tick the box when its "Done when" line is true. Requirement numbers are in brackets, and section numbers point to `design.md`.
 
 Order follows `.kiro/steering/schedule.md`. Tasks in the same phase can run side by side unless a "Needs" line says otherwise.
 
-Cut order if late: T22 (one-shot sounds), T23 (Day Shift music), T27 (phone), T26 (Dead Air). Never cut T1 to T21, T24, T25 and T28 to T31.
+Cut order if late: T40 slides 1 to 5 (keep slide 6), the extra dread effects in T37, T22 (one-shot sounds), T23 (Day Shift music), T27 (phone), T26 (Dead Air). Never cut T1 to T21, T24, T25, T28 to T31, and T32 to T39, T41 and T42.
+
+Phase 7 (T32 to T42) builds the 1903 office, story and endings from design sections 4 to 18. It runs before Phase 6, and T26, T27 and T29 build on it.
 
 ## Phase 1. Base (20.11 to 23.11)
 
@@ -124,6 +126,52 @@ Cut order if late: T22 (one-shot sounds), T23 (Day Shift music), T27 (phone), T2
   Needs: T14, T15. Build `input/pointer.js`: touch Morse key, typewriter keyboard A to Z, layout from 360 px wide, chart drawer, touch rules, 44 px targets.
   Done when: Day 1 to Day 3 play through in device mode at an iPhone size and an Android size. [R15]
 
+## Phase 7. The 1903 office (26.11 to 29.11)
+
+- [ ] **T32. Fonts and the empty office**
+  Needs: T2. Bundle `fonts/` into the build as base64 `@font-face`. Add `core/util.js`, `office/drawings.js`, `office/scenery.js`, `office/room.js` and the office CSS. Night Shift and Dead Air show the office (window, codebook spot, calendar, wall clock, galvanometer spot, lamp, key, desk); Day Shift keeps its desk through the shared desk interface. `fitRoom()` scales the 900 px room; below 1050 px it is one column.
+  Done when: the build has no link to another site and fails on one; screenshots of the office at 1440, 1920 and 360 px look right; Day Shift looks as before. [R11.2, R11.4, R7.2a, design 3, 8]
+
+- [ ] **T33. The learned hand**
+  Needs: T6. Build `core/hand.js` and use it in sending, the tutorial and touch. Save the hand; add "Forget my hand"; show wpm and the hold meter with the threshold mark.
+  Done when: unit and property tests for the hand pass; the 300 / 700 ms tests are replaced; a new player's threshold is 240 ms and letter gap 720 ms. [R3.3, R3.3a, R3.3b, R2.3, R2.7]
+
+- [ ] **T34. Form, spike, tape, codebook and galvanometer in the office**
+  Needs: T32, T33. Build `office/forms.js` (telegram form, spike, SENT/RECEIVED stamp, paper tape with pencilled letters and red strikes, Backspace tears it) and `office/galvanometer.js` (springy needle from lives, 10 or 5 steps, red zone, tock). The codebook card enlarges on click.
+  Done when: Day 1 to Day 3 play through in the office in Night Shift; screenshots show a sent form and a mistake on the tape. [R3.1, R3.1a, R3.4a, R3.5 to R3.7, R4.2, R4.5b, R5.1 to R5.3]
+
+- [ ] **T35. Game clock, arrivals, idling and the late drain**
+  Needs: T10, T34. Build `core/day-clock.js` and `core/idle.js`: real-time clock from the first input, arrivals with the counter bell, the spike, 4x and 6x speeds, the day ends at 06:00, `TIME_UP` loses the day, a life per 6 s then 17 s idle, a life per 20 s past 04:00 and 10 s past 05:00. Wall clock hands and the window sky follow the clock.
+  Done when: unit and property tests pass; a day left unfinished at 06:00 ends in a game over with "TELEGRAMS NOT SENT". [R9.7 to R9.7h, R9.8]
+
+- [ ] **T36. Office sound and the phonograph waltz**
+  Needs: T3, T32. Build `audio/office-sound.js`, `audio/phonograph.js` and `audio/scores.js` on the engine's buses. Remove `audio/music-night.js`. Add the "Music" switch.
+  Done when: Night Shift plays the room tone, wind, wires and the waltz; mute, both sliders and "Music" work; captions exist for the new sounds. [R6.1, R6.2, R6.8, R10.3]
+
+- [ ] **T37. Faults, omens, last warning and dread**
+  Needs: T34, T35, T36. Build `office/light.js`, `director/faults.js` and `director/dread.js`. Day 2 dread starts at 70% of Day 1's points; Day 3 and Dead Air are full from 22:00. "Reduce flashing" softens every stutter.
+  Done when: faults tests pass for 10 and 5 lives; each omen plays at most once a day; screenshots of the dimmed room, the dark corners and the last warning. [R6.4 to R6.7]
+
+- [ ] **T38. Game over sequence, dawn and company notices**
+  Needs: T37. Build `ui/endings.js`: the snap, the figure, the dark, "THE LINE IS DEAD" tapped in the player's hand (a key skips it), the dismissal telegram; the dawn with the bell and robin; the "SHIFT ENDED 06:00" and closing notices. Day Shift gets the calm versions.
+  Done when: game over, time up, dawn and closing all show their notices with the right buttons in every mode; screenshots of each. [R5.5, R5.6, R8.1, R8.3, R9.9, R16.6]
+
+- [ ] **T39. Start card and "Line Held"**
+  Needs: T32, T11. Build the company card over the drifting empty office with the roster and the mode buttons. Move Options onto a company card; holding the game stops the clock, idling and all sound. Add "Always skip the story" and "Full screen".
+  Done when: the start card shows from the first paint with no sound before a click; Esc during play holds and resumes the game. [R1.1, R1.1a, R1.3, R10.1a, R10.1b, R11.6]
+
+- [ ] **T40. The story**
+  Needs: T36, T39. Build `story/` (six slides, the letter, the lantern fades, Space and Esc), `audio/piano.js` with the nocturne, and `audio/story-sound.js`. Offer the story after a mode is picked; skip it in Dead Air, Judge mode and with "Always skip the story".
+  Done when: the story runs about 60 to 90 seconds and leads into Day 1; screenshots of each slide. [R17]
+
+- [ ] **T41. Messages and thoughts for 1903, and the name**
+  Needs: T7, T21. Rewrite the pool for 1903 with threads and the Vane telegram as Day 1's last in Night Shift and Dead Air; set the day dates and the calendar. Check every thought is true for 1903 and uses "they". Rename the game to "Night Shift" in the title, README, Judge card and storage key (`nightshift.v1`).
+  Done when: message tests pass for 1000 seeds; no "Dead Air -- 1873" or "1873" is left outside the hard mode's name. [R6.3a, R9.8, R12.4, R12.5, design 6, 17]
+
+- [ ] **T42. Judge additions and screenshot script**
+  Needs: T24, T38, T40. Add "Dawn" to Jump to day, "Play the story", one button per omen and the last warning; infinite lives covers idling and the late drain; the speed switch speeds the clock. Add `tools/shots.mjs` (always `--mute-audio`).
+  Done when: every new Judge button works with sound off; `tools/shots.mjs` writes the full shot list from design 16. [R13.3a, R13.3g, R13.4c, R13.5]
+
 ## Phase 6. Finish (29.11 to 01.12)
 
 - [ ] **T28. Full test run and bug fixes**
@@ -146,19 +194,20 @@ Cut order if late: T22 (one-shot sounds), T23 (Day Shift music), T27 (phone), T2
 
 | Req | Tasks |
 |---|---|
-| R1 | T10, T11 |
-| R2 | T16 |
-| R3 | T5, T6, T12 |
-| R4 | T13, T14 |
-| R5 | T8, T10, T13 |
-| R6 | T17, T18, T19, T20, T22 |
-| R7 | T2, T18, T23 |
-| R8 | T9, T13 |
-| R9 | T7, T10, T15 |
-| R10 | T11, T22, T25 |
-| R11 | T1, T28 |
-| R12 | T7, T20, T21 |
-| R13 | T24 |
+| R1 | T10, T11, T39 |
+| R2 | T16, T33 |
+| R3 | T5, T6, T12, T33, T34 |
+| R4 | T13, T14, T34 |
+| R5 | T8, T10, T13, T34, T38 |
+| R6 | T17, T18, T19, T20, T22, T36, T37 |
+| R7 | T2, T18, T23, T32 |
+| R8 | T9, T13, T38 |
+| R9 | T7, T10, T15, T35, T38, T41 |
+| R10 | T11, T22, T25, T36, T39 |
+| R11 | T1, T28, T32, T39 |
+| R12 | T7, T20, T21, T41 |
+| R13 | T24, T42 |
 | R14 | T1, T30, T31 |
 | R15 | T27 |
-| R16 | T19, T26 |
+| R16 | T19, T26, T38 |
+| R17 | T40 |

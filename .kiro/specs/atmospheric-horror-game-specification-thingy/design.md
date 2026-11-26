@@ -43,7 +43,6 @@ src/
     piano.js            plain piano for the story's nocturne
     scores.js           the waltz and the nocturne as note data
     story-sound.js      each slide's sound picture
-    music-night.js      hoo tones (see section 9)
     music-day.js        soft music and birdsong
     sequencer.js        plays a letter as tones on the audio clock
     captions.js         sound name to caption text
@@ -308,7 +307,7 @@ Every sound module takes `{ ctx, sfxBus, musicBus }` from `engine.js`, so one vo
 **Music** [R6.2]:
 
 - Night Shift: `phonograph.js` plays the waltz in E♭ minor from `scores.js` through the period sound (needle, crackle, warp, reverb), as if from the next room. The key's tone is tuned to E♭.
-- The old drone and heartbeat in `music-night.js` are dropped. The hoo tones are an open question: they are built on notes around D, a half step off the waltz's E♭, so they would clash unless moved to E♭.
+- `music-night.js` (drone, hoo tones, heartbeat) is removed: its notes sit around D, a half step off the waltz's E♭, and the record and the room tone fill that space.
 - The record can wobble, sag, drag flat and stick (one 0.8 s turn repeated 4 times), on calls from `dread.js` and `faults.js`.
 - Story: `piano.js` plays the nocturne from the hall to the station, then fades [R17.4].
 - Day Shift: `music-day.js`, unchanged [R7.3].
@@ -412,6 +411,7 @@ As before. New: the story's letter is real text with `aria-live="polite"`, so a 
 | The letter gap is always between 450 and 1600 ms | Glossary |
 | For any list of tick lengths and inputs, the game clock never goes back, messages arrive in order, and the day never ends with a message left | R9.7 |
 | For any idle run in Night Shift, lives lost = 0 before 6 s, then 1 + floor((t - 6) / 17) | R9.7f |
+| For any run, no late life is lost before 04:00 or once all 5 are done | R9.7h |
 | For any run of lives lost and refilled, each omen plays at most once a day and the last warning only on reaching 1 | R6.4a, R6.4b |
 | All earlier properties, with the 300 ms rule replaced by the hand's threshold | as before |
 
