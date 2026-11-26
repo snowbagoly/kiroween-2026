@@ -64,6 +64,7 @@ export function officeHtml({ max = 10 } = {}) {
       <svg overflow="visible" aria-hidden="true"></svg>
       <span class="lives-num" aria-hidden="true"></span>
     </figure>
+    <div class="on-desk"></div>
   </div>
 </div>`;
 }
@@ -94,6 +95,8 @@ export function mountOffice(stage, { max = 10, lives = max, day = 1, minutes = 2
     gauge,
     hud: office.querySelector('.office-hud'),
     work: office.querySelector('.office-work'),
+    formSpot: office.querySelector('.on-desk'),
+    minutes,
     codebookSpot: office.querySelector('.codebook-spot'),
     setDay(d) {
       const { viewBox, body } = drawCalendar({ crossedTo: crossedTo(d) });
@@ -101,6 +104,7 @@ export function mountOffice(stage, { max = 10, lives = max, day = 1, minutes = 2
       calendar.innerHTML = body;
     },
     setTime(mins) {
+      api.minutes = mins;
       const { hour, minute } = clockAngles(mins);
       clock.style.setProperty('--hour', `${hour}deg`);
       clock.style.setProperty('--minute', `${minute}deg`);
