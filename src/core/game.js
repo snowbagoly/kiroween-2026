@@ -6,11 +6,16 @@ import { createLives, maxLivesFor } from './lives.js';
 import { createStats, accuracyOf, wpmOf, finalRank, updateBest } from './stats.js';
 import { createRng } from './rng.js';
 import { defaultData } from './settings.js';
+import { createDayClock, arrivalTimes, clockTime } from './day-clock.js';
+import { createLifeDrain, drainsLives } from './idle.js';
 
-export const SCREENS = ['start', 'tutorialDialog', 'tutorial', 'dayIntro', 'playing', 'messageDone', 'dayStats', 'gameOver', 'closing'];
+// `waiting`: the desk is empty, the next telegram has not been handed in yet, or the day's work is done
+// and the clock runs on to 06:00 [R9.7].
+export const SCREENS = ['start', 'tutorialDialog', 'tutorial', 'dayIntro', 'playing', 'messageDone', 'waiting', 'dayStats', 'gameOver', 'closing'];
 export const MODES = ['night', 'day', 'deadair'];
 export const LAST_DAY = 3;
-const RUN_SCREENS = ['tutorialDialog', 'tutorial', 'dayIntro', 'playing', 'messageDone', 'dayStats', 'gameOver'];
+const RUN_SCREENS = ['tutorialDialog', 'tutorial', 'dayIntro', 'playing', 'messageDone', 'waiting', 'dayStats', 'gameOver'];
+export const CLOCK_SCREENS = ['playing', 'messageDone', 'waiting'];
 
 // Numbers for the Judge "Show stats" button: a good, believable day [R13.3f].
 export const SAMPLE_STATS = Object.freeze({
@@ -35,12 +40,14 @@ export function runTotals(days, livesLeft = 0) {
 
 // `data` is the saved data from settings.js. `save(data)` writes it (it does nothing in Judge mode).
 // `seed` makes the messages repeatable. `bus` gets every output event.
-export function createGame({ data = defaultData(), save = () => {}, seed = 1, bus = null, judge = false } = {}) {
+// `timed`: the game clock runs (TICK events), telegrams arrive at set times and the day ends at 06:00
+// [R9.7]. The game always plays timed; without it the messages simply follow each other.
+export function createGame({ data = defaultData(), save = () => {}, seed = 1, bus = null, judge = false, timed = false } = {}) {
   const rng = createRng(seed);
   let saved = data;
   const s = {
     screen: 'start', mode: null, day: 0, messages: [], msgIndex: 0, pos: 0, msgMistakes: 0,
-    lives: null, stats: null, days: [], checkpoint: null, judge,
+    lives: null, stats: null, days: [], checkpoint: null, judge, clock: null, drain: null, done: 0, arrivals: [],
   };
 
   const out = [];
@@ -60,7 +67,8 @@ export function createGame({ data = defaultData(), save = () => {}, seed = 1, bu
   function startDay(day) {
     s.day = day;
     s.messages = buildDay(day, s.mode, rng);
-    s.checkpoint = { day, days: s.days.map((d) => ({ ...d })), messages: s.messages };
+    s.arrivals = arrivalTimes(s.messages.length, rng);
+    s.checkpoint = { day, days: s.days.map((d) => ({ ...d })), messages: s.messages, arrivals: s.arrivals };
     beginDay();
   }
 
@@ -70,6 +78,9 @@ export function createGame({ data = defaultData(), save = () => {}, seed = 1, bu
     s.msgMistakes = 0;
     s.lives.reset();
     s.stats = createStats();
+    s.done = 0;
+    s.clock = timed ? createDayClock({ day: s.day, arrivals: s.arrivals }) : null;
+    s.drain = timed ? createLifeDrain() : null;
     emit('DAY_STARTED', { day: s.day, lives: s.lives.lives, max: s.lives.max });
     go('dayIntro');
   }
@@ -119,6 +130,7 @@ export function createGame({ data = defaultData(), save = () => {}, seed = 1, bu
   }
 
   function finishMessage() {
+    s.done += 1;
     s.stats.messageDone();
     const { lives, refilled } = s.lives.messageDone(s.msgMistakes === 0);
     emit('MESSAGE_DONE', { index: s.msgIndex, mistakes: s.msgMistakes });
@@ -130,15 +142,67 @@ export function createGame({ data = defaultData(), save = () => {}, seed = 1, bu
     s.msgIndex += 1;
     s.pos = 0;
     s.msgMistakes = 0;
+    if (s.clock) {
+      // The next telegram is on the spike, or not handed in yet, or the work is done [R9.7c].
+      if (s.msgIndex < s.clock.arrived) { emit('MESSAGE_STARTED', { index: s.msgIndex, message: message() }); go('playing'); }
+      else { emit('DESK_EMPTY', { allDone: s.done >= s.messages.length }); go('waiting'); }
+      return;
+    }
     if (s.msgIndex < s.messages.length) {
       emit('MESSAGE_STARTED', { index: s.msgIndex, message: message() });
       go('playing');
       return;
     }
+    endDay();
+  }
+
+  function endDay() {
     const summary = s.stats.summary(s.lives.lives);
     s.days.push({ day: s.day, ...summary });
     emit('DAY_ENDED', { day: s.day, stats: summary });
     go('dayStats');
+  }
+
+  // Lives lost with no mistake: idling, or the late drain [R9.7f, R9.7h]. They break the clean streak,
+  // but are not counted as mistakes in the statistics.
+  function drainLife(kind) {
+    if (s.screen === 'playing') s.msgMistakes += 1;
+    const { lives, dead } = s.lives.loseLife();
+    emit(kind === 'idle' ? 'IDLE_LIFE_LOST' : 'LATE_LIFE_LOST', { lives, max: s.lives.max });
+    emit('LIFE_LOST', { lives, max: s.lives.max, kind });
+    if (dead && s.infinite) { emit('LIVES_SET', { lives: s.lives.set(1), max: s.lives.max }); return false; }
+    if (dead) { emit('GAME_OVER', { day: s.day, canRestart: s.mode !== 'deadair', reason: 'lives' }); go('gameOver'); return true; }
+    return false;
+  }
+
+  function arrived(e) {
+    emit('ARRIVED', { index: e.index, at: clockTime(e.at), waiting: Math.max(0, s.clock.arrived - s.done - (s.screen === 'waiting' ? 0 : 1)) });
+    if (s.screen === 'waiting' && s.msgIndex === e.index) startMessage();
+  }
+
+  // One step of real time while a day runs.
+  function tick(e) {
+    const c = s.clock;
+    if (!c) return;
+    const inHand = s.screen === 'playing' || s.screen === 'messageDone';
+    for (const ev of c.tick(e.ms, { inHand, done: s.done, hold: !!s.infinite })) {
+      if (ev.type === 'ARRIVED') arrived(ev);
+      else if (ev.type === 'DAWN') { emit('DAWN', { at: clockTime(c.minutes) }); endDay(); return; }
+      else if (ev.type === 'TIME_UP') {
+        emit('GAME_OVER', { day: s.day, canRestart: s.mode !== 'deadair', reason: 'time' });
+        go('gameOver');
+        return;
+      }
+    }
+    const waiting = Math.max(0, c.arrived - s.done - (inHand ? 1 : 0));
+    emit('CLOCK', { minutes: c.minutes, time: clockTime(c.minutes), progress: c.progress, waiting });
+    const lost = s.drain.tick(e.ms, {
+      on: drainsLives(s.mode) && c.started,
+      waiting: s.screen === 'playing' || (s.screen === 'waiting' && waiting > 0),
+      minutes: c.minutes,
+      allDone: s.done >= s.messages.length,
+    });
+    for (const kind of lost) if (drainLife(kind)) return;
   }
 
   function nextDay() {
@@ -229,6 +293,7 @@ export function createGame({ data = defaultData(), save = () => {}, seed = 1, bu
     },
     JUDGE_SKIP() {
       if (s.screen === 'playing' || s.screen === 'messageDone') nextMessage();
+      else if (s.screen === 'waiting' && s.clock && s.msgIndex < s.messages.length) for (const ev of s.clock.bring(s.msgIndex)) arrived(ev);
     },
     JUDGE_LIVES(e) {
       if (!s.lives) return;
@@ -286,16 +351,23 @@ export function createGame({ data = defaultData(), save = () => {}, seed = 1, bu
       },
     },
     playing: {
-      INPUT(e) { s.stats.input(Number(e.t) || 0); },
+      INPUT(e) {
+        s.stats.input(Number(e.t) || 0);
+        s.clock?.start(); // the first press or typed letter starts the clock [R9.7a]
+        s.drain?.input();
+      },
       LETTER: letter,
+      TICK: tick,
     },
-    messageDone: { NEXT_MESSAGE: nextMessage },
+    messageDone: { NEXT_MESSAGE: nextMessage, TICK: tick },
+    waiting: { TICK: tick },
     dayStats: { NEXT_DAY: nextDay },
     gameOver: {
       RESTART_DAY() {
         if (s.mode === 'deadair' || !s.checkpoint) return; // Dead Air has no second chance [R16.6]
         s.days = s.checkpoint.days.map((d) => ({ ...d }));
         s.messages = s.checkpoint.messages;
+        s.arrivals = s.checkpoint.arrivals ?? s.arrivals;
         emit('DAY_RESTARTED', { day: s.day });
         beginDay();
       },
@@ -329,6 +401,9 @@ export function createGame({ data = defaultData(), save = () => {}, seed = 1, bu
         lives: s.lives?.lives ?? null, maxLives: s.lives?.max ?? null,
         dayStats: s.stats?.summary(s.lives?.lives ?? 0) ?? null,
         days: s.days.map((d) => ({ ...d })), judge, infinite: !!s.infinite,
+        clock: s.clock ? { minutes: s.clock.minutes, time: clockTime(s.clock.minutes), progress: s.clock.progress, started: s.clock.started,
+          arrived: s.clock.arrived, waiting: Math.max(0, s.clock.arrived - s.done - (['playing', 'messageDone'].includes(s.screen) ? 1 : 0)) } : null,
+        done: s.done,
       };
     },
     get saved() { return saved; },

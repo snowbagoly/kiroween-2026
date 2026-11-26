@@ -3,6 +3,7 @@ export const CAPTION_MS = 2000;
 
 export const CAPTIONS = {
   thunder: '[thunder]',
+  bell: '[the counter bell]',
   crow: '[a crow caws]',
   scream: '[a distant scream]',
   knock: '[knocking at the door]',

@@ -61,6 +61,31 @@ export function playTick(engine, { level = 0.5 } = {}) {
   });
 }
 
+// The counter bell, rung when a telegram is handed in [R9.7b]: two bright partials, a bit apart,
+// ringing out over a second.
+export function playBell(engine, { level = 0.22 } = {}) {
+  return engine.voice((ctx, out) => {
+    const t = ctx.currentTime;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(level, t + 0.004);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 1.4);
+    g.connect(out);
+    const oscs = [[2093, 1], [2637 * 1.004, 0.55], [4186 * 1.01, 0.18]].map(([f, mix]) => {
+      const o = ctx.createOscillator();
+      o.frequency.value = f;
+      const m = ctx.createGain();
+      m.gain.value = mix;
+      o.connect(m);
+      m.connect(g);
+      o.start(t);
+      o.stop(t + 1.5);
+      return [o, m];
+    });
+    return { source: oscs[0][0], nodes: [g, ...oscs.flat().slice(1)] };
+  });
+}
+
 // The office galvanometer's needle jolting in its case when a life is lost: a dull wooden tock,
 // band-passed noise around 520 Hz that dies in 45 ms [R5.2].
 export function playTock(engine, { level = 0.9 } = {}) {
