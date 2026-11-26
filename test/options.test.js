@@ -42,6 +42,8 @@ test('start screen: mode buttons with their lines, Dead Air locked until unlocke
   assert.match(locked, /data-pick="deadair" disabled/);
   assert.ok(locked.includes('Kiroween Judge'));
   const open = startScreenHtml({ deadAirUnlocked: true });
-  assert.ok(open.includes('hard: 5 lives, no Morse chart, no second chance'));
+  assert.ok(open.includes('hard: 5 lives, no codebook, no second chance'));
+  assert.ok(locked.includes('Marsh &amp; Western Telegraph Co.') && locked.includes('Station 7') && locked.includes('Night duty roster'));
+  assert.match(locked, /<h1 id="start-title">Night Shift<\/h1>/);
   assert.doesNotMatch(open, /data-pick="deadair" disabled/);
 });

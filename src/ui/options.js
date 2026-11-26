@@ -16,9 +16,11 @@ export function optionsHtml() {
       <label class="opt-row opt-check"><input type="checkbox" name="reduceFlashing"> Reduce flashing</label>
       <label class="opt-row opt-check"><input type="checkbox" name="captions"> Captions</label>
       <label class="opt-row opt-check"><input type="checkbox" name="showLivesNumber"> Show lives as a number</label>
+      <label class="opt-row opt-check"><input type="checkbox" name="skipStory"> Always skip the story</label>
       <label class="opt-row">Start with tutorial
         <select name="tutorial"><option value="ask">Ask on start</option><option value="never">Never</option></select></label>
       <div class="opt-row"><span class="hand-now"></span><button type="button" class="forget-hand-btn">Forget my hand</button></div>
+      <div class="opt-row"><span>Screen</span><button type="button" class="fullscreen-btn">Full screen</button></div>
       <div class="opt-buttons">
         <button type="button" class="end-game-btn">End game</button>
         <button type="button" class="close-btn">Close</button>
@@ -56,6 +58,8 @@ export function mountOptions(root, { getData, setValue, inRun = () => false, onE
       else el.value = String(s[el.name]);
     }
     endBtn.hidden = !inRun();
+    // During a run the card holds the line: the clock, the line and every sound stop [R10.1b].
+    dialog.querySelector('#options-title').textContent = inRun() ? 'Line Held' : 'Options';
     dialog.querySelector('.hand-now').textContent = handLine();
   }
 
@@ -103,6 +107,11 @@ export function mountOptions(root, { getData, setValue, inRun = () => false, onE
     endBtn.focus();
   });
   confirm.querySelector('.confirm-end').addEventListener('click', () => { api.close(); onEndGame(); });
+  dialog.querySelector('.fullscreen-btn').addEventListener('click', () => {
+    const doc = root.ownerDocument;
+    if (doc.fullscreenElement) doc.exitFullscreen?.();
+    else doc.documentElement.requestFullscreen?.().catch(() => {});
+  });
   dialog.querySelector('.forget-hand-btn').addEventListener('click', () => {
     dialog.querySelector('.hand-now').textContent = onForgetHand() || handLine();
   });

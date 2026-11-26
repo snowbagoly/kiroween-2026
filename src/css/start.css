@@ -1,0 +1,75 @@
+/* The start screen [R1.1]: the company's printed card over the empty office, dimmed and drifting slowly
+   from side to side. It is there from the first paint, with no fade in. */
+.start-screen { position: relative; min-height: 100vh; overflow: hidden; background: #0b0907; display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; }
+.start-office { position: absolute; inset: 0; pointer-events: none; }
+.start-office .office { scale: 1.05; animation: start-drift 70s ease-in-out infinite alternate; }
+.start-office::after { content: ''; position: absolute; inset: 0; z-index: 5; background: radial-gradient(ellipse at 50% 50%, rgb(0 0 0 / .45), rgb(0 0 0 / .8)); }
+@keyframes start-drift { from { translate: -24px 0; } to { translate: 24px 0; } }
+@media (prefers-reduced-motion: reduce) { .start-office .office { animation: none; } }
+.start-card {
+  position: relative;
+  z-index: 6;
+  width: min(470px, 100%);
+  padding: 22px 28px 20px;
+  text-align: center;
+  color: #3a2f22;
+  font-family: "Special Elite", "Courier New", monospace;
+  background: linear-gradient(170deg, #ebe1c6, #d6c79f);
+  box-shadow: 0 18px 40px rgb(0 0 0 / .75), inset 0 0 30px rgb(120 90 40 / .25);
+  transform: rotate(-.6deg);
+}
+.start-card .co { margin: 0; font: 13px "IM Fell English SC", serif; letter-spacing: .1em; }
+.start-screen .start-card h1 {
+  margin: 4px 0 0;
+  font: clamp(2.4rem, 7vw, 3.4rem)/1.05 "IM Fell English SC", serif;
+  letter-spacing: .12em;
+  text-transform: none;
+  color: #1b120a;
+  text-shadow: none;
+  border-bottom: 2px double rgb(58 47 34 / .6);
+  padding-bottom: 8px;
+}
+.start-screen .start-card .subtitle { margin: 8px 0 12px; font-style: normal; font-size: 14px; letter-spacing: .14em; color: #3a2f22; }
+.start-card .roster { width: 100%; margin: 0 0 14px; border-collapse: collapse; font-size: 13px; text-align: left; }
+.start-card .roster caption { font: 14px "IM Fell English SC", serif; letter-spacing: .12em; padding-bottom: 4px; }
+.start-card .roster td { padding: 3px 6px; border-bottom: 1px solid rgb(58 47 34 / .3); }
+.start-card .roster .pencil { font: 500 20px/1 "Caveat", cursive; color: #4a4033; text-align: right; }
+.start-card .roster .tonight td:not(.pencil) { text-decoration: underline 1.5px rgb(74 64 51 / .7); text-underline-offset: 4px; }
+.start-screen .start-card .mode-list { display: grid; gap: 8px; }
+.start-screen .start-card .mode-btn {
+  width: 100%;
+  padding: 8px 10px;
+  background: transparent;
+  color: #3a2f22;
+  border: 1px solid rgb(58 47 34 / .6);
+  border-radius: 0;
+  box-shadow: none;
+  text-align: center;
+}
+.start-screen .start-card .mode-btn:hover:not([disabled]), .start-screen .start-card .mode-btn:focus-visible { transform: none; background: rgb(58 47 34 / .1); }
+.start-screen .start-card .mode-name { font: 19px "IM Fell English SC", serif; letter-spacing: .12em; font-weight: normal; }
+.start-screen .start-card .mode-line { font: 500 18px/1.1 "Caveat", cursive; font-style: normal; }
+.start-screen .start-card .mode-btn[disabled] { background: transparent; color: #6b5d48; border-style: dashed; border-color: rgb(58 47 34 / .45); }
+.start-screen .start-card .judge-btn { margin-top: 12px; color: #3a2f22; border-color: rgb(58 47 34 / .5); font: 14px "IM Fell English SC", serif; letter-spacing: .1em; }
+
+/* The Options card, and "Line Held" during a run: the company's printed card too [R10.1b]. */
+.options-dialog {
+  font-family: "Special Elite", "Courier New", monospace;
+  color: #3a2f22;
+  background: linear-gradient(170deg, #ebe1c6, #d6c79f);
+  border: 0;
+  border-radius: 0;
+  box-shadow: 0 18px 40px rgb(0 0 0 / .75), inset 0 0 30px rgb(120 90 40 / .25);
+}
+.options-dialog h2 { font: 22px "IM Fell English SC", serif; letter-spacing: .2em; border-bottom: 2px double rgb(58 47 34 / .6); padding-bottom: 6px; }
+.options-dialog .opt-buttons button, .options-dialog .opt-row button {
+  font: 15px "IM Fell English SC", serif;
+  letter-spacing: .1em;
+  color: #3a2f22;
+  background: transparent;
+  border: 1px solid rgb(58 47 34 / .6);
+  border-radius: 0;
+  padding: .35rem .8rem;
+  cursor: pointer;
+}
+.options-dialog .opt-buttons .end-game-btn, .options-dialog .opt-buttons .confirm-end { color: #fff; background: #8a1f1a; border-color: #8a1f1a; }
