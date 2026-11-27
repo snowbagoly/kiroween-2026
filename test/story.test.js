@@ -47,14 +47,11 @@ test('story: "Go straight to the desk", Day Shift too, and the tutorial set to N
   assert.equal(g.state.screen, 'dayIntro');
 });
 
-test('story: never offered in Dead Air, in Judge mode, or when always skipped [R16.8, R13.5]', () => {
+test('story: never offered in Judge mode, or when always skipped [R17.6, R13.5]', () => {
   const always = game({ skip: true });
   always.dispatch({ type: 'PICK_MODE', mode: 'night' });
   assert.equal(always.state.screen, 'tutorialDialog');
   const j = game({ judge: true });
   j.dispatch({ type: 'PICK_MODE', mode: 'night' });
   assert.notEqual(j.state.screen, 'storyOffer');
-  const d = createGame({ data: { ...defaultData(), deadAirUnlocked: true }, story: true });
-  d.dispatch({ type: 'PICK_MODE', mode: 'deadair' });
-  assert.notEqual(d.state.screen, 'storyOffer');
 });

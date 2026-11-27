@@ -15,7 +15,7 @@ const message = fc.record({ words: fc.array(word, { minLength: 1, maxLength: 10 
   });
 
 test('R12.2, R12.4a: on random messages, at most 2 a day, at most 20 words, and reactions only when they fit', () => {
-  fc.assert(fc.property(fc.integer(), fc.constantFrom('night', 'day', 'deadair'), fc.array(fc.array(message, { minLength: 5, maxLength: 5 }), { minLength: 1, maxLength: 3 }), (seed, mode, days) => {
+  fc.assert(fc.property(fc.integer(), fc.constantFrom('night', 'day'), fc.array(fc.array(message, { minLength: 5, maxLength: 5 }), { minLength: 1, maxLength: 3 }), (seed, mode, days) => {
     let r = seed;
     const rng = () => { r = (r * 1103515245 + 12345) & 0x7fffffff; return r / 0x7fffffff; };
     const t = createThoughts({ rng });

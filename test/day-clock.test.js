@@ -198,7 +198,6 @@ test('game: restart this day starts the clock again at 22:00 (10:00 in Day Shift
 test('clock: Day Shift works 10:00 to 18:00, the night 22:00 to 06:00 [R7.2]', () => {
   assert.equal(startHourFor('day'), 10);
   assert.equal(startHourFor('night'), 22);
-  assert.equal(startHourFor('deadair'), 22);
   assert.equal(clockTime(0, startHourFor('day')), '10:00');
   assert.equal(clockTime(480, startHourFor('day')), '18:00');
   assert.equal(clockTime(480), '06:00');

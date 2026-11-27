@@ -27,9 +27,9 @@ test('screens: stats screen shows every R8.1 number and the rank, with Next day 
   assert.equal(statsRows(stats).length, 7);
 });
 
-test('screens: game over has two buttons, Dead Air only Main menu [R5.5, R16.6]', () => {
-  assert.deepEqual(buttons(cardHtml('gameOver', { day: 2, mode: 'night', canRestart: true })), ['Restart this day', 'Main menu']);
-  assert.deepEqual(buttons(cardHtml('gameOver', { day: 2, mode: 'deadair', canRestart: false })), ['Main menu']);
+test('screens: game over has two buttons [R5.5]', () => {
+  assert.deepEqual(buttons(cardHtml('gameOver', { day: 2, mode: 'night' })), ['Restart this day', 'Main menu']);
+  assert.deepEqual(buttons(cardHtml('gameOver', { day: 2, mode: 'day' })), ['Restart this day', 'Main menu']);
   // Day Shift sends the operator to the seaside instead of dismissing them.
   const rest = cardHtml('gameOver', { mode: 'day', time: '14:20' });
   assert.match(rest, /A rest is ordered/);
@@ -42,10 +42,10 @@ test('screens: game over has two buttons, Dead Air only Main menu [R5.5, R16.6]'
   assert.match(cardHtml('gameOver', { mode: 'night', time: '02:10' }), /OPERATOR RELIEVED OF DUTY/);
 });
 
-test('screens: closing shows the run, best stats and the unlock', () => {
-  const html = cardHtml('closing', { mode: 'night', totals: stats, best: stats, unlocked: true });
-  assert.ok(html.includes('THREE NIGHTS AT STATION 7 SERVED') && html.includes('Best Night Shift run') && html.includes('Dead Air is now open'));
-  assert.ok(!cardHtml('closing', { mode: 'day', totals: stats, best: null, unlocked: false }).includes('Dead Air is now open'));
+test('screens: closing shows the run and the best stats', () => {
+  const html = cardHtml('closing', { mode: 'night', totals: stats, best: stats });
+  assert.ok(html.includes('THREE NIGHTS AT STATION 7 SERVED') && html.includes('Best Night Shift run'));
+  assert.ok(!cardHtml('closing', { mode: 'day', totals: stats, best: null }).includes('Best Day Shift run'));
 });
 
 test('screens: tutorial dialog buttons [R2.1a]', () => {
@@ -56,7 +56,7 @@ test('screens: tutorial dialog buttons [R2.1a]', () => {
 test('screens: playing has no card, HUD shows mode and day [R1.2]', () => {
   assert.equal(cardHtml('playing'), '');
   assert.equal(hudLabel('night', 1), 'Night Shift · Day 1');
-  assert.equal(hudLabel('deadair', 3), 'Dead Air · Day 3');
+  assert.equal(hudLabel('day', 3), 'Day Shift · Day 3');
 });
 
 test('screens: the end cards are company notices with strips of tape [R8.1, R5.5, R9.7g]', () => {

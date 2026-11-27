@@ -4,9 +4,9 @@ Each task is small enough to become one GitHub issue and one pull request. Tick 
 
 Order follows `.kiro/steering/schedule.md`. Tasks in the same phase can run side by side unless a "Needs" line says otherwise.
 
-Cut order if late: T40 slides 1 to 5 (keep slide 6), the extra dread effects in T37, T22 (one-shot sounds), T23 (Day Shift music), T27 (phone), T26 (Dead Air). Never cut T1 to T21, T24, T25, T28 to T31, and T32 to T39, T41 and T42.
+Cut order if late: T40 slides 1 to 5 (keep slide 6), the extra dread effects in T37, T22 (one-shot sounds), T23 (Day Shift music), T27 (phone). Never cut T1 to T21, T24, T25, T28 to T31, and T32 to T39, T41 and T42.
 
-Phase 7 (T32 to T42) builds the 1903 office, story and endings from design sections 4 to 18. It runs before Phase 6, and T26, T27 and T29 build on it.
+Phase 7 (T32 to T42) builds the 1903 office, story and endings from design sections 4 to 18. It runs before Phase 6, and T27 and T29 build on it.
 
 Phase 8 (T47 to T51, with T44) tells the story across the three nights (R20, design 21). Build T47 and T44 first: they carry the story at little cost. If late, cut in this order: the mile nine slide in T50, the looking around in T48 to T50 (each morning is only its cutscene), the slides of T51 (the end of the letter goes on the closing notice). Never cut T47 or T44.
 
@@ -45,7 +45,7 @@ Phase 8 (T47 to T51, with T44) tells the story across the three nights (R20, des
   Done when: property tests pass for 1000 seeds: 5 messages, a short and a long one, not sorted by length, strange counts per day and mode, Day 3 has 2 send and 2 receive, Day Shift has no strange messages, same seed gives same result. [R6.3, R6.7, R7.2, R9.2, R9.2a, R12.5, design 6]
 
 - [x] **T8. Lives and galvanometer**
-  Needs: T2, T3. Build `core/lives.js` and `ui/galvanometer.js`: 10 steps (5 in Dead Air), needle animation, tremble near the red zone, tick sound, hidden label, "Show lives as a number" text.
+  Needs: T2, T3. Build `core/lives.js` and `ui/galvanometer.js`: 10 steps, needle animation, tremble near the red zone, tick sound, hidden label, "Show lives as a number" text.
   Done when: property tests keep lives between 0 and the max, refill happens after each 3 clean messages, and `dead` is true only at 0; the needle moves one step per life; a screen reader reads "3 of 10 lives". [R5.1 to R5.5, R5.7, R5.8, R7.5, R9.6]
   Later: `ui/galvanometer.js` was replaced by `office/galvanometer.js` (T34) and removed in T43.
 
@@ -65,11 +65,11 @@ Phase 8 (T47 to T51, with T44) tells the story across the three nights (R20, des
 
 - [x] **T12. Morse chart and text row**
   Needs: T2, T6. Build `ui/morse-chart.js` (left side, A to Z) and `ui/text-row.js` (highlighted next letter, no pattern beneath, blanks for receiving).
-  Done when: the chart is always shown in Night Shift and Day Shift and never in Dead Air; the next letter is highlighted while sending. [R3.1, R3.1a, R4.2]
+  Done when: the chart is always shown in Night Shift and Day Shift; the next letter is highlighted while sending. [R3.1, R3.1a, R4.2]
   Later: the chart became the codebook card (`office/codebook.js`) and the text row the telegram form (T34); both old files were removed in T43.
 
 - [x] **T13. Day flow screens**
-  Needs: T10, T11. Day intro cards (Day 2 and Day 3), "Message sent" and "Message received", statistics screen with rank, game-over screen (two buttons, or one in Dead Air), closing screen.
+  Needs: T10, T11. Day intro cards (Day 2 and Day 3), "Message sent" and "Message received", statistics screen with rank, game-over screen (two buttons), closing screen.
   Done when: you can play Day 1 from start to the stats screen and click "Next day". [R4.6, R7.4, R8.1 to R8.3, R9.5, R5.5]
 
 - [x] **T14. Receiving**
@@ -96,8 +96,8 @@ Phase 8 (T47 to T51, with T44) tells the story across the three nights (R20, des
   Done when: a mistake in Night Shift shows static and flicker; with "Reduce flashing" there is no change faster than 3 times a second; Day Shift loads none of it. [R6.4, R6.6, R7.1]
 
 - [x] **T19. Horror director**
-  Needs: T3, T10, T17. Build `director/horror.js`: intensity from day and lives, random effect scheduler with the minimum gap, no effect while a key is down, Day 3 full set, Dead Air from Day 1.
-  Done when: property test: no two effects closer than 8 s (4 s on Day 3), none while a key is down; the scheduler is never started in Day Shift. [R6.5, R6.7, R16.1]
+  Needs: T3, T10, T17. Build `director/horror.js`: intensity from day and lives, random effect scheduler with the minimum gap, no effect while a key is down, Day 3 full set.
+  Done when: property test: no two effects closer than 8 s (4 s on Day 3), none while a key is down; the scheduler is never started in Day Shift. [R6.5, R6.7]
 
 - [x] **T20. Strange messages**
   Needs: T7, T19. Write the strange messages; connect them to the director and the day builder.
@@ -125,10 +125,8 @@ Phase 8 (T47 to T51, with T44) tells the story across the three nights (R20, des
   Needs: T11, T13. Check keyboard-only play, live regions, hidden label, contrast script, captions on by default if audio is blocked.
   Done when: the contrast test passes at 4.5:1 for every pair; a full game is playable with the keyboard alone. [R10]
 
-- [x] **T26. Dead Air hard mode** (fourth cut)
-  Needs: T10, T13, T19. Add the locked button, unlock on Night Shift Day 3, 5 lives with a 5 step dial, no chart, no restart, own best stats, no tutorial dialog.
-  Done when: Dead Air is locked on a fresh browser and unlocks after Night Shift Day 3; at 0 lives only "Main menu" shows. [R16]
-  Built along the way in T10, T19, T32 and T34 (no PR of its own).
+- [x] **T26. (Dropped)**
+  The hard mode (R16) was dropped on 27.11.2026, and its code was taken out. The number is kept so later numbers stay the same.
 
 - [ ] **T27. Phone support** (third cut)
   Needs: T14, T15. Build `input/pointer.js`: touch Morse key, typewriter keyboard A to Z, layout from 360 px wide, chart drawer, touch rules, 44 px targets.
@@ -137,7 +135,7 @@ Phase 8 (T47 to T51, with T44) tells the story across the three nights (R20, des
 ## Phase 7. The 1903 office (26.11 to 29.11)
 
 - [x] **T32. Fonts and the empty office**
-  Needs: T2. Bundle `fonts/` into the build as base64 `@font-face`. Add `core/util.js`, `office/drawings.js`, `office/scenery.js`, `office/room.js` and the office CSS. Night Shift and Dead Air show the office (window, codebook spot, calendar, wall clock, galvanometer spot, lamp, key, desk); Day Shift keeps its desk through the shared desk interface. `fitRoom()` scales the 900 px room; below 1050 px it is one column.
+  Needs: T2. Bundle `fonts/` into the build as base64 `@font-face`. Add `core/util.js`, `office/drawings.js`, `office/scenery.js`, `office/room.js` and the office CSS. Night Shift shows the office (window, codebook spot, calendar, wall clock, galvanometer spot, lamp, key, desk); Day Shift keeps its desk through the shared desk interface. `fitRoom()` scales the 900 px room; below 1050 px it is one column.
   Done when: the build has no link to another site and fails on one; screenshots of the office at 1440, 1920 and 360 px look right; Day Shift looks as before. [R11.2, R11.4, R7.2a, design 3, 8]
 
 - [x] **T33. The learned hand**
@@ -157,24 +155,24 @@ Phase 8 (T47 to T51, with T44) tells the story across the three nights (R20, des
   Done when: Night Shift plays the room tone, wind, wires and the waltz; mute, both sliders and "Music" work; captions exist for the new sounds. [R6.1, R6.2, R6.8, R10.3]
 
 - [x] **T37. Faults, omens, last warning and dread**
-  Needs: T34, T35, T36. Build `office/light.js`, `director/faults.js` and `director/dread.js`. Day 2 dread starts at 70% of Day 1's points; Day 3 and Dead Air are full from 22:00. "Reduce flashing" softens every stutter.
-  Done when: faults tests pass for 10 and 5 lives; each omen plays at most once a day; screenshots of the dimmed room, the dark corners and the last warning. [R6.4 to R6.7]
+  Needs: T34, T35, T36. Build `office/light.js`, `director/faults.js` and `director/dread.js`. Day 2 dread starts at 70% of Day 1's points; Day 3 is full from 22:00. "Reduce flashing" softens every stutter.
+  Done when: faults tests pass for 10 lives; each omen plays at most once a day; screenshots of the dimmed room, the dark corners and the last warning. [R6.4 to R6.7]
 
 - [x] **T38. Game over sequence, dawn and company notices**
   Needs: T37. Build `ui/endings.js`: the snap, the figure, the dark, "THE LINE IS DEAD" tapped in the player's hand (a key skips it), the dismissal telegram; the dawn with the bell and robin; the "SHIFT ENDED 06:00" and closing notices. Day Shift gets the calm versions.
-  Done when: game over, time up, dawn and closing all show their notices with the right buttons in every mode; screenshots of each. [R5.5, R5.6, R8.1, R8.3, R9.9, R16.6]
+  Done when: game over, time up, dawn and closing all show their notices with the right buttons in every mode; screenshots of each. [R5.5, R5.6, R8.1, R8.3, R9.9]
 
 - [x] **T39. Start card and "Line Held"**
   Needs: T32, T11. Build the company card over the drifting empty office with the roster and the mode buttons. Move Options onto a company card; holding the game stops the clock, idling and all sound. Add "Always skip the story" and "Full screen".
   Done when: the start card shows from the first paint with no sound before a click; Esc during play holds and resumes the game. [R1.1, R1.1a, R1.3, R10.1a, R10.1b, R11.6]
 
 - [x] **T40. The story**
-  Needs: T36, T39. Build `story/` (six slides, the letter, the lantern fades, Space and Esc), `audio/piano.js` with the nocturne, and `audio/story-sound.js`. Offer the story after a mode is picked; skip it in Dead Air, Judge mode and with "Always skip the story".
+  Needs: T36, T39. Build `story/` (six slides, the letter, the lantern fades, Space and Esc), `audio/piano.js` with the nocturne, and `audio/story-sound.js`. Offer the story after a mode is picked; skip it in Judge mode and with "Always skip the story".
   Done when: the story runs about 60 to 90 seconds and leads into Day 1; screenshots of each slide. [R17]
 
 - [x] **T41. Messages and thoughts for 1903, and the name**
-  Needs: T7, T21. Rewrite the pool for 1903 with threads and the Vane telegram as Day 1's last in Night Shift and Dead Air; give every message its To and From, written on the form (design 6); set the day dates and the calendar. Check every thought is true for 1903 and uses "they". Rename the game to "Night Shift" in the title, README, Judge card and storage key (`nightshift.v1`).
-  Done when: message tests pass for 1000 seeds; every message has a To and a From; no "Dead Air -- 1873" or "1873" is left outside the hard mode's name. [R6.3a, R9.2a, R9.8, R12.4, R12.5, R12.6, design 6, 17]
+  Needs: T7, T21. Rewrite the pool for 1903 with threads and the Vane telegram as Day 1's last in Night Shift; give every message its To and From, written on the form (design 6); set the day dates and the calendar. Check every thought is true for 1903 and uses "they". Rename the game to "Night Shift" in the title, README, Judge card and storage key (`nightshift.v1`).
+  Done when: message tests pass for 1000 seeds; every message has a To and a From; the old name and "1873" are gone. [R6.3a, R9.2a, R9.8, R12.4, R12.5, R12.6, design 6, 17]
 
 - [x] **T42. Judge additions and screenshot script**
   Needs: T24, T38, T40. Add "Dawn" to Jump to day, "Play the story", one button per omen and the last warning; infinite lives covers idling and the late drain; the speed switch speeds the clock. Add `tools/shots.mjs` (always `--mute-audio`).
@@ -184,7 +182,7 @@ Phase 8 (T47 to T51, with T44) tells the story across the three nights (R20, des
   Done when: Day Shift plays Day 1 to Day 3 in the daylight office; the bird flies past at random, never while a letter is being keyed and not with reduced motion; screenshots at 1440, 1920 and 360 px. [R7.2, R7.2a, R11.4, design 8]
 
 - [ ] **T44. The order on Day 3, the end of the story**
-  Needs: T35, T37, T38, T40, T47. Build `director/order.js` and wire it in (design 19): the order "SEND WHAT IT NEVER HEARD", received from VN in Vane's hand on Day 3 in Night Shift and Dead Air; the sign once all the day's messages are done: the sounder sends the advert by itself in the player's hand, onto a form in their own ink; 20 s with the order shown above it, a heartbeat and the room dimmed, the clock held; MAUD sent by key or keyboard, each right letter making the sounder falter. Kept: the sounder stops dead, Vane's last telegram to Mrs M. Vane (not one of the 5, no lives lost), then the dawn. Broken: the figure at the window, darkness, the newspaper advert for a new operator, then the game over notice. Judge buttons for the order, the sign and the failure.
+  Needs: T35, T37, T38, T40, T47. Build `director/order.js` and wire it in (design 19): the order "SEND WHAT IT NEVER HEARD", received from VN in Vane's hand on Day 3 in Night Shift; the sign once all the day's messages are done: the sounder sends the advert by itself in the player's hand, onto a form in their own ink; 20 s with the order shown above it, a heartbeat and the room dimmed, the clock held; MAUD sent by key or keyboard, each right letter making the sounder falter. Kept: the sounder stops dead, Vane's last telegram to Mrs M. Vane (not one of the 5, no lives lost), then the dawn. Broken: the figure at the window, darkness, the newspaper advert for a new operator, then the game over notice. Judge buttons for the order, the sign and the failure.
   Done when: unit and property tests for the order's states and timing pass (the sign only after every message is done, the word only counts in the 20 s, at most once a run, never in Day Shift, the last telegram costs no life and is not in the stats); both outcomes play through in Chrome with sound off; screenshots of the 20 s, Vane's last telegram and the advert. [R18, R20.5]
 
 - [ ] **T45. The date on the day card**
@@ -198,16 +196,16 @@ Phase 8 (T47 to T51, with T44) tells the story across the three nights (R20, des
 ## Phase 8. The story across the three nights (28.11 to 30.11)
 
 - [ ] **T47. The story's telegrams**
-  Needs: T41. Add the story's telegrams for Night Shift and Dead Air (design 6, step 4a): on Day 2 a message from VN and Mrs M. Vane's "IS HE WITH YOU"; on Day 3 Mrs M. Vane's wire and a form to send in the operator's own hand. Add `hand` to messages: VN's forms in a dark ink and played in Vane's slower, heavier hand by the sequencer, the operator's in the ink of the letter to Ada. Day Shift is unchanged.
+  Needs: T41. Add the story's telegrams for Night Shift (design 6, step 4a): on Day 2 a message from VN and Mrs M. Vane's "IS HE WITH YOU"; on Day 3 Mrs M. Vane's wire and a form to send in the operator's own hand. Add `hand` to messages: VN's forms in a dark ink and played in Vane's slower, heavier hand by the sequencer, the operator's in the ink of the letter to Ada. Day Shift is unchanged.
   Done when: message tests pass for 1000 seeds (Day 2 has a VN message and Mrs Vane's, Day 3 has Mrs Vane's and a form in the operator's hand, Day Shift has none, the strange counts still hold); both inks pass the contrast test; screenshots of a VN form and a form in the operator's hand. [R20.2 to R20.5a, R6.3, R6.3a, R10.4]
 
 - [ ] **T48. The mornings: the flow and looking around**
-  Needs: T10, T40, T43. Add the `morning` and `epilogue` screens to `core/game.js` (design 4): the morning after Day 1 and Day 2 in Night Shift only, skipped in Dead Air, in Judge mode and with "Always skip the story"; the checkpoint after the morning. Build `core/morning.js` (things, looked-at marks, the lock and pick riddles, skip) and `office/morning.js` (the office in grey morning light, things as buttons reachable with Tab, close-up cards, the number lock, the pick, "Go back to bed"), the date card, and the cutscene through the story's slide player with a given slide list. Judge: "Morning 1", "Morning 2", "Epilogue", and "Type it correctly" solves a riddle. Start with a stand-in morning (one thing, one riddle, one slide) so T49 and T50 only add content.
-  Done when: unit and property tests pass (design 16: the morning only between Night Shift days, never replayed by "Restart this day", a riddle solves only with its answer, skip plays the cutscene); a morning plays through with the mouse and with the keyboard alone; screenshots of the morning office and a close-up. [R20.1, R20.6 to R20.8, R20.12 to R20.14, R8.3, R9.3, R13.3a, R13.5, R16.8]
+  Needs: T10, T40, T43. Add the `morning` and `epilogue` screens to `core/game.js` (design 4): the morning after Day 1 and Day 2 in Night Shift only, skipped in Judge mode and with "Always skip the story"; the checkpoint after the morning. Build `core/morning.js` (things, looked-at marks, the lock and pick riddles, skip) and `office/morning.js` (the office in grey morning light, things as buttons reachable with Tab, close-up cards, the number lock, the pick, "Go back to bed"), the date card, and the cutscene through the story's slide player with a given slide list. Judge: "Morning 1", "Morning 2", "Epilogue", and "Type it correctly" solves a riddle. Start with a stand-in morning (one thing, one riddle, one slide) so T49 and T50 only add content.
+  Done when: unit and property tests pass (design 16: the morning only between Night Shift days, never replayed by "Restart this day", a riddle solves only with its answer, skip plays the cutscene); a morning plays through with the mouse and with the keyboard alone; screenshots of the morning office and a close-up. [R20.1, R20.6 to R20.8, R20.12 to R20.14, R8.3, R9.3, R13.3a, R13.5]
 
 - [ ] **T49. Morning 1: Vane's desk**
-  Needs: T48. The things and their close-ups from design 21 (logbook, coat, record, calendar with its October sheet, drawer), the lock at 2710, the cutscene slides `story/slides/logbook.js` and `label.js` with their letter lines. Build `office/vane-notes.js`: Vane's notes on the wall from Day 2 in Night Shift and Dead Air, enlarged on click.
-  Done when: Morning 1 plays through to Day 2; the notes hang on the wall on Day 2 and Day 3, also with the story skipped and in Dead Air; screenshots of each close-up, the open drawer, both slides and the notes on the wall. [R20.9, R20.12]
+  Needs: T48. The things and their close-ups from design 21 (logbook, coat, record, calendar with its October sheet, drawer), the lock at 2710, the cutscene slides `story/slides/logbook.js` and `label.js` with their letter lines. Build `office/vane-notes.js`: Vane's notes on the wall from Day 2 in Night Shift, enlarged on click.
+  Done when: Morning 1 plays through to Day 2; the notes hang on the wall on Day 2 and Day 3, also with the story skipped; screenshots of each close-up, the open drawer, both slides and the notes on the wall. [R20.9, R20.12]
 
 - [ ] **T50. Morning 2: the file copies and mile nine** (cut the mile nine slide first)
   Needs: T48, T49. The things and close-ups from design 21 (Vane's notes, the window, the spike of six file copies), the pick riddle (the advert of 29 October), the cutscene slides `filecopy.js`, `milenine.js` (the marsh by day at mile nine, the boots at the dyke, the watch on the pole) and `score.js` (the waltz from story slide 2, with "Maud" at the top; share the score's drawing with slide 2) and their letter lines.
@@ -215,7 +213,7 @@ Phase 8 (T47 to T51, with T44) tells the story across the three nights (R20, des
 
 - [ ] **T51. The epilogue** (cut its slides if late)
   Needs: T44, T48. After the Day 3 dawn in Night Shift: three slides (`station` at dawn, `hall` in spring sun, `printed`: the waltz in print) with the end of the letter, then the closing notice. Reuse story slides 5 and 1 with a dawn and a spring palette (the R19 day hall if T46's Day Shift story is built). New: `story/slides/printed.js`.
-  Done when: the epilogue plays after Day 3 in Night Shift only (not in Dead Air, not after a broken order, not with the story skipped); screenshots of each slide. [R20.11, R8.3]
+  Done when: the epilogue plays after Day 3 in Night Shift only (not after a broken order, not with the story skipped); screenshots of each slide. [R20.11, R8.3]
 
 ## Phase 6. Finish (29.11 to 01.12)
 
@@ -254,7 +252,7 @@ Phase 8 (T47 to T51, with T44) tells the story across the three nights (R20, des
 | R13 | T24, T42, T48 |
 | R14 | T1, T30, T31 |
 | R15 | T27 |
-| R16 | T19, T26, T38, T48 |
+| R16 | (Dropped) |
 | R17 | T40 |
 | R18 | T44 |
 | R19 | T46 |

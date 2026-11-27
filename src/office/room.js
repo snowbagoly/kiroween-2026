@@ -1,4 +1,4 @@
-// The office, at night for Night Shift and Dead Air and by day for Day Shift [design 3, 8, R7.2, R11.4]: a left wall
+// The office, at night for Night Shift and by day for Day Shift [design 3, 8, R7.2, R11.4]: a left wall
 // (window, codebook, lamp), a centre (the work, the calendar, the key and the sounder on the desk) and a
 // right wall (wall clock, galvanometer). Laid out at a 900 px design height and scaled as a whole;
 // below NARROW_SCREEN it is one scrolling column without the window, clock, calendar and lamp.

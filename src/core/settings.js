@@ -2,10 +2,10 @@
 // If storage is blocked or full, the game keeps working with the values in memory.
 import { validHand } from './hand.js';
 
-export const STORAGE_KEY = 'nightshift.v1'; // old deadair.v1 saves are not read
+export const STORAGE_KEY = 'nightshift.v1'; // saves under the game's old name are not read
 export const SAVE_VERSION = 1;
 const TUTORIAL_CHOICES = ['ask', 'never'];
-const BEST_MODES = ['night', 'day', 'deadair'];
+const BEST_MODES = ['night', 'day'];
 
 export function defaultData() {
   return {
@@ -22,8 +22,7 @@ export function defaultData() {
       tutorial: 'ask',
     },
     hand: null, // the learned hand { dot, dash }, or null for a new player [R3.3a]
-    best: { night: null, day: null, deadair: null },
-    deadAirUnlocked: false,
+    best: { night: null, day: null },
   };
 }
 
@@ -42,7 +41,6 @@ export function cleanData(raw) {
   if (TUTORIAL_CHOICES.includes(s.tutorial)) d.settings.tutorial = s.tutorial;
   const b = isObj(raw.best) ? raw.best : {};
   for (const m of BEST_MODES) d.best[m] = isObj(b[m]) ? b[m] : null;
-  d.deadAirUnlocked = bool(raw.deadAirUnlocked, false);
   d.hand = validHand(raw.hand); // a broken hand is a new player's
   return d;
 }

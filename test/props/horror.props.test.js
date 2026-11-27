@@ -32,13 +32,12 @@ function fakeTime() {
 const busyWindows = fc.array(fc.record({ at: fc.integer({ min: 0, max: 600000 }), len: fc.integer({ min: 50, max: 5000 }) }), { maxLength: 80 });
 const setup = fc.record({
   day: fc.constantFrom(1, 2, 3),
-  mode: fc.constantFrom('night', 'deadair'),
   lives: fc.integer({ min: 0, max: 10 }),
   seed: fc.integer(),
 });
 
-test('R6.5, R6.7: no two effects closer than 8 s (4 s on Day 3 and in Dead Air), none while a key is down', () => {
-  fc.assert(fc.property(setup, busyWindows, ({ day, mode, lives, seed }, windows) => {
+test('R6.5, R6.7: no two effects closer than 8 s (4 s on Day 3), none while a key is down', () => {
+  fc.assert(fc.property(setup, busyWindows, ({ day, lives, seed }, windows) => {
     const clock = fakeTime();
     let r = seed;
     const rng = () => { r = (r * 1103515245 + 12345) & 0x7fffffff; return r / 0x7fffffff; };
@@ -49,15 +48,14 @@ test('R6.5, R6.7: no two effects closer than 8 s (4 s on Day 3 and in Dead Air),
       isBusy: () => busy(clock.now()),
       onEffect: (name) => fired.push({ name, at: clock.now() }),
     });
-    const max = mode === 'deadair' ? 5 : 10;
-    d.start({ day, mode, lives: Math.min(lives, max), max });
+    d.start({ day, mode: 'night', lives, max: 10 });
     clock.runTo(600000); // ten minutes
-    const gap = minGapFor(day, mode);
-    assert.equal(gap, day === 3 || mode === 'deadair' ? MIN_GAP_FULL_MS : MIN_GAP_MS);
+    const gap = minGapFor(day);
+    assert.equal(gap, day === 3 ? MIN_GAP_FULL_MS : MIN_GAP_MS);
     for (let i = 1; i < fired.length; i++) assert.ok(fired[i].at - fired[i - 1].at >= gap, `${fired[i].at - fired[i - 1].at} ms`);
     for (const f of fired) assert.ok(!busy(f.at), `effect at ${f.at} while a key is down`);
-    if (day === 1 && mode === 'night') assert.ok(fired.every((f) => f.at >= DAY1_CALM_MS), 'Day 1 starts calm');
-    if (day < 3 && mode === 'night') assert.ok(fired.every((f) => f.name !== 'scream'));
+    if (day === 1) assert.ok(fired.every((f) => f.at >= DAY1_CALM_MS), 'Day 1 starts calm');
+    if (day < 3) assert.ok(fired.every((f) => f.name !== 'scream'));
     assert.ok(fired.length > 0, 'something happens in ten minutes');
   }), RUNS);
 });

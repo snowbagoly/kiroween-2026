@@ -42,11 +42,6 @@ test('R7.1: Day Shift never shows a strange message, on any day', () => {
   }), RUNS);
 });
 
-test('R16.1: Dead Air has 3 or more strange messages every day', () => {
-  fc.assert(fc.property(seed, (s) => {
-    for (const day of playRun(s, 'deadair')) assert.ok(day.filter((m) => m.strange).length >= 3);
-  }), RUNS);
-});
 
 test('director: a strange message raises intensity until the next message', () => {
   const d = createHorrorDirector({ setTimer: () => 1, clearTimer: () => {}, now: () => 0 });

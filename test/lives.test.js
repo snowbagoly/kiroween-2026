@@ -1,12 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createLives, maxLivesFor } from '../src/core/lives.js';
+import { createLives, MAX_LIVES } from '../src/core/lives.js';
 import { livesLabel } from '../src/office/galvanometer.js';
 
-test('lives: 10 in Night and Day Shift, 5 in Dead Air', () => {
-  assert.equal(maxLivesFor('night'), 10);
-  assert.equal(maxLivesFor('day'), 10);
-  assert.equal(maxLivesFor('deadair'), 5);
+test('lives: 10 to start with', () => {
+  assert.equal(MAX_LIVES, 10);
   assert.equal(createLives().lives, 10);
 });
 

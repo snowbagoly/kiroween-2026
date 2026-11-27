@@ -46,10 +46,9 @@
   box-shadow: none;
   text-align: center;
 }
-.start-screen .start-card .mode-btn:hover:not([disabled]), .start-screen .start-card .mode-btn:focus-visible { transform: none; background: rgb(58 47 34 / .1); }
+.start-screen .start-card .mode-btn:hover, .start-screen .start-card .mode-btn:focus-visible { transform: none; background: rgb(58 47 34 / .1); }
 .start-screen .start-card .mode-name { font: 19px "IM Fell English SC", serif; letter-spacing: .12em; font-weight: normal; }
 .start-screen .start-card .mode-line { font: 500 18px/1.1 "Caveat", cursive; font-style: normal; }
-.start-screen .start-card .mode-btn[disabled] { background: transparent; color: #6b5d48; border-style: dashed; border-color: rgb(58 47 34 / .45); }
 .start-screen .start-card .judge-btn { margin-top: 12px; color: #3a2f22; border-color: rgb(58 47 34 / .5); font: 14px "IM Fell English SC", serif; letter-spacing: .1em; }
 
 /* The Options card, and "Line Held" during a run: the company's printed card too [R10.1b]. */

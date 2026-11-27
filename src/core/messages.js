@@ -1,10 +1,10 @@
-// Message pool and day builder [design 6, R6.3, R6.7, R7.2, R9.2, R12.5, R16.1].
+// Message pool and day builder [design 6, R6.3, R6.7, R7.2, R9.2, R12.5].
 // The telegrams themselves are in message-pool.js.
 import { POOL } from './message-pool.js';
 import { shuffle, randomInt } from './rng.js';
 
 export const MESSAGES = POOL;
-// Day 1's last telegram in Night Shift and Dead Air: Head Office asking Mr Vane why he has not reported [R6.3a].
+// Day 1's last telegram in Night Shift: Head Office asking Mr Vane why he has not reported [R6.3a].
 export const VANE_ID = 'd1-16';
 
 export const SHORT_MAX = 10; // letters
@@ -36,7 +36,7 @@ export function lengthClass(text) {
 // Minimum strange messages per day. Night Shift day 1: only the 5th one.
 export function strangeRule(day, mode) {
   if (mode === 'day') return { min: 0, max: 0, lastOnly: false };
-  if (mode === 'deadair' || day === 3) return { min: 3, max: 4, lastOnly: false };
+  if (day === 3) return { min: 3, max: 4, lastOnly: false };
   if (day === 2) return { min: 2, max: 3, lastOnly: false };
   return { min: 1, max: 1, lastOnly: true };
 }
@@ -76,7 +76,7 @@ export function checkDay(list, day, mode) {
 
 const withInfo = (m, role) => ({ ...m, role, letters: lettersOf(m.text), length: lengthClass(m.text) });
 
-// Picks 5 messages for a day. `mode` is 'night', 'day' or 'deadair'. `rng` comes from createRng(seed).
+// Picks 5 messages for a day. `mode` is 'night' or 'day'. `rng` comes from createRng(seed).
 export function buildDay(day, mode, rng) {
   const pool = MESSAGES.filter((m) => m.day === day);
   const normal = pool.filter((m) => !m.strange);

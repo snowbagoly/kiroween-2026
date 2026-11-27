@@ -15,4 +15,4 @@ export const junk = fc.anything();
 
 export const seed = fc.integer({ min: 0, max: 0xffffffff });
 export const day = fc.constantFrom(1, 2, 3);
-export const mode = fc.constantFrom('night', 'day', 'deadair');
+export const mode = fc.constantFrom('night', 'day');

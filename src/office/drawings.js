@@ -203,7 +203,7 @@ export function drawLamp({ id = 'lamp' } = {}) {
   };
 }
 
-// The line galvanometer on its board, with steps marked on its dial (10 lives, or 5 in Dead Air). Its
+// The line galvanometer on its board, with steps marked on its dial (10 lives). Its
 // needle is turned from outside, or fixed at the given strength (0 to 1); the wires run down to wiresTo.
 export function drawGalvanometer({ id = 'galvanometer', needle = null, wiresTo = 300, steps = 10 } = {}) {
   const needleAt = (before) => (needle === null ? ''

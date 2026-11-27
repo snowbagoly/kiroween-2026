@@ -35,6 +35,6 @@ const sounds = { ...HORROR_SOUNDS, static: playStatic };
 for (const b of document.querySelectorAll('[data-sound]')) {
   b.addEventListener('click', () => { audio.unlock(); if (sounds[b.dataset.sound](audio)) caps.show(b.dataset.sound); });
 }
-// From the browser console: deadAirSound('thunder'), 'crow', 'scream', 'knock' or 'static'.
-window.deadAirSound = (name) => { audio.unlock(); const ok = !!sounds[name]?.(audio); if (ok) caps.show(name); return ok; };
+// From the browser console: nightShiftSound('thunder'), 'crow', 'scream', 'knock' or 'static'.
+window.nightShiftSound = (name) => { audio.unlock(); const ok = !!sounds[name]?.(audio); if (ok) caps.show(name); return ok; };
 if (new URLSearchParams(window.location.search).get('test') === '1') window.__night = { audio, night, day, caps };

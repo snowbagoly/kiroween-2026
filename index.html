@@ -55,7 +55,6 @@
   .stats-table th, .stats-table td { padding: .2rem .6rem; border-bottom: 1px solid rgba(74,59,34,.3); }
   .stats-table th { font-weight: normal; }
   .stats-table td { text-align: right; font-weight: bold; }
-  .card .unlock { font-weight: bold; }
   .judge-badge { display: inline-block; padding: 0 .4em; margin-right: .3em; background: #8a1f1a; color: #fff; font-size: .8rem;
     font-weight: bold; letter-spacing: .12em; border-radius: 2px; }
   .judge-panel { position: fixed; z-index: 22; left: .5rem; top: 19.5rem; width: clamp(14rem, 20vw, 17rem); max-height: calc(100vh - 20.5rem);
@@ -124,8 +123,7 @@
   .mode-btn { display: flex; flex-direction: column; gap: .35rem; width: 15rem; padding: 1rem 1.2rem; cursor: pointer;
     background: var(--paper); color: var(--ink); border: 2px solid var(--brass2); border-radius: 3px;
     box-shadow: 0 4px 14px var(--shadow); }
-  .mode-btn:hover:not([disabled]) { transform: translateY(-2px); }
-  .mode-btn[disabled] { cursor: not-allowed; background: var(--frame); color: var(--face); border-color: var(--frame); }
+  .mode-btn:hover { transform: translateY(-2px); }
   .mode-name { font-size: 1.35rem; font-weight: bold; letter-spacing: .06em; }
   .mode-line { font-size: .95rem; font-style: italic; }
   .judge-btn { margin-top: 1.2rem; padding: .5rem 1rem; cursor: pointer; background: transparent; color: var(--text);

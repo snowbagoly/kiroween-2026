@@ -5,10 +5,10 @@ import { createRng } from '../src/core/rng.js';
 import { MORSE } from '../src/core/morse.js';
 
 test('messages: at least 12 work messages per day, strange ones on top', () => {
-  for (const d of [1, 2, 3]) {
-    assert.ok(MESSAGES.filter((m) => m.day === d && !m.strange).length >= 12, `day ${d}`);
-    assert.ok(MESSAGES.filter((m) => m.day === d && m.strange).length >= 5, `day ${d} strange`);
-  }
+  for (const d of [1, 2, 3]) assert.ok(MESSAGES.filter((m) => m.day === d && !m.strange).length >= 12, `day ${d}`);
+  // Day 1 has one strange telegram, the last: Head Office asking Mr Vane [R6.3a].
+  assert.deepEqual(MESSAGES.filter((m) => m.day === 1 && m.strange).map((m) => m.id), ['d1-16']);
+  for (const d of [2, 3]) assert.ok(MESSAGES.filter((m) => m.day === d && m.strange).length >= 5, `day ${d} strange`);
 });
 
 test('messages: ids are unique and text uses only letters Morse can send', () => {
@@ -41,7 +41,7 @@ test('messages: no long message among the last two of any day, for 1000 seeds [R
   const { createRng } = await import('../src/core/rng.js');
   const { buildDay } = await import('../src/core/messages.js');
   for (let seed = 1; seed <= 1000; seed++) {
-    for (const mode of ['night', 'day', 'deadair']) {
+    for (const mode of ['night', 'day']) {
       for (const day of [1, 2, 3]) {
         const list = buildDay(day, mode, createRng(seed));
         assert.ok(list.slice(-2).every((m) => m.length !== 'long'), `${seed} ${mode} ${day}`);
@@ -57,7 +57,7 @@ test('messages: Day 1 starts short and keeps every telegram within two lines, fo
   assert.equal(formLines('YES'), 1);
   assert.ok(MESSAGES.filter((m) => m.day === 1).every((m) => formLines(m.text) <= 2));
   for (let seed = 1; seed <= 1000; seed++) {
-    for (const mode of ['night', 'day', 'deadair']) {
+    for (const mode of ['night', 'day']) {
       const list = buildDay(1, mode, createRng(seed));
       assert.equal(list[0].length, 'short', `${seed} ${mode}`);
       assert.ok(list.every((m) => formLines(m.text) <= 2), `${seed} ${mode}`);
@@ -69,15 +69,13 @@ test('messages: every telegram has a To and a From [T41, design 6]', () => {
   for (const m of MESSAGES) assert.ok(m.to && m.from, m.id);
 });
 
-test('messages: Day 1 ends with Head Office asking Mr Vane, in Night Shift and Dead Air only [R6.3a]', async () => {
+test('messages: Day 1 ends with Head Office asking Mr Vane, in Night Shift only [R6.3a]', async () => {
   const { createRng } = await import('../src/core/rng.js');
   const { buildDay, VANE_ID } = await import('../src/core/messages.js');
   for (let seed = 1; seed <= 300; seed++) {
-    for (const mode of ['night', 'deadair']) {
-      const last = buildDay(1, mode, createRng(seed)).at(-1);
-      assert.equal(last.id, VANE_ID);
-      assert.equal(last.to, 'Mr E. Vane, Station 7');
-    }
+    const last = buildDay(1, 'night', createRng(seed)).at(-1);
+    assert.equal(last.id, VANE_ID);
+    assert.equal(last.to, 'Mr E. Vane, Station 7');
     assert.ok(buildDay(1, 'day', createRng(seed)).every((m) => m.id !== VANE_ID));
   }
 });

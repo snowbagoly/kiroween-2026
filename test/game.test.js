@@ -56,21 +56,15 @@ test('game: setting "never" skips the dialog [R2.1c]', () => {
   assert.equal(g.state.screen, 'dayIntro');
 });
 
-test('game: Dead Air is locked until unlocked, open in Judge mode, never asks for the tutorial', () => {
-  const g = createGame();
-  g.dispatch({ type: 'PICK_MODE', mode: 'deadair' });
+test('game: only Night Shift and Day Shift can be picked', () => {
+  const g = createGame({ judge: true });
+  g.dispatch({ type: 'PICK_MODE', mode: 'hard' });
   assert.equal(g.state.screen, 'start');
-  const j = createGame({ judge: true });
-  j.dispatch({ type: 'PICK_MODE', mode: 'deadair' });
-  assert.equal(j.state.screen, 'dayIntro');
-  assert.equal(j.state.maxLives, 5);
-  const d = defaultData(); d.deadAirUnlocked = true;
-  const u = createGame({ data: d });
-  u.dispatch({ type: 'PICK_MODE', mode: 'deadair' });
-  assert.equal(u.state.screen, 'dayIntro');
+  g.dispatch({ type: 'PICK_MODE', mode: 'night' });
+  assert.equal(g.state.maxLives, 10);
 });
 
-test('game: a full Night Shift run ends on closing, saves best stats and unlocks Dead Air [R8.4, R16.3]', () => {
+test('game: a full Night Shift run ends on closing and saves best stats [R8.4]', () => {
   const saves = [];
   const g = createGame({ data: never(), save: (d) => saves.push(d), seed: 7 });
   g.dispatch({ type: 'PICK_MODE', mode: 'night' });
@@ -81,7 +75,6 @@ test('game: a full Night Shift run ends on closing, saves best stats and unlocks
     g.dispatch({ type: 'NEXT_DAY' });
   }
   assert.equal(g.state.screen, 'closing');
-  assert.equal(g.saved.deadAirUnlocked, true);
   assert.equal(g.saved.best.night.messages, 15);
   assert.equal(g.saved.best.night.accuracy, 100);
   assert.equal(saves.length, 1);
@@ -89,13 +82,13 @@ test('game: a full Night Shift run ends on closing, saves best stats and unlocks
   assert.equal(g.state.screen, 'start');
 });
 
-test('game: Day Shift does not unlock Dead Air [R16.1]', () => {
+test('game: a full Day Shift run saves its own best stats [R1.5]', () => {
   const g = createGame({ data: never() });
   g.dispatch({ type: 'PICK_MODE', mode: 'day' });
   for (let day = 1; day <= 3; day++) { playDay(g); g.dispatch({ type: 'NEXT_DAY' }); }
   assert.equal(g.state.screen, 'closing');
-  assert.equal(g.saved.deadAirUnlocked, false);
   assert.ok(g.saved.best.day);
+  assert.equal(g.saved.best.night, null);
 });
 
 test('game: 0 lives is game over; restart gives full lives, zero stats, same messages, earlier days kept [R5.5, R5.6a]', () => {
@@ -120,20 +113,6 @@ test('game: 0 lives is game over; restart gives full lives, zero stats, same mes
   assert.equal(g.state.dayStats.mistakes, 0);
   assert.deepEqual(g.state.days, day1);
   assert.deepEqual(g.state.messages.map((m) => m.id), day2Messages);
-});
-
-test('game: Dead Air game over has no restart [R16.6]', () => {
-  const g = createGame({ judge: true });
-  g.dispatch({ type: 'PICK_MODE', mode: 'deadair' });
-  g.dispatch({ type: 'CONTINUE' });
-  const ev = [];
-  for (let i = 0; i < 5; i++) ev.push(...g.dispatch({ type: 'LETTER', letter: '?' }));
-  assert.equal(ev.find((e) => e.type === 'GAME_OVER').canRestart, false);
-  g.dispatch({ type: 'RESTART_DAY' });
-  assert.equal(g.state.screen, 'gameOver');
-  g.dispatch({ type: 'MAIN_MENU' });
-  assert.equal(g.state.screen, 'start');
-  assert.equal(g.state.mode, null);
 });
 
 test('game: End game drops the run and goes to start; not on start itself [R1.4]', () => {

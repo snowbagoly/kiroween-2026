@@ -20,7 +20,7 @@ const CHROME = process.env.CHROME ?? (process.platform === 'darwin'
 
 // The Judge panel and its welcome card are hidden; `test=1` gives the page hook.
 const HIDE_JUDGE = '.judge-panel, .judge-welcome { display: none !important; }';
-const g = 'window.__deadAir.game';
+const g = 'window.__nightShift.game';
 
 // name, page size, extra query, setup (runs in the page), wait before the shot (ms), freeze time (ms).
 // A setup may `return` a CSS selector: the shot is taken as soon as it shows, or after `wait`.
@@ -32,7 +32,7 @@ const SHOTS = [
   {
     name: '05-last-warning',
     setup: `${g}.dispatch({ type: 'JUDGE_JUMP_DAY', day: 2, mode: 'night' });
-      setTimeout(() => window.__deadAir.judgeUi().panel.querySelector('[data-judge="fx-lastWarning"]').click(), 600); return '.room-window.watched';`,
+      setTimeout(() => window.__nightShift.judgeUi().panel.querySelector('[data-judge="fx-lastWarning"]').click(), 600); return '.room-window.watched';`,
     wait: 8000,
   },
   { name: '06-game-over', setup: `${g}.dispatch({ type: 'JUDGE_JUMP_DAY', day: 1, mode: 'night' }); setTimeout(() => ${g}.dispatch({ type: 'JUDGE_FORCE_GAMEOVER' }), 600)`, wait: 2500, key: '.dead-line' },
@@ -40,7 +40,7 @@ const SHOTS = [
   { name: '08-dawn-notice', query: '&dawn', wait: 8000 },
   { name: '09-one-column-360', width: 360, height: 800, setup: `${g}.dispatch({ type: 'JUDGE_JUMP_DAY', day: 1, mode: 'night' })`, wait: 2000 },
   { name: '10-day-shift-desk', setup: `${g}.dispatch({ type: 'JUDGE_JUMP_DAY', day: 1, mode: 'day' })`, wait: 2000 },
-  { name: '11-day-shift-bird', setup: `${g}.dispatch({ type: 'JUDGE_JUMP_DAY', day: 2, mode: 'day' }); setTimeout(() => window.__deadAir.office().bird.fly(), 800)`, wait: 2100, pause: true },
+  { name: '11-day-shift-bird', setup: `${g}.dispatch({ type: 'JUDGE_JUMP_DAY', day: 2, mode: 'day' }); setTimeout(() => window.__nightShift.office().bird.fly(), 800)`, wait: 2100, pause: true },
   { name: '13-day-shift-1920', width: 1920, height: 1080, setup: `${g}.dispatch({ type: 'JUDGE_JUMP_DAY', day: 1, mode: 'day' })`, wait: 2000 },
   { name: '14-day-shift-1100', width: 1100, height: 900, setup: `${g}.dispatch({ type: 'JUDGE_JUMP_DAY', day: 1, mode: 'day' })`, wait: 2000 },
   { name: '15-day-shift-rest', setup: `${g}.dispatch({ type: 'JUDGE_JUMP_DAY', day: 2, mode: 'day' }); setTimeout(() => ${g}.dispatch({ type: 'JUDGE_FORCE_GAMEOVER' }), 600)`, wait: 2500 },

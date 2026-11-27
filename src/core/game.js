@@ -2,7 +2,7 @@
 // Input events change the state; output events go to the bus for UI, audio and the director.
 // No browser calls here. The run lives in memory only, so a page reload drops it [R5.6b].
 import { buildDay, MESSAGES_PER_DAY, lettersOf, lengthClass } from './messages.js';
-import { createLives, maxLivesFor } from './lives.js';
+import { createLives } from './lives.js';
 import { createStats, accuracyOf, wpmOf, finalRank, updateBest } from './stats.js';
 import { createRng } from './rng.js';
 import { defaultData } from './settings.js';
@@ -12,7 +12,7 @@ import { createLifeDrain, drainsLives } from './idle.js';
 // `waiting`: the desk is empty, the next telegram has not been handed in yet, or the day's work is done
 // and the clock runs on to 06:00 [R9.7].
 export const SCREENS = ['start', 'storyOffer', 'story', 'tutorialDialog', 'tutorial', 'dayIntro', 'playing', 'messageDone', 'waiting', 'dayStats', 'gameOver', 'closing'];
-export const MODES = ['night', 'day', 'deadair'];
+export const MODES = ['night', 'day'];
 export const LAST_DAY = 3;
 const RUN_SCREENS = ['storyOffer', 'story', 'tutorialDialog', 'tutorial', 'dayIntro', 'playing', 'messageDone', 'waiting', 'dayStats', 'gameOver'];
 export const CLOCK_SCREENS = ['playing', 'messageDone', 'waiting'];
@@ -61,7 +61,6 @@ export function createGame({ data = defaultData(), save = () => {}, seed = 1, bu
   const setSaved = (next) => { if (next !== saved) { saved = next; save(saved); } };
   const setTutorial = (value) => setSaved({ ...saved, settings: { ...saved.settings, tutorial: value } });
 
-  const deadAirOpen = () => judge || saved.deadAirUnlocked;
   const message = () => s.messages[s.msgIndex] ?? null;
 
   function clearRun() {
@@ -93,17 +92,17 @@ export function createGame({ data = defaultData(), save = () => {}, seed = 1, bu
   function startRun(mode) {
     clearRun();
     s.mode = mode;
-    s.lives = createLives(maxLivesFor(mode));
+    s.lives = createLives();
     emit('RUN_STARTED', { mode });
-    // The story first, unless it is always skipped; never in Dead Air or Judge mode [R17.6, R16.8, R13.5].
-    if (story && mode !== 'deadair' && !judge && !skipStory()) go('storyOffer');
+    // The story first, unless it is always skipped; never in Judge mode [R17.6, R13.5].
+    if (story && !judge && !skipStory()) go('storyOffer');
     else afterStory();
   }
 
   function afterStory() {
     // The Options menu can change the setting during the session, so read it fresh [R2.1, R2.1d].
     const setting = tutorialSetting ? tutorialSetting() : saved.settings.tutorial;
-    const ask = setting === 'ask' && s.mode !== 'deadair' && !judge;
+    const ask = setting === 'ask' && !judge;
     if (ask) go('tutorialDialog');
     else startDay(1);
   }
@@ -139,7 +138,7 @@ export function createGame({ data = defaultData(), save = () => {}, seed = 1, bu
       return;
     }
     if (dead) {
-      emit('GAME_OVER', { day: s.day, canRestart: s.mode !== 'deadair' });
+      emit('GAME_OVER', { day: s.day });
       go('gameOver');
     }
   }
@@ -187,7 +186,7 @@ export function createGame({ data = defaultData(), save = () => {}, seed = 1, bu
     emit(kind === 'idle' ? 'IDLE_LIFE_LOST' : 'LATE_LIFE_LOST', { lives, max: s.lives.max });
     emit('LIFE_LOST', { lives, max: s.lives.max, kind });
     if (dead && s.infinite) { emit('LIVES_SET', { lives: s.lives.set(1), max: s.lives.max }); return false; }
-    if (dead) { emit('GAME_OVER', { day: s.day, canRestart: s.mode !== 'deadair', reason: 'lives' }); go('gameOver'); return true; }
+    if (dead) { emit('GAME_OVER', { day: s.day, reason: 'lives' }); go('gameOver'); return true; }
     return false;
   }
 
@@ -205,7 +204,7 @@ export function createGame({ data = defaultData(), save = () => {}, seed = 1, bu
       if (ev.type === 'ARRIVED') arrived(ev);
       else if (ev.type === 'DAWN') { emit('DAWN', { at: shiftTime(c.minutes) }); endDay(); return; }
       else if (ev.type === 'TIME_UP') {
-        emit('GAME_OVER', { day: s.day, canRestart: s.mode !== 'deadair', reason: 'time' });
+        emit('GAME_OVER', { day: s.day, reason: 'time' });
         go('gameOver');
         return;
       }
@@ -225,10 +224,8 @@ export function createGame({ data = defaultData(), save = () => {}, seed = 1, bu
   function nextDay() {
     if (s.day < LAST_DAY) { startDay(s.day + 1); return; }
     const totals = runTotals(s.days, s.lives.lives);
-    let next = updateBest(saved, s.mode, totals);
-    if (s.mode === 'night' && !next.deadAirUnlocked) next = { ...next, deadAirUnlocked: true };
-    setSaved(next);
-    emit('RUN_FINISHED', { mode: s.mode, totals, best: saved.best[s.mode], deadAirUnlocked: saved.deadAirUnlocked });
+    setSaved(updateBest(saved, s.mode, totals));
+    emit('RUN_FINISHED', { mode: s.mode, totals, best: saved.best[s.mode] });
     go('closing');
   }
 
@@ -240,7 +237,7 @@ export function createGame({ data = defaultData(), save = () => {}, seed = 1, bu
   function ensureRun(mode = 'night') {
     if (s.mode) return;
     s.mode = MODES.includes(mode) ? mode : 'night';
-    s.lives = createLives(maxLivesFor(s.mode));
+    s.lives = createLives();
     s.stats = createStats();
     emit('RUN_STARTED', { mode: s.mode, judge: true });
   }
@@ -261,13 +258,13 @@ export function createGame({ data = defaultData(), save = () => {}, seed = 1, bu
       ensureRun(e.mode ?? s.mode ?? 'night');
       if ((e.mode === 'night' || e.mode === 'day') && s.mode !== e.mode) {
         s.mode = e.mode; // the demo starts in Day Shift even if a Night Shift run is open
-        s.lives = createLives(maxLivesFor(s.mode));
+        s.lives = createLives();
         emit('MODE_CHANGED', { mode: s.mode, day: s.day });
       }
       if (e.day === 'closing') {
         if (!s.days.length) s.days = [1, 2, 3].map((day) => ({ day, ...SAMPLE_STATS }));
         const totals = runTotals(s.days, s.lives.lives);
-        emit('RUN_FINISHED', { mode: s.mode, totals, best: totals, deadAirUnlocked: saved.deadAirUnlocked });
+        emit('RUN_FINISHED', { mode: s.mode, totals, best: totals });
         go('closing');
         return;
       }
@@ -277,15 +274,12 @@ export function createGame({ data = defaultData(), save = () => {}, seed = 1, bu
       startMessage();
     },
     // Night Shift and Day Shift switch, keeping the day [R13.4a]. The day's messages are rebuilt,
-    // so Day Shift never keeps a strange one. Dead Air is not part of the switch.
+    // so Day Shift never keeps a strange one. Lives stay as they are.
     JUDGE_SET_MODE(e) {
       if (e.mode !== 'night' && e.mode !== 'day') return;
       if (!s.mode) { ensureRun(e.mode); startDay(1); startMessage(); return; }
       if (s.mode === e.mode) return;
-      const lives = s.lives.lives;
       s.mode = e.mode;
-      s.lives = createLives(maxLivesFor(s.mode));
-      s.lives.set(lives);
       const keep = s.msgIndex;
       s.messages = buildDay(s.day || 1, s.mode, rng);
       s.msgIndex = Math.min(keep, s.messages.length - 1);
@@ -319,7 +313,7 @@ export function createGame({ data = defaultData(), save = () => {}, seed = 1, bu
         const { lives, dead } = s.lives.loseLife();
         emit('LIFE_LOST', { lives, max: s.lives.max });
         if (dead && s.infinite) emit('LIVES_SET', { lives: s.lives.set(1), max: s.lives.max });
-        else if (dead && inRun()) { emit('GAME_OVER', { day: s.day, canRestart: s.mode !== 'deadair' }); go('gameOver'); }
+        else if (dead && inRun()) { emit('GAME_OVER', { day: s.day }); go('gameOver'); }
         return;
       }
       const n = e.op === 'full' ? s.lives.max : s.lives.lives + 1;
@@ -329,7 +323,7 @@ export function createGame({ data = defaultData(), save = () => {}, seed = 1, bu
     JUDGE_FORCE_GAMEOVER() {
       ensureRun(s.mode ?? 'night');
       if (!s.day) startDay(1);
-      emit('GAME_OVER', { day: s.day, canRestart: s.mode !== 'deadair' });
+      emit('GAME_OVER', { day: s.day });
       go('gameOver');
     },
     // The dawn at once [R13.3a, R9.9]: the day's work counts as done, the clock reads 06:00, the dawn
@@ -366,7 +360,6 @@ export function createGame({ data = defaultData(), save = () => {}, seed = 1, bu
     start: {
       PICK_MODE(e) {
         if (!MODES.includes(e.mode)) return;
-        if (e.mode === 'deadair' && !deadAirOpen()) return;
         startRun(e.mode);
       },
     },
@@ -407,7 +400,7 @@ export function createGame({ data = defaultData(), save = () => {}, seed = 1, bu
     dayStats: { NEXT_DAY: nextDay },
     gameOver: {
       RESTART_DAY() {
-        if (s.mode === 'deadair' || !s.checkpoint) return; // Dead Air has no second chance [R16.6]
+        if (!s.checkpoint) return;
         s.days = s.checkpoint.days.map((d) => ({ ...d }));
         s.messages = s.checkpoint.messages;
         s.arrivals = s.checkpoint.arrivals ?? s.arrivals;

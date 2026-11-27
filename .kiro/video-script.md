@@ -1,4 +1,4 @@
-# Kiroween Video Script: Dead Air -- 1873
+# Kiroween Video Script: Night Shift -- 1903
 
 Category: Resurrection. Bonus: Best Kiro Crew App.
 Hard limit: under 3:00. This plan ends at 2:50, with about 340 spoken words.
@@ -19,12 +19,12 @@ Tip: these lines are a draft. Read them aloud and change any word that feels odd
 
 VOICE: "It's 1873, and you're the night telegraph operator. The line's been quiet for hours. Then it starts to answer you."
 
-[Title: DEAD AIR -- 1873]
+[Title: NIGHT SHIFT -- 1903]
 
 ## 2. What it is (0:12-0:40)
 [Gameplay: tapping Space, the key moves, letters light up.]
 
-VOICE: "This is Dead Air, a little horror game about Morse code. You tap the space bar to send. Short tap, dot. Long press, dash. Later on you have to decode messages just by listening."
+VOICE: "This is Night Shift, a little horror game about Morse code. You tap the space bar to send. Short tap, dot. Long press, dash. Later on you have to decode messages just by listening."
 
 [Candle burning down after a mistake. Then "IT IS IN THE WIRES" with a flicker.]
 
@@ -74,7 +74,7 @@ VOICE: "In the end, it's a Kiro Crew app, so you can install it and play. The co
 ## 6. Close and end card (2:25-2:50)
 [Candle flame goes out. Telegraph click.]
 
-VOICE: "Dead Air, 1873. Keep your candle lit."
+VOICE: "Night Shift, 1903. Keep your candle lit."
 
 [End card, 5 seconds: "Category: Resurrection. Bonus: Best Kiro Crew App. #KiroweenHackathon26"]
 

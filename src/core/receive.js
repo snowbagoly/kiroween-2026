@@ -1,7 +1,7 @@
 // Receiving rules that are not about letters: replays and waiting [design 5 Receiving, R4.3 to R4.5a].
 // The letters themselves are checked by core/game.js.
 
-export const NIGHT_REPLAYS = 3; // per message, Night Shift and Dead Air
+export const NIGHT_REPLAYS = 3; // per message, Night Shift
 export const NEXT_LETTER_PAUSE_MS = 400; // after a right letter
 export const IDLE_REPLAY_MS = 15000; // no input for this long: play the letter again once
 

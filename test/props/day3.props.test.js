@@ -16,7 +16,7 @@ function playDayRight(g) {
 }
 
 test('R9.1, R9.2: Day 3 mixes send and receive, and a run with random mistakes never gets stuck', () => {
-  fc.assert(fc.property(seed, fc.constantFrom('night', 'day', 'deadair'), fc.array(fc.boolean(), { maxLength: 400 }), (s, mode, picks) => {
+  fc.assert(fc.property(seed, fc.constantFrom('night', 'day'), fc.array(fc.boolean(), { maxLength: 400 }), (s, mode, picks) => {
     const g = createGame({ data: never(), seed: s, judge: true });
     g.dispatch({ type: 'PICK_MODE', mode });
     playDayRight(g); g.dispatch({ type: 'NEXT_DAY' });

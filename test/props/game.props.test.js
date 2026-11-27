@@ -10,7 +10,7 @@ const TYPES = ['PICK_MODE', 'TUTORIAL_CHOICE', 'TUTORIAL_DONE', 'CONTINUE', 'INP
 
 const event = fc.record({
   type: fc.constantFrom(...TYPES),
-  mode: fc.constantFrom('night', 'day', 'deadair', 'nope'),
+  mode: fc.constantFrom('night', 'day', 'nope'),
   choice: fc.constantFrom('start', 'notnow', 'never', 'x'),
   letter: fc.oneof(fc.constantFrom(...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')), fc.string()),
   t: fc.integer({ min: 0, max: 1e7 }),

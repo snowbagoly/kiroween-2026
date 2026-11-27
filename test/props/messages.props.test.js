@@ -19,7 +19,7 @@ test('R9.2, R6.3, R6.7, R16.1: every built day obeys every rule, for 1000 seeds'
     assert.equal(new Set(list.map((x) => x.id)).size, 5);
     const strange = list.filter((x) => x.strange).length;
     if (m === 'day') assert.equal(strange, 0);
-    else if (m === 'deadair' || d === 3) assert.ok(strange >= 3);
+    else if (d === 3) assert.ok(strange >= 3);
     else if (d === 2) assert.ok(strange >= 2);
     else { assert.equal(strange, 1); assert.equal(list[4].strange, true); }
     if (d === 3) {

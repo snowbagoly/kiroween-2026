@@ -107,7 +107,7 @@ tools/shots.mjs         headless Chrome screenshots (always --mute-audio)
 - **One office, night and day.** Every mode is played in the office (`office/room.js`). Day Shift mounts it with `daylight: true`: the `.office.daylight` class shows the day sky, clouds, sunlight and bird (`.day-only`) and hides the lamp's flame, the rain and the drops. The lamp light, the faults, the dread, the dying line and the dawn are only mounted at night.
 - **One scope.** The bundler puts all modules in one scope, so top-level names must be unique across modules (the build checks this). The office's galvanometer class is `OfficeGalvanometer` and its sound class is `OfficeSound`, so they do not clash with the Day Shift ones.
 
-## 4. Screens and flow [R1, R2, R5, R8, R9, R16, R17, R20]
+## 4. Screens and flow [R1, R2, R5, R8, R9, R17, R20]
 
 The screens are `SCREENS` in `core/game.js`. Each `go(screen)` emits a `SCREEN` event, and `main.js` draws it.
 
@@ -143,15 +143,15 @@ Options "End game" (during a run) -> confirm -> start
 
 The game clock ticks (`TICK`) in `playing`, `messageDone` and `waiting` (`CLOCK_SCREENS`).
 
-**The dawn** is not a screen of its own. On `DAWN` the game goes to `dayStats` at once, and `main.js` (Night Shift and Dead Air only) plays the dawn in the office: the `at-dawn` class, the lamp out, the bell striking six. It shows the notice 6 s later, while the bell is still striking, and a robin sings at 10.5 s and 14 s. In Day Shift the notice comes straight away.
+**The dawn** is not a screen of its own. On `DAWN` the game goes to `dayStats` at once, and `main.js` (Night Shift only) plays the dawn in the office: the `at-dawn` class, the lamp out, the bell striking six. It shows the notice 6 s later, while the bell is still striking, and a robin sings at 10.5 s and 14 s. In Day Shift the notice comes straight away.
 
 **Game over** is played by `main.js`: the snap, the figure, the dark and "THE LINE IS DEAD" in the player's hand, then the notice from `ui/screens.js`.
 
-Skipping rules: `storyOffer` and `story` are skipped when "Always skip the story" is on, in Dead Air, and in Judge mode [R16.8, R13.5]. `morning` and `epilogue` follow the same rules, and only come in Night Shift [R20.1, R20.12]; Judge mode reaches them by Jump to day. `tutorialDialog` is skipped in Dead Air, in Judge mode and when the tutorial setting is "Never".
+Skipping rules: `storyOffer` and `story` are skipped when "Always skip the story" is on, and in Judge mode [R13.5]. `morning` and `epilogue` follow the same rules, and only come in Night Shift [R20.1, R20.12]; Judge mode reaches them by Jump to day. `tutorialDialog` is skipped in Judge mode and when the tutorial setting is "Never".
 
 Day dates: Day 1 is Wednesday, 4 November 1903 (the newspaper on slide 3 is dated Tuesday, 3 November). Day 2 and Day 3 follow. The calendar on the wall is crossed off up to the day before (`crossedTo(day)` in `office/room.js`) [R9.8]. The roster on the start card shows the dates. The `dayIntro` card does not show the date yet (see T45).
 
-Checkpoint [R5.6a]: when a day starts, `game.js` keeps `checkpoint = { day, days, messages, arrivals }` in memory only: copies of the earlier days' stats, and that day's messages and arrival times. "Restart this day" restores it with full lives, zeroed stats for that day and a fresh clock at 22:00, so the same telegrams arrive at the same times. Dead Air has no restart. Nothing is written for it, so a reload drops the run [R5.6b]. The learned hand is not part of the checkpoint; it keeps learning. The checkpoint is taken at `dayIntro`, after the morning, so "Restart this day" never plays the morning again [R20.13]. Vane's notes hang on the wall from Day 2 in Night Shift and Dead Air whether or not Morning 1 was played [R20.12].
+Checkpoint [R5.6a]: when a day starts, `game.js` keeps `checkpoint = { day, days, messages, arrivals }` in memory only: copies of the earlier days' stats, and that day's messages and arrival times. "Restart this day" restores it with full lives, zeroed stats for that day and a fresh clock at 22:00, so the same telegrams arrive at the same times. Nothing is written for it, so a reload drops the run [R5.6b]. The learned hand is not part of the checkpoint; it keeps learning. The checkpoint is taken at `dayIntro`, after the morning, so "Restart this day" never plays the morning again [R20.13]. Vane's notes hang on the wall from Day 2 in Night Shift whether or not Morning 1 was played [R20.12].
 
 ## 5. Morse engine [R3]
 
@@ -222,10 +222,10 @@ The sounder arm and the "click" and "clack" are scheduled from the same list of 
 **Day builder** `buildDay(day, mode, rng)` picks 5 messages and their arrival times:
 
 1. Choose from the pool of that day and mode (Day Shift uses `strange: false` only [R7.2]).
-2. Rules to satisfy: at least one short and one long [R9.2]; lengths not sorted [R9.2]; no long message among the last two [R9.2]; on Day 1 a short first message and every message within two lines of the form (`formLines`, 17 characters a line) [R9.2a]; Night Shift strange counts: Day 1 only the 5th, Day 2 at least 2, Day 3 at least 3 [R6.3, R6.7]; Day 3 at least 2 send and 2 receive [R9.2]; Dead Air uses Day 3 strange counts on all days [R16.1].
-3. The 5th message of Day 1 in Night Shift and Dead Air is the fixed telegram to "Mr E. Vane, Station 7": `WHY HAVE YOU NOT REPORTED` (it counts as strange and long) [R6.3a]. In Day Shift it is a normal message.
+2. Rules to satisfy: at least one short and one long [R9.2]; lengths not sorted [R9.2]; no long message among the last two [R9.2]; on Day 1 a short first message and every message within two lines of the form (`formLines`, 17 characters a line) [R9.2a]; Night Shift strange counts: Day 1 only the 5th, Day 2 at least 2, Day 3 at least 3 [R6.3, R6.7]; Day 3 at least 2 send and 2 receive [R9.2].
+3. The 5th message of Day 1 in Night Shift is the fixed telegram to "Mr E. Vane, Station 7": `WHY HAVE YOU NOT REPORTED` (it counts as strange and long) [R6.3a]. In Day Shift it is a normal message.
 4. A day may hold one thread, and its parts keep their order [R12.5].
-4a. The story's telegrams (Night Shift and Dead Air only) [R20.3 to R20.5]: Day 2 gets one message from VN (`hand: "vane"`, received) and Mrs M. Vane's "IS HE WITH YOU" (received); Day 3 gets the order (R18), Mrs M. Vane's "A WIRE CAME FROM HIM LAST NIGHT" (received) and one send form with `hand: "operator"` (for example to "Mr E. Vane, Station 7", from "Station 7": "I AM STILL HERE"). They count as strange. The exact words are tuned in T47.
+4a. The story's telegrams (Night Shift only) [R20.3 to R20.5]: Day 2 gets one message from VN (`hand: "vane"`, received) and Mrs M. Vane's "IS HE WITH YOU" (received); Day 3 gets the order (R18), Mrs M. Vane's "A WIRE CAME FROM HIM LAST NIGHT" (received) and one send form with `hand: "operator"` (for example to "Mr E. Vane, Station 7", from "Station 7": "I AM STILL HERE"). They count as strange. The exact words are tuned in T47.
 5. Arrival times: the first at 22:00, the rest spread to 04:00 with a little seeded jitter, in order [R9.7b].
 6. Shuffle with the seeded `rng` and retry (up to 200 times) until all rules hold. A test checks this for 1000 seeds.
 
@@ -239,24 +239,23 @@ As before, plus: every fact is checked to be true for 1903 (some lines were writ
 
 `STORY_SLIDES` in `story/intro.js` holds the six slides as data (the mornings' and the epilogue's slides are in `story/arc.js`, design 21): `{ scene, lines[], sounds: [[atMs, name, repeatMs?]], music, wind, rain, drips, indoors, … }`. The sounds are the one-off moments of a slide's sound picture (a bill flapping, a cab passing), and their settings are in `story/ambience.js`. Moments that are seen (the shade at the window, the crow) are timed in `story.css`. `story/slides/*.js` each export a function that returns the slide's SVG.
 
-### Saved data [R8.4, R2, R16.3, R3.3a]
+### Saved data [R8.4, R2, R3.3a]
 
-One localStorage key `nightshift.v1`. Old `deadair.v1` saves are not read.
+One localStorage key `nightshift.v1`. Saves under the game's old key are not read.
 
 ```js
 { version: 1,
   settings: { musicVol, sfxVol, mute, music: true, reduceFlashing, captions,
               showLivesNumber, skipStory: false, tutorial: "ask" | "never" },
   hand: { dot: 120, dash: 360 },
-  best: { night: Stats|null, day: Stats|null, deadair: Stats|null },
-  deadAirUnlocked: false }
+  best: { night: Stats|null, day: Stats|null } }
 ```
 
 `settings.js` wraps storage in `load()` and `save()`. In Judge mode `save()` does nothing [R13.5]. If localStorage is blocked or full, the game keeps working with defaults in memory.
 
 ## 7. Lives, stats, rank, game clock, idling [R5, R8, R9.7]
 
-`core/lives.js` and `core/stats.js` are unchanged (max 10 or 5, refill after 3 clean messages, wpm, rank).
+`core/lives.js` and `core/stats.js` are unchanged (max 10, refill after 3 clean messages, wpm, rank).
 
 **Game clock** (`core/day-clock.js`, pure: it gets `tick(realMs)` calls and returns events) [R9.7]:
 
@@ -280,7 +279,7 @@ The clock starts on the first key press or typed letter of the day, and stops wh
 
 ## 8. Visuals [R1, R3, R4, R5, R7, R9, R11.4]
 
-### The office (Night Shift and Dead Air) [R11.4]
+### The office (Night Shift) [R11.4]
 
 Laid out at a 900 px design height and scaled as a whole with one CSS `transform: scale()` (`fitRoom()`, on load and resize). Design width is from the screen's aspect, up to 1700 px.
 
@@ -293,15 +292,15 @@ Laid out at a 900 px design height and scaled as a whole with one CSS `transform
 
 Below 1050 px wide the room becomes one scrolling column without the window, clock, calendar and lamp. This is also the phone layout [R15.3]. There the game clock is shown as text.
 
-**Codebook** (`office/codebook.js`): a printed card, 2 columns (A to M, N to Z) [R3.1a]. Click enlarges it to the middle of the screen; click again or Esc puts it back. No letter shortcut. In Dead Air it is not drawn; the wall shows two pin marks [R16.5].
+**Codebook** (`office/codebook.js`): a printed card, 2 columns (A to M, N to Z) [R3.1a]. Click enlarges it to the middle of the screen; click again or Esc puts it back. No letter shortcut.
 
-**Vane's notes** (`office/vane-notes.js`) [R20.9]: from Day 2 in Night Shift and Dead Air, a torn logbook page pinned beside the codebook (beside the pin marks in Dead Air), with his three lines in Caveat in a dark ink. Click enlarges it like the codebook. In the one-column layout it sits under the codebook.
+**Vane's notes** (`office/vane-notes.js`) [R20.9]: from Day 2 in Night Shift, a torn logbook page pinned beside the codebook, with his three lines in Caveat in a dark ink. Click enlarges it like the codebook. In the one-column layout it sits under the codebook.
 
 **Inks** [R20.5a]: the form writes `hand: "vane"` messages in a dark, heavy ink (`--ink-vane`) and `hand: "operator"` messages in the ink of the letter to Ada (`--ink-letter`). Both are checked for 4.5:1 on the form [R10.4].
 
 **Telegram form**: a Marsh & Western form in IM Fell English SC, with `to`, `from` and the text in Caveat handwriting. Words never break across lines. The next letter is underlined in pencil; sent letters fade; a wrong letter gets a red tally mark. A finished form gets a red SENT or RECEIVED stamp with the time and slides off; the next waiting form slides in [R3.1, R3.7, R4.5b, R9.7c]. Waiting forms show as a stack on the spike.
 
-**Galvanometer** (`office/galvanometer.js`): a springy needle driven by `lives / max`. The dial has 10 marked steps (5 in Dead Air) and a red zone. The needle trembles more near the red zone. Each step down jolts it with a "tock"; 0 lives flings it against the zero stop [R5.1-5.3]. Its glass can carry the crack [R6.4b].
+**Galvanometer** (`office/galvanometer.js`): a springy needle driven by `lives / max`. The dial has 10 marked steps and a red zone. The needle trembles more near the red zone. Each step down jolts it with a "tock"; 0 lives flings it against the zero stop [R5.1-5.3]. Its glass can carry the crack [R6.4b].
 
 **Light** (`office/light.js`): the lamplight is a gradient layer. It can stutter, dim the room except the galvanometer (a cut-out around it), close the dark in from the corners, go out, and at dawn give way to the window's light shaft. With "Reduce flashing" every stutter is a 600 ms fade [R6.6].
 
@@ -349,11 +348,11 @@ Every sound module takes `{ ctx, sfxBus, musicBus }` from `engine.js`, so one vo
 
 **Captions** [R10.3]: each new voice gets a caption ("[the counter bell]", "[the line crackles]", "[a knock behind you]", "[a church bell strikes six]", "[the record sticks]").
 
-## 10. Directors [R6, R16]
+## 10. Directors [R6]
 
 **Horror** (`director/horror.js`): unchanged. `intensity` from day and lives; random one-shots (thunder, crow, scream, knocking) at least 8 s apart (4 s on Day 3), never while a key is down or a letter is being keyed.
 
-**Dread** (`director/dread.js`) [R6.7]: effects fade in at set points of the night (the game clock as 0 to 1) and grow until dawn. Day 1 uses the points below, Day 2 starts each effect at 70% of them, and Day 3 and Dead Air have every effect at full strength from 22:00.
+**Dread** (`director/dread.js`) [R6.7]: effects fade in at set points of the night (the game clock as 0 to 1) and grow until dawn. Day 1 uses the points below, Day 2 starts each effect at 70% of them, and Day 3 has every effect at full strength from 22:00.
 
 | From (Day 1) | Effect |
 |---|---|
@@ -368,14 +367,14 @@ Dread one-offs share the one-shot gap with the horror director, so two never com
 
 **Faults** (`director/faults.js`) [R6.4]: listens to `LIFE_LOST`, `IDLE_LIFE_LOST` and `LATE_LIFE_LOST`.
 
-| Lives (of 10) | Of 5 (Dead Air) | Adds |
-|---|---|---|
-| any | any | line spits, light stutters, room dims around the needle; all stronger the lower |
-| below 7 | below 4 | sour drone, dark closing in (while lives stay low) |
-| below 5 | below 3 | the line repeats the wrong letter, faint, in the player's hand (not on idling) |
-| below 3 | below 2 | the light goes out after the stutter; three knocks behind |
-| first fall to 7, 5, 3 | to 4, 3, 2 | one omen not yet seen today, 2.5 to 5 s later, in a quiet moment |
-| fall to 1 | fall to 1 | the last warning; the crack stays until the day ends |
+| Lives (of 10) | Adds |
+|---|---|
+| any | line spits, light stutters, room dims around the needle; all stronger the lower |
+| below 7 | sour drone, dark closing in (while lives stay low) |
+| below 5 | the line repeats the wrong letter, faint, in the player's hand (not on idling) |
+| below 3 | the light goes out after the stutter; three knocks behind |
+| first fall to 7, 5, 3 | one omen not yet seen today, 2.5 to 5 s later, in a quiet moment |
+| fall to 1 | the last warning; the crack stays until the day ends |
 
 Omens: blue flame, heavy air, record sticks (only if music is on). Nothing touches the key, tape, codebook or form [R6.4c].
 
@@ -429,13 +428,13 @@ As before. New: the story's letter is real text with `aria-live="polite"`, so a 
 - `hand.test.js`: a new hand has threshold 240 and letter gap 720; after 20 presses of 100 and 300 ms the threshold is 200; one stray 2 s press does not move it much; "forget" resets; letter gap is clamped to 450 and 1600.
 - `day-clock.test.js`: starts at 22:00 only on the first input; 1x, 4x and 6x speeds; arrivals go to the spike while busy; dawn when all done, at 06:00; `TIME_UP` at 06:00 with a message left, never later; held stops it.
 - `day-clock.test.js` and `hear-first.test.js` (idling, in `core/idle.js`): first life after 6 s, then every 17 s; input resets; off in Day Shift, while held and before the first input; a long tick is capped; late drain every 20 s past 04:00 and every 10 s past 05:00, only while work is left.
-- `messages.test.js`: adds the Vane telegram as Day 1's 5th in Night Shift and Dead Air, threads in order, arrival times in order from 22:00 to 04:00.
-- `faults.test.js`: which effects are on for each lives count, for max 10 and max 5; each omen at most once a day; the last warning only at 1.
+- `messages.test.js`: adds the Vane telegram as Day 1's 5th in Night Shift, threads in order, arrival times in order from 22:00 to 04:00.
+- `faults.test.js`: which effects are on for each lives count; each omen at most once a day; the last warning only at 1.
 - `faults.test.js` (dread too): start points per day; Day 3 full from 22:00; nothing fires while a key is down.
-- `story.test.js`: six slides, each with at least one line; Esc ends; skip rules for Dead Air and Judge.
+- `story.test.js`: six slides, each with at least one line; Esc ends; skip rules for Judge mode.
 - `settings.test.js`: new key; a broken hand resets.
 - `morning.test.js` [R20]: each morning's riddle solves only with its answer (2710; the advert's file copy); looking at a thing marks it; "Go back to bed" goes to the cutscene; `MORNING_DONE` leads to the next `dayIntro`.
-- `game.test.js` (story flow) [R20]: in Night Shift, `NEXT_DAY` after Day 1 and Day 2 goes to `morning`, and after Day 3 to `epilogue`; never in Day Shift or Dead Air, or with "Always skip the story"; "Restart this day" does not go back to the morning.
+- `game.test.js` (story flow) [R20]: in Night Shift, `NEXT_DAY` after Day 1 and Day 2 goes to `morning`, and after Day 3 to `epilogue`; never in Day Shift, or with "Always skip the story"; "Restart this day" does not go back to the morning.
 - `messages.test.js` (story) [R20.4, R20.5]: for 1000 seeds, Night Shift Day 2 has a VN message and Mrs Vane's, Day 3 has the order, Mrs Vane's and a form in the operator's hand; Day Shift has none of them; the strange counts still hold.
 - `order.test.js` [R18]: the sign comes only when the order and every other message are done, and once; MAUD counts only in the 20 s; a wrong letter starts the word again; kept hands in Vane's last telegram, which costs no life and is not in the stats; broken loses the day.
 - `setup.test.js` (the build): every page bundles with no top-level name declared twice; no `http://` or `https://` link to another site [R11.2]. (That the fonts are inlined is checked by eye in the shots, not by a test.)
@@ -464,7 +463,7 @@ As before. New: the story's letter is real text with `aria-live="polite"`, so a 
 - `node build.mjs` writes `dist/index.html`: inline CSS, JS and fonts (base64 woff2), no network calls. The build fails on any link to another site [R11.2].
 - The font licences (SIL Open Font License for IM Fell English SC and Caveat, Apache 2.0 for Special Elite) are kept in `fonts/` and named in the README.
 - Publish `dist/` to a static host (GitHub Pages) [R14.1].
-- The game is called "Night Shift" in the page title, the start card, the README, the Judge welcome card and the storage key. The hard mode keeps the name "Dead Air".
+- The game is called "Night Shift" in the page title, the start card, the README, the Judge welcome card and the storage key.
 
 ## 18. Order of work and cuts
 
@@ -490,7 +489,6 @@ If late, cut in this order:
 3. Horror one-shot sounds (crow, scream, knocking, thunder) [R6.1].
 4. Day Shift music [R7.3].
 5. Phone support [R15].
-6. Dead Air [R16].
 
 Never cut: Morse sending, receiving, lives, the hand, the game clock, the office, the game over, the dawn, Judge mode (R13), and the story thoughts (R12).
 
@@ -505,7 +503,7 @@ open -> kept (MAUD in time) -> last (Vane's telegram to send) -> idle; the clock
 open -> broken (20 s pass) -> the scare, the newspaper, the game over (reason 'order')
 ```
 
-- `buildDay` gives Day 3 in Night Shift and Dead Air one extra rule: one of its messages is the order, `{ from: "VN", hand: "vane", text: "SEND WHAT IT NEVER HEARD", kind: "receive", strange: true, order: true }`.
+- `buildDay` gives Day 3 in Night Shift one extra rule: one of its messages is the order, `{ from: "VN", hand: "vane", text: "SEND WHAT IT NEVER HEARD", kind: "receive", strange: true, order: true }`.
 - The sign: when the day clock would emit `DAWN` and the order is done, `game.js` emits `ORDER_SIGN` 3 s later instead. `DAWN` comes after Vane's last telegram is sent. If the order is broken, there is no dawn.
 - `game.js` treats the 20 s as held time for the clock, idling and the late drain (like "Line Held"), and routes letters (from the key or the keyboard) to the order while it is open.
 - The 20 s in the office: the form fades to 0, and an `order-card` takes its place: the order in VN's ink at the top, and below it a form in the player's own ink that fills with "NIGHT OPERATOR WANTED RELAY STATION LOWER MARSH" as the sounder taps it in the player's hand (design 9), with the letters of MAUD sent so far. Each right letter makes the sounder skip one beat. A heartbeat (two low thumps, from 50 to 120 beats a minute) plays on the effects bus, and the light layer dims the room around the key, the codebook and Vane's notes.
@@ -651,7 +649,7 @@ After the Day 3 dawn in Night Shift, before the closing notice. Slides: `station
 | R13 | 13 Judge mode |
 | R14 | 17 Build and repository |
 | R15 | 5 Touch, 8 One column, 14 Phones |
-| R16 | 4, 6, 8 (no codebook), 10 (faults for 5 lives) |
+| R16 | (Dropped) |
 | R17 | 4 Story states, 6 Story data, 9 Piano, 18 step 9 |
 | R18 | 19 The order |
 | R19 | 20 The Day Shift story, 8 The office by day |

@@ -1,4 +1,4 @@
-// Lives lost without a mistake, in Night Shift and Dead Air [design 7, R9.7f, R9.7h]. Pure.
+// Lives lost without a mistake, in Night Shift [design 7, R9.7f, R9.7h]. Pure.
 // Idling: a message waits and nothing is keyed or typed for 6 s: one life, then one every 17 s.
 // Late drain: past 04:00 with work left: one life every 20 s, every 10 s from 05:00.
 
@@ -10,7 +10,7 @@ export const LATE_EVERY_MS = 20000;
 export const LATER_EVERY_MS = 10000;
 const DRAIN_MAX_TICK_MS = 1000;
 
-export const drainsLives = (mode) => mode === 'night' || mode === 'deadair';
+export const drainsLives = (mode) => mode === 'night';
 
 export function createLifeDrain() {
   let idleMs = 0;

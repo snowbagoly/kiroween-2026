@@ -51,7 +51,7 @@ const saveFromGame = (d) => {
   // The tutorial choice is the game's only when it changed it (Never, or the tutorial done).
   const tutorial = d.settings.tutorial !== lastGameTutorial ? d.settings.tutorial : data.settings.tutorial;
   lastGameTutorial = d.settings.tutorial;
-  data = { ...data, best: d.best, deadAirUnlocked: d.deadAirUnlocked, settings: { ...data.settings, tutorial } };
+  data = { ...data, best: d.best, settings: { ...data.settings, tutorial } };
   store.save(data);
 };
 const game = createGame({ data, save: saveFromGame, seed: Date.now() >>> 0, bus, judge, timed: true, mustHear: true, story: true, skipStory: () => data.settings.skipStory, tutorialSetting: () => data.settings.tutorial });
@@ -73,14 +73,13 @@ for (const ev of ['pointerdown', 'keydown']) window.addEventListener(ev, () => s
 app.innerHTML = '<div class="view"></div>';
 const view = app.querySelector('.view');
 let desk = null; // { mode, stage, gauge, row, hud, layer } while a run is on screen
-let office = null; // the office's parts (office/room.js): at night in Night Shift and Dead Air, by day in Day Shift
+let office = null; // the office's parts (office/room.js): at night in Night Shift, by day in Day Shift
 // The office at night: the lamp, the faults, the dread, the dying line and the dawn belong to it.
-const nightRoom = () => !!office && (desk?.mode === 'night' || desk?.mode === 'deadair');
+const nightRoom = () => !!office && desk?.mode === 'night';
 let startOffice = null; // the empty office behind the start card
 let tapeWords = new Set(); // letter indexes that start a new word, for gaps on the tape
 let options = null;
-let deadAirBefore = data.deadAirUnlocked;
-let card = { role: 'send', stats: null, canRestart: true, totals: null, best: null, unlocked: false };
+let card = { role: 'send', stats: null, totals: null, best: null };
 
 // "Reduce flashing" in Options, or the computer's own reduce-motion setting.
 const reduceMotion = () => !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -419,13 +418,12 @@ function onAction(action) {
 let lastPattern = '';
 let strainNow = 0;
 let dreadWarp = 0;
-const NIGHT_MODES = ['night', 'deadair'];
 const quietNow = () => !reader.pressing && !playingNow() && !reader.pattern;
 const setWarp = () => night.setWarpFloor(Math.max(strainNow, dreadWarp));
 
 function runFaults(actions) {
   const light = office?.light;
-  if (!light || !NIGHT_MODES.includes(st().mode)) return;
+  if (!light || st().mode !== 'night') return;
   for (const a of actions) {
     if (a.type === 'spit') lineFault(audio, a.severity);
     else if (a.type === 'gaze') light.gaze(a.severity, a.holdMs);
@@ -449,7 +447,7 @@ function runFaults(actions) {
 
 // Clean messages bring lives back, and the room eases with them.
 function easeFaults(lives) {
-  if (!office || !NIGHT_MODES.includes(st().mode)) return;
+  if (!office || st().mode !== 'night') return;
   const max = st().maxLives ?? 10;
   strainNow = strainLevel(lives, max);
   night.setStrain(strainNow);
@@ -500,7 +498,7 @@ function runDread(progress) {
   const t = now();
   const seconds = (t - lastDreadAt) / 1000;
   lastDreadAt = t;
-  if (!office || !NIGHT_MODES.includes(st().mode) || !office.dread) return;
+  if (!office || st().mode !== 'night' || !office.dread) return;
   const lv = office.dread.levels(progress);
   night.setWind(lv.wind);
   night.setHum(lv.hum);
@@ -514,7 +512,7 @@ function runDread(progress) {
   }
 }
 
-// The line dies (Night Shift and Dead Air) [R5.5]: it snaps with a crack and a flash, the room jolts,
+// The line dies (Night Shift) [R5.5]: it snaps with a crack and a flash, the room jolts,
 // the needle is flung down, the sounder jams into one long tone while the light stutters out, and in
 // the last flash someone stands in the room. Then dark and silence, and the dead line speaks.
 function lineDies() {
@@ -533,7 +531,7 @@ function lineDies() {
 }
 
 // ---- the endings [R5.5, R9.9] ------------------------------------------------
-// The line dies (Night Shift and Dead Air): darkness and silence, then the sounder taps out
+// The line dies (Night Shift): darkness and silence, then the sounder taps out
 // "THE LINE IS DEAD" by itself in the player's own hand, each letter surfacing as it ends, and then
 // the dismissal notice. A key or a click skips to the notice.
 const DEAD_MESSAGE = 'THE LINE IS DEAD';
@@ -587,7 +585,7 @@ function deadLine() {
   deadTimers.push(setTimeout(notice, at + NOTICE_DELAY_MS));
 }
 
-// The dawn (Night Shift and Dead Air): the window's sky goes pale, the lamp gutters out, the light
+// The dawn (Night Shift): the window's sky goes pale, the lamp gutters out, the light
 // comes in through the window, and a church bell strikes six; then the notice [R9.9].
 const DAWN_NOTICE_MS = 6000;
 let dawnUntil = 0;
@@ -608,7 +606,7 @@ bus.on('DAY_STARTED', ({ max }) => {
   deadTimers.forEach(clearTimeout);
   if (!nightRoom()) return;
   office.faults = createFaults({ max });
-  office.dread = createDread({ day: st().day, mode: st().mode });
+  office.dread = createDread({ day: st().day });
   office.light.reset({ newDay: true });
   night.setStrain(0);
   night.setWind(0);
@@ -647,8 +645,6 @@ function renderStart() {
   reader.reset();
   document.documentElement.dataset.mode = 'night';
   mountStart(view, {
-    data,
-    judge,
     onPick: (mode) => { audio.unlock(); game.dispatch({ type: 'PICK_MODE', mode }); },
     onJudge: () => { window.location.search = '?judge=1'; },
     // The empty office behind the card, at one minute to ten [R1.1].
@@ -669,12 +665,11 @@ function buildDesk(s) {
   const lives = s.lives ?? s.maxLives;
   const hud = document.createElement('p');
   hud.className = 'hud-label';
-  // Night Shift and Dead Air are played in the office at night, Day Shift in the same office by day [R11.4, R7.2].
+  // Night Shift is played in the office at night, Day Shift in the same office by day [R11.4, R7.2].
   const daylight = s.mode === 'day';
   office = mountOffice(stage, { max: s.maxLives, lives, day: s.day, daylight, minutes: wallMinutes(s.clock?.minutes ?? 0, startHourFor(s.mode)) });
-  const chart = mountMorseChart(office.codebookSpot, s.mode);
-  if (chart) chart.addEventListener('click', () => toggleCodebook());
-  else office.codebookSpot.innerHTML = '<div class="bare-wall" aria-hidden="true"><i></i><i></i></div>'; // Dead Air [R16.5]
+  const chart = mountMorseChart(office.codebookSpot);
+  chart.addEventListener('click', () => toggleCodebook());
   // The message is a telegram form on the desk, and each press goes onto the paper tape [R3.1, R3.4a].
   office.tape = mountTape(office.work);
   if (daylight) {
@@ -686,7 +681,7 @@ function buildDesk(s) {
   } else {
     office.light = mountLight(stage, office.office, { calm: () => reduceFlashing() });
     office.faults = createFaults({ max: s.maxLives });
-    office.dread = createDread({ day: s.day, mode: s.mode });
+    office.dread = createDread({ day: s.day });
   }
   const row = mountForm(office.formSpot);
   office.hud.append(hud);
@@ -698,7 +693,7 @@ function buildDesk(s) {
   const replay = stage.querySelector('.replay-btn');
   replay.addEventListener('click', () => { onReplay(); replay.blur(); });
   recv.counter = createReplayCounter(s.mode);
-  // Screen effects exist only in Night Shift and Dead Air; Day Shift never loads them [R7.1].
+  // Screen effects exist only in Night Shift; Day Shift never loads them [R7.1].
   const fx = s.mode === 'day' ? null : mountEffects(stage, { reduce: reduceFlashing() });
   fx?.setIntensity(nightTension(s));
   // Thoughts: a line at the bottom of the desk. A status region, so it never takes focus [R12.3].
@@ -763,7 +758,7 @@ function nightTension(s) {
 }
 function updateNight() {
   const s = st();
-  const nightMode = s.mode === 'night' || s.mode === 'deadair';
+  const nightMode = s.mode === 'night';
   // The dead line is silent: no night sound under it [R5.5].
   // The start screen has the office's sound too, once a click allows sound; the record stays silent
   // until the operator sits down at the desk [R1.3].
@@ -864,7 +859,7 @@ function queueThought(th) {
   thoughtTimer = setTimeout(attempt, THOUGHT_DELAY_MS);
 }
 
-bus.on('RUN_STARTED', () => { deadAirBefore = data.deadAirUnlocked; thoughts = createThoughts(); });
+bus.on('RUN_STARTED', () => { thoughts = createThoughts(); });
 bus.on('DAY_STARTED', ({ lives, max }) => {
   thoughts.newDay(); // at most 2 thoughts a day [R12.2]
   if (!desk) return;
@@ -962,11 +957,10 @@ bus.on('ARRIVED', ({ waiting }) => {
 bus.on('DESK_EMPTY', () => { desk?.row.clear(); updateReplay(); });
 
 bus.on('DAY_ENDED', ({ stats }) => { card.stats = stats; });
-bus.on('GAME_OVER', ({ canRestart, reason }) => { card.canRestart = canRestart; card.reason = reason; });
-bus.on('RUN_FINISHED', ({ totals, best, deadAirUnlocked }) => {
+bus.on('GAME_OVER', ({ reason }) => { card.reason = reason; });
+bus.on('RUN_FINISHED', ({ totals, best }) => {
   card.totals = totals;
   card.best = best;
-  card.unlocked = deadAirUnlocked && !deadAirBefore;
 });
 bus.on('STOP_SOUND', () => { tone?.stop(); tone = null; night.stop(); dayMusic.stop(); director.stop(); });
 // Horror effects from the director: the sound and its caption [R6.1, R10.3]. Never in Day Shift.
@@ -1064,7 +1058,7 @@ const OMEN_NAMES = ['blueFlame', 'heavyAir', 'recordSticks', 'lastWarning'];
 // "Dawn" [R13.3a]: a Night Shift day on the desk first, then the dawn and its notice.
 function judgeDawn() {
   audio.unlock();
-  if (st().mode !== 'night' && st().mode !== 'deadair') game.dispatch({ type: 'JUDGE_SET_MODE', mode: 'night' });
+  if (st().mode !== 'night') game.dispatch({ type: 'JUDGE_SET_MODE', mode: 'night' });
   if (['playing', 'messageDone', 'waiting'].includes(st().screen) && office) { game.dispatch({ type: 'JUDGE_DAWN' }); return; }
   game.dispatch({ type: 'JUDGE_JUMP_DAY', day: st().day || 1 });
   setTimeout(() => game.dispatch({ type: 'JUDGE_DAWN' }), 400);
@@ -1122,5 +1116,5 @@ options = mountOptions(document.body, {
 
 applySettings();
 render();
-if (query.get('test') === '1') window.__deadAir = { game, bus, audio, night, dayMusic, director, playHorror, captions, judgeUi: () => judgeUi, office: () => office, store, audioBlocked: () => audioBlocked }; // hook for the browser check only
+if (query.get('test') === '1') window.__nightShift = { game, bus, audio, night, dayMusic, director, playHorror, captions, judgeUi: () => judgeUi, office: () => office, store, audioBlocked: () => audioBlocked }; // hook for the browser check only
 export { bus, game, options };

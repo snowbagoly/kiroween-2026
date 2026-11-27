@@ -22,7 +22,7 @@ test('settings: empty storage gives defaults', () => {
   const store = createSettingsStore({ storage: memoryStorage() });
   assert.deepEqual(store.load(), defaultData());
   assert.equal(defaultData().settings.tutorial, 'ask');
-  assert.equal(defaultData().deadAirUnlocked, false);
+  assert.deepEqual(defaultData().best, { night: null, day: null });
 });
 
 test('settings: save then load round trip', () => {
@@ -31,7 +31,6 @@ test('settings: save then load round trip', () => {
   const d = defaultData();
   d.settings.musicVol = 0.3; d.settings.mute = true; d.settings.tutorial = 'never';
   d.best.night = { rank: 'Operator', accuracy: 0.9, wpm: 4 };
-  d.deadAirUnlocked = true;
   assert.equal(store.save(d), true);
   assert.deepEqual(store.load(), d);
 });
@@ -77,6 +76,6 @@ test('settings (property): any stored text loads to a valid shape without throwi
     assert.equal(d.version, SAVE_VERSION);
     assert.ok(d.settings.musicVol >= 0 && d.settings.musicVol <= 1);
     assert.ok(['ask', 'never'].includes(d.settings.tutorial));
-    assert.equal(typeof d.deadAirUnlocked, 'boolean');
+    assert.deepEqual(Object.keys(d.best), ['night', 'day']);
   }));
 });

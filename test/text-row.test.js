@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { layoutText, textRowStatus } from '../src/office/forms.js';
-import { chartVisible, mountMorseChart } from '../src/office/codebook.js';
+import { mountMorseChart } from '../src/office/codebook.js';
 import { MORSE } from '../src/core/morse.js';
 
 const cells = (html) => [...html.matchAll(/<span class="cell ([^"]*)">([^<]*)<\/span>/g)].map((m) => ({ cls: m[1], text: m[2] }));
@@ -19,14 +19,9 @@ test('text row: screen reader status', () => {
   assert.equal(textRowStatus('SOS', { role: 'receive', pos: 3 }), 'Message received');
 });
 
-test('morse chart: shown in Night Shift and Day Shift, never in Dead Air [R3.1a, R16.5]', () => {
-  assert.equal(chartVisible('night'), true);
-  assert.equal(chartVisible('day'), true);
-  assert.equal(chartVisible('deadair'), false);
+test('morse chart: always put on the wall [R3.1a]', () => {
   let drawn = 0;
   const parent = { insertAdjacentHTML: () => { drawn++; }, querySelector: () => ({}) };
-  assert.equal(mountMorseChart(parent, 'deadair'), null);
-  assert.equal(drawn, 0);
-  mountMorseChart(parent, 'day');
+  assert.ok(mountMorseChart(parent));
   assert.equal(drawn, 1);
 });

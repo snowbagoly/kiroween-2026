@@ -28,12 +28,6 @@ export const POOL = [
   m('d1-14', 1, 'send', 'PLEASE ADVISE PRICE OF WHEAT', 'Corn Exchange, Kingsport', 'Marsh Farm'),
   m('d1-15', 1, 'send', 'SAFE HOME', 'Mrs Wren, Harbour Row', 'Samuel'),
   m('d1-16', 1, 'send', 'WHY NO REPORT', 'Mr E. Vane, Station 7', 'Head Office', ODD),
-  // Dead Air's first night has more strange telegrams before it [R16.1].
-  m('d1-17', 1, 'send', 'DO NOT ANSWER', 'Station 7', 'Station 9', ODD),
-  m('d1-18', 1, 'send', 'WHO IS THIS', 'Station 9', 'Station 7', ODD),
-  m('d1-19', 1, 'send', 'IT IS IN THE WIRES', 'Head Office', 'Station 7', ODD),
-  m('d1-20', 1, 'send', 'SOMEONE IS LISTENING', 'Head Office', 'Station 7', ODD),
-  m('d1-21', 1, 'send', 'LET ME IN', 'Station 7', 'Station 7', ODD),
 
   // Day 2: receiving only.
   m('d2-01', 2, 'receive', 'FLOOD AT LOWER FORD STOP HOLD ALL TRAINS', 'Stationmaster, Station 7', 'Signal Box 4'),
@@ -80,7 +74,7 @@ export const POOL = [
   m('d3-17', 3, 'either', 'THE WIRE GOES NOWHERE', 'Night Operator, Station 7', 'Station 9', ODD),
   m('d3-18', 3, 'either', 'NO ONE IS SENDING THIS', 'Night Operator, Station 7', 'Station 7', ODD),
   m('d3-19', 3, 'either', 'YOU ARE THE LAST ONE AWAKE', 'Night Operator, Station 7', 'Station 9', ODD),
-  m('d3-20', 3, 'either', 'DEAD AIR', 'Head Office', 'Station 7', ODD),
+  m('d3-20', 3, 'either', 'SILENCE ON THE LINE', 'Head Office', 'Station 7', ODD),
   m('d3-21', 3, 'either', 'WE HEAR YOU TAPPING STOP WE HAVE ALWAYS HEARD YOU', 'Night Operator, Station 7', 'Station 9', ODD),
   m('d3-22', 3, 'either', 'OPEN THE DOOR', 'Night Operator, Station 7', 'Station 7', ODD),
   m('d3-23', 3, 'either', 'DO NOT ANSWER IT', 'Night Operator, Station 7', 'VN', ODD),

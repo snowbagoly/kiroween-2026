@@ -1,7 +1,7 @@
 - [title] You see the video's name, its length limit and its two prizes at a glance.
-  - what_to_say: This is the storyboard for the Dead Air -- 1873 Kiroween video. It is planned to finish at 2:50, leaving ten seconds before the 3:00 limit.
+  - what_to_say: This is the storyboard for the Night Shift -- 1903 Kiroween video. It is planned to finish at 2:50, leaving ten seconds before the 3:00 limit.
   - evidence: Category Resurrection, bonus Best Kiro Crew App, hashtag #KiroweenHackathon26 (video-script.md)
-  - what_to_show: Dark title slide in the game's mood: candle flame, telegraph key line art. Big title "DEAD AIR -- 1873", small line "Video storyboard", prize tags at the bottom. No stock photos.
+  - what_to_show: Dark title slide in the game's mood: candle flame, telegraph key line art. Big title "NIGHT SHIFT -- 1903", small line "Video storyboard", prize tags at the bottom. No stock photos.
   - notes: Add a small note that TODO scenes carry a badge, so the reader knows what it means from the first slide.
 - [timeline] You see all six parts with their times, and which lines to cut first if it runs long.
   - what_to_say: The video has six parts. The Kiro section gets the most time, and there is a cut list if the recording runs long.
@@ -11,7 +11,7 @@
 - [hook] The video opens in the dark with rain, a click and a candle, so the mood is set before anyone speaks.
   - what_to_say: Voice, 0:00-0:12: "It's 1873, and you're the night telegraph operator. The line's been quiet for hours. Then it starts to answer you."
   - evidence: Script part 1, Hook, 0:00-0:12 (video-script.md)
-  - what_to_show: Black screen, rain, one telegraph click, then a candle flame appears. At the end, the title card DEAD AIR -- 1873. Storyboard frame: dark panel with a flame sketch, the voice line under it, the time range top right.
+  - what_to_show: Black screen, rain, one telegraph click, then a candle flame appears. At the end, the title card NIGHT SHIFT -- 1903. Storyboard frame: dark panel with a flame sketch, the voice line under it, the time range top right.
   - notes: Under the 3:00 limit, the hook is the first thing to trim, by one line.
 - [resurrection] The judges see why this fits Resurrection: an old craft made playable again, in the browser, on a phone, with live sound and captions.
   - what_to_say: Voice, 0:12-0:37: "Morse was once how messages travelled quickly over long distances, but now most of us only know it from old films. We wanted to bring it back as a game that runs in your browser, even on your phone, with live-made sound and captions for players who need them."
@@ -19,7 +19,7 @@
   - what_to_show: Your own drawing of a telegraph turns into the game on a phone. The frame shows the drawing on the left, an arrow, and a phone on the right. Three small tags sit under it: "browser", "live sound", "captions".
   - notes: Phone support and live sound are plans in the script. Check them before recording.
 - [what-play] The viewer sees how the game works: tap Space for dots and dashes, and decode by ear later.
-  - what_to_say: Voice, 0:37-0:51: "This is Dead Air, a little horror game about Morse code. You relay messages from one end of the line to the other. It's a fairly ordinary job, at least until the messages start getting strange."
+  - what_to_say: Voice, 0:37-0:51: "This is Night Shift, a little horror game about Morse code. You relay messages from one end of the line to the other. It's a fairly ordinary job, at least until the messages start getting strange."
   - evidence: Script part 2, What it is (video-script.md). Wording by the user.
   - what_to_show: Gameplay clip: tapping Space, the telegraph key moving, letters lighting up. The footage shows how to play, so the voice does not explain it. Storyboard frame: gameplay screenshot placeholder, the voice line under it.
   - notes: The line takes about 12 s of the 28 s slot. Let the footage play on its own for a few seconds, or move time to the next scene. Footage must be the game itself, on its real device.
@@ -54,12 +54,12 @@
   - what_to_show: Issue Radar, then the critique report, then the storyboard deck. Keep the TODO badge visible.
   - notes: Third item to cut if the video runs long. Do not record this before all three uses are real.
 - [going] The judges see the game as an installable Kiro Crew app on the real device, with open source code.
-  - what_to_say: Voice, 2:05-2:25: "We built Dead Air as a Kiro Crew app, so you can install it and play it for yourself. The code is open source on GitHub, and you can look through the whole project."
+  - what_to_say: Voice, 2:05-2:25: "We built Night Shift as a Kiro Crew app, so you can install it and play it for yourself. The code is open source on GitHub, and you can look through the whole project."
   - evidence: The script says to use "planned" unless the app is really packaged, and only call it a Kiro Crew app when that is true (video-script.md)
   - what_to_show: Kiro Crew dashboard and the app running on its real device.
   - notes: Use this voice line only after the app is packaged and the GitHub repo is public. Show the installed app on its real device, then the public GitHub page.
 - [close] The video ends with the candle going out and one last line.
-  - what_to_say: Voice, 2:25-2:45: "Dead Air, 1873. Keep your candle lit."
+  - what_to_say: Voice, 2:25-2:45: "Night Shift, 1903. Keep your candle lit."
   - evidence: Script part 6 (video-script.md)
   - what_to_show: The candle flame goes out. One telegraph click follows.
 - [endcard] The end card shows the category, the bonus prize and the hashtag for 5 seconds.

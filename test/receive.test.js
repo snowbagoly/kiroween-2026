@@ -50,7 +50,7 @@ test('sequencer: one letter is one voice, tones gate on and off at the schedule'
   assert.equal(playLetter(engine, '?'), null);
 });
 
-test('replays: 3 per message in Night Shift and Dead Air, unlimited in Day Shift [R4.5]', () => {
+test('replays: 3 per message in Night Shift, unlimited in Day Shift [R4.5]', () => {
   const n = createReplayCounter('night');
   assert.equal(replayLabel(n), 'Replay (3 left)');
   assert.ok(n.use() && n.use() && n.use());
@@ -58,7 +58,6 @@ test('replays: 3 per message in Night Shift and Dead Air, unlimited in Day Shift
   assert.equal(n.canUse(), false);
   n.reset();
   assert.equal(n.left, 3);
-  assert.equal(createReplayCounter('deadair').left, 3);
   const d = createReplayCounter('day');
   for (let i = 0; i < 50; i++) assert.ok(d.use());
   assert.equal(replayLabel(d), 'Replay');

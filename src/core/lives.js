@@ -1,9 +1,6 @@
 // Lives, clean streak and refill [design 7, R5.1, R5.4, R5.5].
 export const MAX_LIVES = 10;
-export const DEAD_AIR_LIVES = 5;
 export const REFILL_AFTER = 3; // clean messages in a row
-
-export const maxLivesFor = (mode) => (mode === 'deadair' ? DEAD_AIR_LIVES : MAX_LIVES);
 
 export function createLives(max = MAX_LIVES) {
   let lives = max;

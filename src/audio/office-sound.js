@@ -1,4 +1,4 @@
-// The office's sound at night, Night Shift and Dead Air [design 9, R6.1, R6.2]: rain against the window,
+// The office's sound at night, Night Shift [design 9, R6.1, R6.2]: rain against the window,
 // wind, the wind singing in the telegraph wires, the room tone (the low rumble of an empty building and
 // the hum of the mains), and the phonograph in the next room playing the waltz. All synthesized.
 // The room goes to the effects bus; the record to the music bus.

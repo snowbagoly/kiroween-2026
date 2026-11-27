@@ -1,7 +1,7 @@
-# Brief: Dead Air -- 1873 video storyboard
+# Brief: Night Shift -- 1903 video storyboard
 
 ## Presentation Goal
-This deck is a storyboard for the Kiroween hackathon video of "Dead Air -- 1873". It is a planning tool, not a talk. Each scene shows what is on screen, what the voice says, and when. The main message of the video is: "Dead Air -- 1873 gives Morse code a second life, and Kiro helped build it spec first." After reading the deck, the maker can record the voice, match the footage to it, and keep the video under 3:00 without more planning.
+This deck is a storyboard for the Kiroween hackathon video of "Night Shift -- 1903". It is a planning tool, not a talk. Each scene shows what is on screen, what the voice says, and when. The main message of the video is: "Night Shift -- 1903 gives Morse code a second life, and Kiro helped build it spec first." After reading the deck, the maker can record the voice, match the footage to it, and keep the video under 3:00 without more planning.
 
 ## Audience
 The reader is the maker (Zsofia, a software developer) and anyone who helps film the video. The end viewers of the video are Kiroween judges. They score the Resurrection category. They score "how we used Kiro" most, so that part gets the most time.
@@ -40,8 +40,8 @@ All facts below come from /Users/zsofiaborbely/private/halloween/.kiro/video-scr
 1. Hook 0:00-0:12. 2. What it is 0:12-0:40. 3. Why Resurrection 0:40-1:05. 4. How we used Kiro 1:05-2:05. 5. Where it's going 2:05-2:25. 6. Close and end card 2:25-2:50. (video-script.md)
 
 ### Scenes: screen and voice
-1. Hook (0:00-0:12). Screen: black screen, rain, a telegraph click, a candle flame appears. Title card: DEAD AIR -- 1873. Voice: "It's 1873, and you're the night telegraph operator. The line's been quiet for hours. Then it starts to answer you."
-2. What it is (0:12-0:40). Screen: gameplay, tapping Space, the key moves, letters light up. Then a candle burning down after a mistake, then "IT IS IN THE WIRES" with a flicker. Voice A: "This is Dead Air, a little horror game about Morse code. You tap the space bar to send. Short tap, dot. Long press, dash. Later on you have to decode messages just by listening." Voice B: "You get five lives, and they're a candle. Every mistake burns it down. And the messages get weirder each day. If that's too much, there's a Cozy mode with no scares."
+1. Hook (0:00-0:12). Screen: black screen, rain, a telegraph click, a candle flame appears. Title card: NIGHT SHIFT -- 1903. Voice: "It's 1873, and you're the night telegraph operator. The line's been quiet for hours. Then it starts to answer you."
+2. What it is (0:12-0:40). Screen: gameplay, tapping Space, the key moves, letters light up. Then a candle burning down after a mistake, then "IT IS IN THE WIRES" with a flicker. Voice A: "This is Night Shift, a little horror game about Morse code. You tap the space bar to send. Short tap, dot. Long press, dash. Later on you have to decode messages just by listening." Voice B: "You get five lives, and they're a candle. Every mistake burns it down. And the messages get weirder each day. If that's too much, there's a Cozy mode with no scares."
 3. Why Resurrection (0:40-1:05). Screen: the user's own drawing of a telegraph that turns into the game on a phone. Voice: "Nobody sends telegrams anymore, and most people have never tried Morse. We wanted to give it a second life. So it runs in the browser, even on a phone. All the sound is made live, with no audio files. And there are captions, for people who can't hear it."
 4. How we used Kiro (1:05-2:05), the longest part because judges score it.
    - Screen: the .kiro folder in the project. Voice: "We started with a spec, before any code."
@@ -53,7 +53,7 @@ All facts below come from /Users/zsofiaborbely/private/halloween/.kiro/video-scr
    - TODO, only after they exist. Screen: design.md and tasks.md. Voice: "Then Kiro built the game from the task list, one task at a time."
    - Cut order if this part runs long: the hook line, then the widget line, then the Issue Radar, Design Critique and PPTX Maker line.
 5. Where it's going (2:05-2:25). Screen: Kiro Crew dashboard with the app installed, running on the real device. Voice: "In the end, it's a Kiro Crew app, so you can install it and play. The code is open source on GitHub."
-6. Close and end card (2:25-2:50). Screen: candle flame goes out, telegraph click. Voice: "Dead Air, 1873. Keep your candle lit." End card for 5 seconds: "Category: Resurrection. Bonus: Best Kiro Crew App. #KiroweenHackathon26".
+6. Close and end card (2:25-2:50). Screen: candle flame goes out, telegraph click. Voice: "Night Shift, 1903. Keep your candle lit." End card for 5 seconds: "Category: Resurrection. Bonus: Best Kiro Crew App. #KiroweenHackathon26".
 (All from video-script.md)
 
 ### Game facts (spec)

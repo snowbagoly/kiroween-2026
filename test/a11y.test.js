@@ -51,7 +51,6 @@ const pairs = (p) => {
     ['tutorial hint', '#8a1f1a', v('face')],
     // The start screen always uses the Night Shift colours (main.js renderStart), so only check it there.
     ...(p === PALETTES.night ? [['start screen title', v('paper'), v('wall')], ['start screen subtitle', v('thought'), v('wall')]] : []),
-    ['locked Dead Air button', v('face'), v('frame')],
     ['lives as a number', v('face'), v('frame')],
     ['thought line', v('thought'), p === PALETTES.day ? 'rgba(70,40,15,.7)' : 'rgba(0,0,0,.45)', v('desk')],
     ['caption', '#ffffff', 'rgba(0,0,0,.8)', v('desk')],

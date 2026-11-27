@@ -15,7 +15,7 @@ const TYPES = ['PICK_MODE', 'TUTORIAL_CHOICE', 'TUTORIAL_DONE', 'CONTINUE', 'INP
   'JUDGE_INFINITE', 'JUDGE_FORCE_GAMEOVER', 'JUDGE_SHOW_STATS', 'SETTING'];
 const event = fc.record({
   type: fc.constantFrom(...TYPES),
-  mode: fc.constantFrom('night', 'day', 'deadair'),
+  mode: fc.constantFrom('night', 'day'),
   choice: fc.constantFrom('start', 'notnow', 'never'),
   day: fc.constantFrom(1, 2, 3, 'closing'),
   op: fc.constantFrom('+1', '-1', 'full'),
@@ -42,7 +42,7 @@ test('R13.5: Judge mode writes nothing to storage, whatever happens', () => {
   }), RUNS);
 });
 
-test('R13.5: a full Night Shift run in Judge mode would unlock Dead Air, but still saves nothing', () => {
+test('R13.5: a full Night Shift run in Judge mode saves nothing', () => {
   const storage = memoryStorage();
   const store = createSettingsStore({ storage, saving: false });
   const d = defaultData();

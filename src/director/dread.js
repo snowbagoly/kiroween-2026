@@ -1,4 +1,4 @@
-// The unease that builds through a night, Night Shift and Dead Air [design 10, R6.7]. Pure.
+// The unease that builds through a night in Night Shift [design 10, R6.7]. Pure.
 // Steady sounds swell with the hours (wind, a second hum, the record's wobble), and occasional events
 // come more and more often (the light stutters, the sounder clicks by itself, a knock far off).
 // Progress is the game clock: 0 at 22:00, 1 at 06:00.
@@ -10,27 +10,27 @@ export const DREAD_RATE = { flicker: 2.5, phantom: 1.5, knock: 1.5 };
 export const DAY2_SCALE = 0.7; // Day 2 starts each effect at 70% of Day 1's point
 export const DREAD_GAP_S = 8; // the occasional events keep at least this far apart
 
-// Day 3 and Dead Air are at full strength from 22:00.
-export const fullFromStart = (day, mode) => mode === 'deadair' || day >= 3;
+// Day 3 is at full strength from 22:00.
+export const fullFromStart = (day) => day >= 3;
 
-export function dreadLevels(progress, { day = 1, mode = 'night' } = {}) {
+export function dreadLevels(progress, { day = 1 } = {}) {
   const out = {};
   for (const [k, from] of Object.entries(DREAD_FROM)) {
-    if (fullFromStart(day, mode)) { out[k] = 1; continue; }
+    if (fullFromStart(day)) { out[k] = 1; continue; }
     const start = day === 2 ? from * DAY2_SCALE : from;
     out[k] = Math.min(1, Math.max(0, (progress - start) / (1 - start)));
   }
   return out;
 }
 
-export function createDread({ day = 1, mode = 'night', rng = Math.random } = {}) {
+export function createDread({ day = 1, rng = Math.random } = {}) {
   let sinceLast = Infinity;
   return {
-    levels: (progress) => dreadLevels(progress, { day, mode }),
+    levels: (progress) => dreadLevels(progress, { day }),
     // `seconds` of real time passed at `progress`. `quiet`: the player is between letters, so a click or
     // a knock will not be taken for their own keying. Returns the events that happen now.
     tick(seconds, progress, { quiet = true } = {}) {
-      const lv = dreadLevels(progress, { day, mode });
+      const lv = dreadLevels(progress, { day });
       const s = Math.max(0, Math.min(1, Number(seconds) || 0));
       sinceLast += s;
       const out = [];

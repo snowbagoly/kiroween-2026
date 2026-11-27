@@ -34,16 +34,13 @@ test('options: the menu has every control from R10.1a', () => {
   assert.equal(END_GAME_QUESTION, 'End your game? Your current run will be lost.');
 });
 
-test('start screen: mode buttons with their lines, Dead Air locked until unlocked [R1.1, R16.2]', () => {
-  const locked = startScreenHtml({ deadAirUnlocked: false });
-  assert.ok(locked.includes('Night Shift') && locked.includes('scares and strange messages'));
-  assert.ok(locked.includes('Day Shift') && locked.includes('calm, no scares'));
-  assert.ok(locked.includes('Finish Night Shift to unlock'));
-  assert.match(locked, /data-pick="deadair" disabled/);
-  assert.ok(locked.includes('Kiroween Judge'));
-  const open = startScreenHtml({ deadAirUnlocked: true });
-  assert.ok(open.includes('hard: 5 lives, no codebook, no second chance'));
-  assert.ok(locked.includes('Marsh &amp; Western Telegraph Co.') && locked.includes('Station 7') && locked.includes('Night duty roster'));
-  assert.match(locked, /<h1 id="start-title">Night Shift<\/h1>/);
-  assert.doesNotMatch(open, /data-pick="deadair" disabled/);
+test('start screen: the two mode buttons with their lines, and the Judge button [R1.1, R1.1a]', () => {
+  const html = startScreenHtml();
+  assert.ok(html.includes('Night Shift') && html.includes('scares and strange messages'));
+  assert.ok(html.includes('Day Shift') && html.includes('calm, no scares'));
+  assert.deepEqual([...html.matchAll(/data-pick="(\w+)"/g)].map((m) => m[1]), ['night', 'day']);
+  assert.doesNotMatch(html, /disabled/);
+  assert.ok(html.includes('Kiroween Judge'));
+  assert.ok(html.includes('Marsh &amp; Western Telegraph Co.') && html.includes('Station 7') && html.includes('Night duty roster'));
+  assert.match(html, /<h1 id="start-title">Night Shift<\/h1>/);
 });

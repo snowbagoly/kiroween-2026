@@ -1,4 +1,4 @@
-// The sounds of a failing line and of the night's dread, Night Shift and Dead Air [design 9, 10, R6.4,
+// The sounds of a failing line and of the night's dread, Night Shift [design 9, 10, R6.4,
 // R6.7, R5.5]. One-off sounds: each builds its nodes on the effects bus and frees them when done.
 // They need a click first (no context before), and do nothing without one.
 

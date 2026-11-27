@@ -1,8 +1,8 @@
-# Activity log: Dead Air storyboard deck
+# Activity log: Night Shift storyboard deck
 
 2026-11-21
 - Read /Users/zsofiaborbely/private/halloween/.kiro/video-script.md.
-- Created the deck folder: /Users/zsofiaborbely/.config/sdpm/decks/20261121-1859-dead-air-storyboard
+- Created the deck folder under /Users/zsofiaborbely/.config/sdpm/decks/ (name starts with 20261121-1859-, then the game's old title).
 - Wrote specs/brief.md (goal, audience, format, tone, constraints, materials, source material).
 - Tried to init a second deck with a path in the halloween folder. It made a stray empty folder under /Users/zsofiaborbely/.config/sdpm/decks/ (name starts with 20261121-1900-). Safe to delete.
 - My tools cannot write outside the deck folder. Copy this log and the finished files into /Users/zsofiaborbely/private/halloween/.kiro/ by hand.

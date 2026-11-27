@@ -5,7 +5,7 @@ const MODE_BUTTONS = [
   { mode: 'day', label: 'Day Shift', line: 'calm, no scares' },
 ];
 
-export const MODE_NAMES = { night: 'Night Shift', day: 'Day Shift', deadair: 'Dead Air' };
+export const MODE_NAMES = { night: 'Night Shift', day: 'Day Shift' };
 
 // The duty roster on the start card: one row a day, its date in November 1903 [R1.1, R9.8].
 export const ROSTER = [
@@ -16,13 +16,9 @@ export const ROSTER = [
 
 // The start screen [R1.1, R1.1a]: the company's printed card over the empty office, with the game's
 // name, Station 7, the night duty roster (tonight marked in pencil) and the ways in.
-export function startScreenHtml({ deadAirUnlocked = false, judge = false } = {}) {
-  const open = deadAirUnlocked || judge;
+export function startScreenHtml() {
   const modes = MODE_BUTTONS.map((b) => `<button type="button" class="mode-btn" data-pick="${b.mode}">
       <span class="mode-name">${b.label}</span><span class="mode-line">${b.line}</span></button>`).join('');
-  const dead = `<button type="button" class="mode-btn" data-pick="deadair"${open ? '' : ' disabled aria-disabled="true"'}>
-      <span class="mode-name">Dead Air</span>
-      <span class="mode-line">${open ? 'hard: 5 lives, no codebook, no second chance' : 'Finish Night Shift to unlock'}</span></button>`;
   const roster = ROSTER.map((r, i) => `<tr${i === 0 ? ' class="tonight"' : ''}><td>Night ${r.day}</td><td>${r.date}</td><td>22:00 to 06:00</td><td class="pencil">${i === 0 ? 'tonight' : ''}</td></tr>`).join('');
   return `<section class="screen start-screen" aria-labelledby="start-title">
     <div class="start-office" aria-hidden="true"></div>
@@ -31,7 +27,7 @@ export function startScreenHtml({ deadAirUnlocked = false, judge = false } = {})
       <h1 id="start-title">Night Shift</h1>
       <p class="subtitle">Station 7 · Lower Marsh Relay</p>
       <table class="roster"><caption>Night duty roster</caption><tbody>${roster}</tbody></table>
-      <div class="mode-list">${modes}${dead}</div>
+      <div class="mode-list">${modes}</div>
       <button type="button" class="judge-btn">Kiroween Judge</button>
     </div>
   </section>`;
@@ -39,11 +35,11 @@ export function startScreenHtml({ deadAirUnlocked = false, judge = false } = {})
 
 // Draws the start screen into `root`. `onPick(mode)` runs on a mode button, `onJudge()` on the Judge
 // button. `backdrop(el)` may paint the empty office into the element behind the card.
-export function mountStart(root, { data, judge = false, onPick = () => {}, onJudge = () => {}, backdrop = null } = {}) {
-  root.innerHTML = startScreenHtml({ deadAirUnlocked: data?.deadAirUnlocked, judge });
+export function mountStart(root, { onPick = () => {}, onJudge = () => {}, backdrop = null } = {}) {
+  root.innerHTML = startScreenHtml();
   backdrop?.(root.querySelector('.start-office'));
   for (const btn of root.querySelectorAll('.mode-btn')) {
-    btn.addEventListener('click', () => { if (!btn.disabled) onPick(btn.dataset.pick); });
+    btn.addEventListener('click', () => onPick(btn.dataset.pick));
   }
   root.querySelector('.judge-btn').addEventListener('click', () => onJudge());
   root.querySelector('.mode-btn')?.focus();
@@ -141,7 +137,6 @@ export function cardHtml(screen, info = {}) {
     }
     case 'gameOver': {
       // Out of lives, or out of time: 06:00 came with telegrams left [R5.5, R5.6, R9.7g].
-      const restart = info.canRestart === false ? '' : btn('restart-day', 'Restart this day');
       const time = info.time ?? '';
       // In Day Shift the company is kind: the operator is sent to the seaside for a rest.
       const day = mode === 'day';
@@ -158,7 +153,7 @@ export function cardHtml(screen, info = {}) {
         title: day ? 'A rest is ordered' : info.reason === 'time' ? 'Out of time' : 'The line went dead',
         strips,
         rows,
-        buttons: `${restart}${btn('main-menu', 'Main menu')}`,
+        buttons: `${btn('restart-day', 'Restart this day')}${btn('main-menu', 'Main menu')}`,
       });
     }
     case 'closing': {
@@ -167,13 +162,12 @@ export function cardHtml(screen, info = {}) {
       const best = info.best
         ? `<p class="notice-sub">Best ${MODE_NAMES[mode]} run</p><dl class="notice-stats best">${statsRows(info.best).map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>`
         : '';
-      const unlocked = info.unlocked ? '<p class="unlock">Dead Air is now open on the start screen.</p>' : '';
       return noticeHtml({
         title: 'Your shifts are over',
         strips: ['THREE NIGHTS AT STATION 7 SERVED', 'COMPANY THANKS OPERATOR STOP'],
         rank: t.rank,
         rows: statsRows(t),
-        extra: `${best}${unlocked}`,
+        extra: best,
         buttons: btn('main-menu', 'Main menu'),
       });
     }

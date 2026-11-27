@@ -62,7 +62,6 @@
 .card.notice .notice-stats dd { margin: 0; font: 500 22px/1.05 "Caveat", cursive; color: #22303f; text-align: right; }
 .card.notice .notice-sub { margin: 4px 0 0; font: 14px "IM Fell English SC", serif; letter-spacing: .12em; text-align: center; }
 .card.notice .notice-stats.best dd { font-size: 19px; }
-.card.notice .unlock { margin: 6px 0; font: 500 21px/1.1 "Caveat", cursive; color: #8f2a1a; text-align: center; }
 .card.notice .notice-buttons { display: grid; justify-content: stretch; gap: 8px; margin-top: 6px; }
 .card.notice .notice-buttons button {
   display: block;
@@ -78,7 +77,7 @@
 }
 .card.notice .notice-buttons button:hover, .card.notice .notice-buttons button:focus-visible { background: rgb(58 47 34 / .1); }
 
-/* The line is dead (Night Shift and Dead Air): darkness, the dead line's words, then the notice [R5.5]. */
+/* The line is dead (Night Shift): darkness, the dead line's words, then the notice [R5.5]. */
 .card-layer.dead-line { background: #000; flex-direction: column; gap: 5vh; }
 .card-layer.dead-line .card.notice { display: none; }
 .card-layer.dead-line.noticed .card.notice { display: block; }

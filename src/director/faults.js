@@ -1,11 +1,10 @@
-// What a lost life does to the office, Night Shift and Dead Air [design 10, R6.4 to R6.4c]. Pure: it
+// What a lost life does to the office in Night Shift [design 10, R6.4 to R6.4c]. Pure: it
 // returns what should happen; main.js makes it seen and heard. It grows worse as lives fall, and eases
 // as clean messages bring them back. Nothing here touches the key, the tape, the codebook or the form.
 
-// Lives below which each later reaction joins in, out of 10 and out of 5 (Dead Air).
+// Lives below which each later reaction joins in, out of 10.
 export const FAULT_MARKS = {
   10: { strain: 7, echo: 5, near: 3, omens: [7, 5, 3] },
-  5: { strain: 4, echo: 3, near: 2, omens: [4, 3, 2] },
 };
 export const OMENS = ['blueFlame', 'heavyAir', 'recordSticks'];
 export const OMEN_DELAY_MS = [2500, 5000];

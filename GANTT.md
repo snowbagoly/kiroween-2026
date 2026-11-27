@@ -1,11 +1,11 @@
-# Dead Air -- 1873: plan with overlaps
+# Night Shift -- 1903: plan with overlaps
 
 Start: 2026-11-19. Submit: 2026-12-01. That is 13 days.
 Work overlaps on purpose. Requirements keep changing while music and logic are built.
 
 ```mermaid
 gantt
-    title Dead Air -- 1873 (Kiroween)
+    title Night Shift -- 1903 (Kiroween)
     dateFormat  YYYY-MM-DD
     axisFormat  %d.%m
     todayMarker on

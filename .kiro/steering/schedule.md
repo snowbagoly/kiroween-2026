@@ -2,7 +2,7 @@
 inclusion: always
 ---
 
-# Schedule: Dead Air -- 1873
+# Schedule: Night Shift -- 1903
 
 Full chart: `GANTT.md` in the project root. Submit on 01.12.2026.
 

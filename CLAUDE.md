@@ -32,7 +32,7 @@ ONLY=dawn node tools/shots.mjs   # only the shots whose name contains "dawn"; CH
 
 To work on it, serve the repo root with any static server and open `index.html`. It loads `src/main.js` as an ES module. The one dev dependency is `fast-check`.
 
-Query strings that help with checks: `?judge=1` (Judge mode, saves nothing), `?test=1` (puts `window.__deadAir = { game, bus, audio, … }` on the page), `?story=N` (opens story slide N), `?dawn` (ten to six with the work done) and `?dread=0.9` (late-night dread right away).
+Query strings that help with checks: `?judge=1` (Judge mode, saves nothing), `?test=1` (puts `window.__nightShift = { game, bus, audio, … }` on the page), `?story=N` (opens story slide N), `?dawn` (ten to six with the work done) and `?dread=0.9` (late-night dread right away).
 
 ## Build constraints (`build.mjs`)
 
@@ -51,7 +51,7 @@ input (keyboard.js; touch is T27) --events--> core/game.js dispatch(event) --out
 ```
 
 - **`src/core/`**: pure rules with no DOM and no audio. Time (`clock`) and a seeded `rng` are passed in, so `node --test` covers everything here.
-  - `game.js`: the state machine (screens, modes `night | day | deadair`, day flow, checkpoint, Judge cheats).
+  - `game.js`: the state machine (screens, modes `night | day`, day flow, checkpoint, Judge cheats).
   - `hand.js`: learns the player's dot and dash lengths and gives the threshold, the letter gap and the wpm [R3.3]. `morse.js` holds the letter table and the decoder.
   - `send.js`, `receive.js`, `tutorial.js`, `lives.js`, `stats.js`, `settings.js` (localStorage key `nightshift.v1`).
   - `messages.js` + `message-pool.js`: the 1903 telegrams and `buildDay(day, mode, rng)`, which has many placement rules (design §6).
@@ -65,7 +65,7 @@ input (keyboard.js; touch is T27) --events--> core/game.js dispatch(event) --out
 - **`src/css/`** and the inline `<style>` in `index.html`: colours are CSS variables per `data-mode` (night/day). Text contrast must stay ≥ 4.5:1 [R10.4].
 - **`dev/`**: manual audio check pages (built to `dist/dev-*.html`). **`tools/shots.mjs`**: the screenshot list from design §16.
 
-Modes: **Night Shift** (horror, 10 lives), **Day Shift** (calm, no directors), **Dead Air** (hard, 5 lives, no codebook, unlocked after Night Shift Day 3). There are 3 days in each. Day 1 is sending, Day 2 is receiving, Day 3 is mixed.
+Modes: **Night Shift** (horror, 10 lives), **Day Shift** (calm, no directors). There are 3 days in each. Day 1 is sending, Day 2 is receiving, Day 3 is mixed.
 
 ## Workflow conventions
 

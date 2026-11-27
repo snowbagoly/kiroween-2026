@@ -15,11 +15,9 @@ test('faults: every lost life spits, dims the room around the needle and stutter
   assert.ok(a[0].severity > 0 && a[0].severity < 0.2);
 });
 
-test('faults: strain and the dark from the corners start below 7 of 10 and below 4 of 5', () => {
+test('faults: strain and the dark from the corners start below 7 of 10', () => {
   assert.equal(strainLevel(7, 10), 0);
   assert.ok(strainLevel(6, 10) > 0);
-  assert.equal(strainLevel(4, 5), 0);
-  assert.ok(strainLevel(3, 5) > 0);
   assert.equal(strainLevel(0, 10), 1);
 });
 
@@ -35,7 +33,8 @@ test('faults: the echo below 5, only on letters; the light goes out with knocks 
 });
 
 test('faults: one omen at each of 7, 5 and 3, each a different one, at most once a day', () => {
-  for (const max of [10, 5]) {
+  {
+    const max = 10;
     const f = createFaults({ max, rng: () => 0.3 });
     const steps = fall(f, max - 1, 1);
     const at = steps.filter((s) => types(s.actions).includes('omen')).map((s) => s.lives);
@@ -72,12 +71,11 @@ test('faults: the last warning comes once, at one life, without its own stutter'
   assert.equal(f.warned, false);
 });
 
-test('dread: Day 1 starts each effect at its point, Day 2 at 70% of it, Day 3 and Dead Air in full', () => {
+test('dread: Day 1 starts each effect at its point, Day 2 at 70% of it, Day 3 in full', () => {
   const d1 = dreadLevels(DREAD_FROM.wind, { day: 1 });
   assert.equal(d1.wind, 0);
   assert.ok(dreadLevels(DREAD_FROM.wind, { day: 2 }).wind > 0);
   assert.equal(dreadLevels(0, { day: 3 }).knock, 1);
-  assert.equal(dreadLevels(0, { day: 1, mode: 'deadair' }).flicker, 1);
   assert.equal(dreadLevels(1, { day: 1 }).knock, 1);
 });
 
