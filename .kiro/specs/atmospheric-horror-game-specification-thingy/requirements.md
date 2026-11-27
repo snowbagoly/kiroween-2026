@@ -259,6 +259,27 @@ Acceptance criteria:
 6. WHEN the player picks Night Shift or Day Shift and "Always skip the story" is off THEN the system SHALL offer the story first ("Read the letter" or "Go straight to the desk", with an "Always go straight to the desk" tick box). The story SHALL lead straight into Day 1 (or the tutorial dialog, R2.1a).
 7. The story SHALL be the same in Night Shift and Day Shift, with no horror effects.
 
+### R18. The order (Day 3, Night Shift and Dead Air)
+**User story:** As a player, I want the last night to give me an order I must carry out, so I feel the station testing me.
+
+Acceptance criteria:
+1. WHEN Day 3 runs in Night Shift or Dead Air THEN one of its messages SHALL be the order: a received message (R4) from "VN", shown as a strange message in a different ink, saying what to do when a sign comes. It counts as one of the day's messages. The system SHALL pick one order per run at random from:
+   | Order | Sign | Word to send |
+   |---|---|---|
+   | WHEN THEY KNOCK THREE TIMES SEND VANE | three heavy knocks on the office door | VANE |
+   | IF THE FLAME BURNS BLUE SEND ADA | the lamp's flame sinks and burns blue | ADA |
+   | WHEN THE SOUNDER SPEAKS ALONE SEND STOP | the sounder clicks by itself three times | STOP |
+   | WHEN THE CLOCK STRIKES THIRTEEN SEND HOME | the wall clock strikes thirteen | HOME |
+   | IF THE WIRES FALL SILENT SEND SEVEN | the rain and the singing wires stop dead | SEVEN |
+2. WHEN the order has been received, later the same day and before 05:00, THEN the sign SHALL come, once. On that day the sign SHALL NOT happen at any other time (the matching omen and dread event are held back).
+3. WHEN the sign has come THEN the player SHALL have 20 seconds. During them the form SHALL fade out and the order SHALL show again in VN's ink in its place; a heartbeat SHALL start slowly and speed up as the time runs out; the room SHALL dim except the key and the codebook; nothing else SHALL sound. The game clock, idling and the late drain SHALL stop, and nothing keyed or typed SHALL count as a mistake or cost a life.
+4. The player carries out the order by sending the word: keyed in Morse on the key, or typed letter by letter on the keyboard. Each right letter SHALL appear in place, and a wrong one SHALL start the word again.
+5. Sending the word SHALL only count in the 20 seconds after the sign. Before the order has arrived, or between the order and the sign, it SHALL do nothing.
+6. WHEN the word is sent in time THEN the heartbeat SHALL slow and stop, the room's light and sounds SHALL come back, the form SHALL fade back in, and the day SHALL go on where it was.
+7. WHEN the 20 seconds pass without the word THEN the heartbeat SHALL stop dead, the figure SHALL press against the window glass, and the light SHALL go out. Then the story's newspaper slide (R17.1, slide 3) SHALL come up with a later date, the same advertisement for a night operator at Station 7, and the picture SHALL push in slowly until the advertisement fills the screen. Then the game over notice SHALL repeat the advertisement as a company telegram: "NIGHT OPERATOR WANTED / RELAY STATION LOWER MARSH / APPLY MARSH AND WESTERN TELEGRAPH CO", with the usual buttons (R5.5, R16.6). It SHALL count as losing the day.
+8. The order SHALL happen at most once per run, on Day 3 only, never in Day Shift. "Reduce flashing" SHALL soften its light as in R6.6, and captions SHALL name its sounds ("[three knocks at the door]", "[a heartbeat]").
+9. In Judge mode the panel SHALL offer "The order: receive it", "The order: the sign" and "The order: fail", so a judge can see the order, the 20 seconds and the ending at once.
+
 ## Out of scope
 - Online play or a real second player (the other operator is scripted).
 - More than 3 days.
