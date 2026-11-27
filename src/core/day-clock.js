@@ -51,6 +51,8 @@ export function createDayClock({ day = 1, arrivals = [0], realMinutes = DAY_REAL
     get progress() { return Math.min(1, minutes / NIGHT_MINUTES); },
     // The first press or typed letter of the day starts it [R9.7a]. The first message is on the desk at 22:00.
     start() { started = true; },
+    // Judge "Dawn": the clock goes straight to 06:00 and the day is over.
+    toDawn() { started = true; minutes = NIGHT_MINUTES; arrived = arrivals.length; over = true; },
     // Judge "Skip message": hands message i in now, moving the clock on to its time if needed.
     bring(i) {
       if (i >= arrivals.length || arrived > i) return [];

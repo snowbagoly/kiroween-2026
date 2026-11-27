@@ -1,12 +1,16 @@
 // Kiroween Judge mode [design 13, R13]: a panel of cheats and show-off tools, a welcome card,
 // a 30-second demo reel and auto-play. Everything goes through `ctx`, which main.js builds:
 //   dispatch(event)  state()  audioReady()  isBusy()  autoSolve('letter' | 'message') -> Promise
-//   effect(name)  setScare(0..1)  captionsOn()  showThought()  exit()  speed (getter)
+//   effect(name)  setScare(0..1)  captionsOn()  showThought()  dawn()  story()  exit()  speed (getter)
 // The panel only sends normal game events plus JUDGE_* events; it never changes the rules itself.
 
 export const EFFECT_BUTTONS = [
   ['thunder', 'Thunder'], ['crow', 'Crow'], ['scream', 'Scream'], ['knock', 'Knocking'],
   ['static', 'Static burst'], ['flicker', 'Flicker'], ['strange', 'Strange message'],
+];
+// The omens and the last warning [R13.4c, R6.4a, R6.4b]. They go through ctx.effect() too.
+export const OMEN_BUTTONS = [
+  ['blueFlame', 'Blue flame'], ['heavyAir', 'Heavy air'], ['recordSticks', 'Record sticks'], ['lastWarning', 'Last warning'],
 ];
 export const SPEEDS = [1, 2, 4];
 export const DEMO_MS = 30000;
@@ -102,14 +106,15 @@ export function panelHtml() {
     <button type="button" class="jp-fold" aria-expanded="true" aria-controls="jp-body">Fold</button></div>
   <p class="jp-sound" role="status">Click anywhere to enable sound</p>
   <div id="jp-body" class="jp-body">
-    <fieldset><legend>Jump to</legend>${b('day-1', 'Day 1')}${b('day-2', 'Day 2')}${b('day-3', 'Day 3')}${b('closing', 'Closing')}</fieldset>
+    <fieldset><legend>Jump to</legend>${b('day-1', 'Day 1')}${b('day-2', 'Day 2')}${b('day-3', 'Day 3')}${b('dawn', 'Dawn')}${b('closing', 'Closing')}</fieldset>
     <fieldset><legend>Cheats</legend>${b('solve-letter', 'Type the letter')}${b('solve-message', 'Type the message')}${b('skip', 'Skip message')}
       ${b('life-plus', '+1 life')}${b('life-full', 'Full galvanometer')}${b('life-minus', '−1 life')}
       <label><input type="checkbox" data-judge="infinite"> Infinite lives</label>
-      ${b('gameover', 'Force game over')}${b('stats', 'Show stats')}</fieldset>
+      ${b('gameover', 'Force game over')}${b('stats', 'Show stats')}${b('story', 'Play the story')}</fieldset>
     <fieldset><legend>Show off</legend>${b('mode-night', 'Night Shift')}${b('mode-day', 'Day Shift')}
       <label class="jp-wide">Scare <input type="range" data-judge="scare" min="0" max="100" value="0"> <span class="jp-scare">auto</span></label>
       ${EFFECT_BUTTONS.map(([id, label]) => b(`fx-${id}`, label)).join('')}
+      ${OMEN_BUTTONS.map(([id, label]) => b(`fx-${id}`, label)).join('')}
       ${b('captions', 'Captions on')}${b('thought', 'Show a thought')}</fieldset>
     <fieldset><legend>Watch</legend>${b('demo', 'Play demo')}
       <label><input type="checkbox" data-judge="autoplay"> Auto-play</label>
@@ -160,6 +165,7 @@ export function mountJudge(root, ctx, { welcome = true } = {}) {
     'day-1': () => ctx.dispatch({ type: 'JUDGE_JUMP_DAY', day: 1 }),
     'day-2': () => ctx.dispatch({ type: 'JUDGE_JUMP_DAY', day: 2 }),
     'day-3': () => ctx.dispatch({ type: 'JUDGE_JUMP_DAY', day: 3 }),
+    dawn: () => ctx.dawn(),
     closing: () => ctx.dispatch({ type: 'JUDGE_JUMP_DAY', day: 'closing' }),
     'solve-letter': () => ctx.autoSolve('letter'),
     'solve-message': () => ctx.autoSolve('message'),
@@ -169,6 +175,7 @@ export function mountJudge(root, ctx, { welcome = true } = {}) {
     'life-minus': () => ctx.dispatch({ type: 'JUDGE_LIVES', op: '-1' }),
     gameover: () => ctx.dispatch({ type: 'JUDGE_FORCE_GAMEOVER' }),
     stats: () => ctx.dispatch({ type: 'JUDGE_SHOW_STATS' }),
+    story: () => { stopDemo(); auto.stop(); panel.querySelector('[data-judge=autoplay]').checked = false; ctx.story(); },
     'mode-night': () => ctx.dispatch({ type: 'JUDGE_SET_MODE', mode: 'night' }),
     'mode-day': () => ctx.dispatch({ type: 'JUDGE_SET_MODE', mode: 'day' }),
     captions: () => ctx.captionsOn(),
@@ -176,7 +183,7 @@ export function mountJudge(root, ctx, { welcome = true } = {}) {
     demo: () => (demo ? stopDemo() : startDemo()),
     exit: () => { stopDemo(); auto.stop(); ctx.exit(); },
   };
-  for (const [id] of EFFECT_BUTTONS) actions[`fx-${id}`] = () => ctx.effect(id);
+  for (const [id] of [...EFFECT_BUTTONS, ...OMEN_BUTTONS]) actions[`fx-${id}`] = () => ctx.effect(id);
   for (const v of SPEEDS) actions[`speed-${v}`] = () => setSpeed(v);
 
   panel.addEventListener('click', (e) => {

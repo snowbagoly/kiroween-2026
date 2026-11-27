@@ -96,6 +96,7 @@ export function storyHtml() {
 
 // Plays the show in `parent` with the sounder from story-sound.js. `onDone()` runs once, at the end or on Esc.
 export function playStory(parent, sound, { onDone = () => {}, from = 0 } = {}) {
+  from = Math.min(STORY_SLIDES.length - 1, Math.max(0, Math.floor(Number(from)) || 0));
   parent.insertAdjacentHTML('beforeend', storyHtml());
   const root = parent.lastElementChild;
   growScenery(root);
