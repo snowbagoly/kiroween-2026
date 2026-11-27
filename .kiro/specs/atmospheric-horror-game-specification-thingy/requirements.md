@@ -2,7 +2,7 @@
 
 ## Introduction
 
-"Night Shift" is a single-page browser game. The year is 1903. The player is a pianist whose dance hall has closed for the winter, and who has taken the night post at Station 7 of the Marsh & Western Telegraph Co., a lone relay station on an autumn marsh. They tap the space bar to send Morse code, and later decode Morse they receive. The game has two modes: Night Shift (default) and Day Shift. It also has a Kiroween Judge mode (R13) for quick demos. All visuals are SVG/CSS and all audio is synthesized with the Web Audio API. The game loads nothing from other sites (R11).
+"Night Shift" is a single-page browser game. The year is 1903. The player is a pianist whose dance hall has closed for the winter, and who has taken the night post at Station 7 of the Marsh & Western Telegraph Co., a lone relay station on an autumn marsh. They tap the space bar to send Morse code, and later decode Morse they receive. The game has two modes: Night Shift (default) and Day Shift. Over the three nights of Night Shift the player finds out what happened to the operator before them, and why they were brought here (R20). It also has a Kiroween Judge mode (R13) for quick demos. All visuals are SVG/CSS and all audio is synthesized with the Web Audio API. The game loads nothing from other sites (R11).
 
 ## Glossary
 
@@ -19,6 +19,9 @@
 - **Company notice**: A printed Marsh & Western form, used for the end of a day, the game over and the closing screen.
 - **Game clock**: The office's time, from 22:00. It runs in real time while the player works (R9.7). The day always ends at 06:00.
 - **Spike**: The spike on the desk where telegrams that arrive while the player is busy wait, shown as forms stacked under the current one.
+- **Vane**: Mr E. Vane, the operator before the player, who is missing. His wife is Mrs M. (Maud) Vane. On the line he signs "VN".
+- **Morning**: The scene between two nights in Night Shift, in the office by grey daylight, where the player looks around and solves one small riddle (R20.6).
+- **The operator's own hand**: Their handwriting, the same as in the letter to Ada (R17.1), and, on the sounder, their learned hand (R3.3).
 
 ## Requirements
 
@@ -104,7 +107,7 @@ Acceptance criteria:
 1. WHILE in Night Shift mode THEN the system SHALL play the office's sounds (rain against the window, wind, the wires singing, the room tone of rumble and mains hum), plus random one-shot sounds: thunder, a crow, distant screaming, and knocking.
 2. WHILE in Night Shift mode THEN the music SHALL be the station's phonograph, heard from the next room, playing a waltz in E♭ minor on piano and reed organ through a period phonograph sound (needle noise, crackle, warp). It is the waltz the operator wrote years ago (R17). The key's tone SHALL be tuned to the music's key.
 3. WHILE in Night Shift mode THEN some messages SHALL contain strange text (for example "IT IS IN THE WIRES", "DO NOT ANSWER") mixed with normal work messages. Day 1 SHALL have normal messages only, except the last (5th) message, which SHALL be strange. Day 2 SHALL have at least 2 strange messages out of 5.
-3a. The last message of Day 1 SHALL be a fixed telegram from Head Office to "Mr E. Vane, Station 7": "WHY HAVE YOU NOT REPORTED". Vane is the missing operator. The strange messages MAY also include his wife ("HAS MY HUSBAND BEEN MOVED") and telegrams in his hand (for example "DO NOT ANSWER IT", "IT LEARNS YOUR HAND").
+3a. The last message of Day 1 SHALL be a fixed telegram from Head Office to "Mr E. Vane, Station 7": "WHY HAVE YOU NOT REPORTED". Vane is the missing operator. The strange messages MAY also include his wife ("HAS MY HUSBAND BEEN MOVED") and telegrams in his hand (for example "DO NOT ANSWER IT", "IT LEARNS YOUR HAND"). The story's telegrams on Day 2 and Day 3 are set out in R20.
 4. WHEN a mistake happens THEN the line SHALL spit (a stutter of crackle on the sounder, the needle jolting, and a low sour swell), the light SHALL stutter, and the rest of the room SHALL dim for a moment, leaving the galvanometer lit. All of it SHALL get stronger the fewer lives are left. Below 7 lives a sour drone and the dark closing in from the corners SHALL join, for as long as lives stay that low. Below 5 lives the line SHALL repeat the wrong letter back faintly, in the operator's own hand. Below 3 lives the light SHALL go out after the stutter, and something SHALL knock three times on the wall behind the operator. (In Dead Air the marks scale to 5 lives: below 4, 3 and 2.)
 4a. WHEN lives first fall to 7, 5 and 3 in a day (in Dead Air: 4, 3 and 2) THEN the system SHALL play one omen not yet seen that day, a few seconds later and in a quiet moment: the lamp's flame sinks and burns blue, the air goes heavy (sounds sink away as if under water, the record drags flat), or the record sticks in its groove. The order SHALL be random.
 4b. WHEN lives fall to 1 THEN the system SHALL play the last warning: the galvanometer's glass cracks while the room is dim around it, the light stutters out, something knocks three times behind the operator, and as the light snaps back the tall figure is reflected in the window's dark glass, standing behind the operator's chair. It is gone in the next stutter. The crack SHALL stay until the day ends.
@@ -131,7 +134,7 @@ Acceptance criteria:
 Acceptance criteria:
 1. WHEN a day ends (both modes) THEN the system SHALL show, on a company notice ("SHIFT ENDED 06:00 STOP / RELIEF OPERATOR ARRIVED / REPORT AGAIN 22:00 TOMORROW"): messages completed, letters correct, mistakes, accuracy %, average speed in words per minute, lives left, and longest streak without a mistake.
 2. The system SHALL give a rank of "Apprentice", "Operator", or "Master" based on both accuracy and speed. The system SHALL work out an accuracy rank (below 70% Apprentice, 70% to 94% Operator, 95% or more Master) and a speed rank (below 3 words per minute Apprentice, 3 to 5.9 Operator, 6 or more Master), and the final rank SHALL be the lower of the two.
-3. WHEN the player clicks "Next day" THEN the system SHALL start the next day; after Day 3 it SHALL show a closing screen, also as a company notice.
+3. WHEN the player clicks "Next day" THEN the system SHALL start the next day (in Night Shift, after the morning, R20.6); after Day 3 it SHALL show a closing screen, also as a company notice (in Night Shift, after the epilogue, R20.11).
 4. The system SHALL save the best stats per mode in localStorage.
 
 ### R9. Days and progression
@@ -139,7 +142,7 @@ Acceptance criteria:
 1. The game SHALL have 3 days: Day 1 is sending only, Day 2 is receiving only, Day 3 mixes sending and receiving.
 2. Each day SHALL have 5 messages in a mixed order of length: short and long messages SHALL NOT be sorted, so the player may get a long message first, then a short one, then a longer one. Each day SHALL include at least one short message (up to 10 letters) and at least one long message (20 letters or more). The last two messages of a day SHALL NOT be long, so the long work comes early and the last minutes before 06:00 stay fair.
 2a. On Day 1 the first message SHALL be short, and no message SHALL take more than two lines on the telegram form. On Day 3 the messages SHALL be a random mix of "send" and "receive", with at least 2 of each.
-3. WHEN a day ends without game over THEN the system SHALL start the next day after the player clicks "Next day".
+3. WHEN a day ends without game over THEN the system SHALL start the next day after the player clicks "Next day". In Night Shift the morning (R20.6) SHALL come between the two.
 4. The system SHALL always start a new game at Day 1 and SHALL NOT offer a day picker in normal play. After game over, the player can only restart the current day (R5.6a) or go to the main menu.
 5. WHEN Day 3 starts THEN the system SHALL show a short intro explaining that the player now both sends and receives.
 6. Lives SHALL reset to the mode maximum (10, or 5 in Dead Air) at the start of each day.
@@ -191,7 +194,7 @@ Acceptance criteria:
 1. The start screen SHALL show a "Kiroween Judge" button. The system SHALL also open Judge mode when the page URL contains `?judge=1`.
 2. WHEN Judge mode is on THEN the system SHALL show a small, always-visible "Judge panel" that can be collapsed, and a "JUDGE" badge on the HUD. The panel SHALL be used with the mouse. It has no shortcut keys, because the letter keys are needed for typing received letters.
 3. The Judge panel SHALL provide these cheats:
-   a. **Jump to day**: buttons for Day 1, Day 2, Day 3, the dawn, and the closing screen. All days are reachable at once.
+   a. **Jump to day**: buttons for Day 1, Day 2, Day 3, the dawn, Morning 1, Morning 2, the epilogue (R20), and the closing screen. All days are reachable at once. In a morning, "Type it correctly" (b) SHALL solve the riddle.
    b. **Auto-solve**: "Type it correctly" completes the current letter, or the whole message, as if the player had done it perfectly. It SHALL play the sent or received tones, so the audio still shows.
    c. **Skip message**: go straight to the next message.
    d. **Lives**: buttons for "+1 life", "Full galvanometer", "-1 life", and an "Infinite lives" switch. WHEN lives are infinite THEN the system SHALL never show game over.
@@ -207,7 +210,7 @@ Acceptance criteria:
    f. **Speed**: x1 / x2 / x4 for the demo and auto-play.
    g. **Captions on**: a button that turns on sound captions (R10.3) so a muted judge still sees "[thunder]", "[crow]".
    h. **Show a thought**: a button that shows the next character thought (R12) at once, in any mode and day.
-5. WHILE Judge mode is on THEN the system SHALL NOT save progress, best stats, the learned hand, or the "Start with tutorial" setting to localStorage, and SHALL skip the story and the tutorial.
+5. WHILE Judge mode is on THEN the system SHALL NOT save progress, best stats, the learned hand, or the "Start with tutorial" setting to localStorage, and SHALL skip the story, the mornings, the epilogue and the tutorial unless the judge jumps to them.
 6. WHEN a judge opens the page with `?judge=1` THEN the system SHALL show a one-screen welcome card that explains the panel and has a "Start demo" button and an "Explore" button. The card SHALL need no more than one click to reach any day.
 7. The system SHALL work with sound off, since browsers block sound until a click. WHILE no click has happened yet THEN the Judge panel SHALL show "Click anywhere to enable sound".
 8. Judge mode SHALL be a separate switch from Night Shift and Day Shift and SHALL NOT change the rules of normal play. The system SHALL leave Judge mode through an "Exit Kiroween Judge" button that returns to the start screen.
@@ -244,7 +247,7 @@ Acceptance criteria:
 5. In Dead Air the system SHALL NOT show the codebook (R3.1a), neither during play nor in the tutorial. Its place on the wall SHALL be bare, with the pin marks left.
 6. WHEN lives reach 0 in Dead Air THEN the system SHALL play the Night Shift game over (R5.5) and end on a dismissal telegram with only a "Main menu" button. There SHALL be no "Restart this day" and no checkpoint. Starting Dead Air again SHALL begin at Day 1.
 7. Dead Air SHALL keep its own best stats, shown with a "Dead Air" label.
-8. The system SHALL NOT offer the story (R17) or the tutorial dialog (R2) when Dead Air starts.
+8. The system SHALL NOT offer the story (R17) or the tutorial dialog (R2) when Dead Air starts, and SHALL skip the mornings and the epilogue (R20). The story's telegrams, Vane's notes on the wall and the order (R18) SHALL stay.
 9. WHEN Judge mode is on THEN Dead Air SHALL be unlocked, and Judge mode SHALL NOT save the unlock.
 
 ### R17. The story
@@ -260,24 +263,19 @@ Acceptance criteria:
 7. The story SHALL have no horror effects. Day Shift tells its own, happy story instead (R19).
 
 ### R18. The order (Day 3, Night Shift and Dead Air)
-**User story:** As a player, I want the last night to give me an order I must carry out, so I feel the station testing me.
+**User story:** As a player, I want the last night to end the story with a test I must pass, so the ending is mine.
+
+The order is the end of the story (R20). It used to be one of five random orders with a random sign; it is now one fixed order, and its sign is the thing on the line sending in the player's own hand.
 
 Acceptance criteria:
-1. WHEN Day 3 runs in Night Shift or Dead Air THEN one of its messages SHALL be the order: a received message (R4) from "VN", shown as a strange message in a different ink, saying what to do when a sign comes. It counts as one of the day's messages. The system SHALL pick one order per run at random from:
-   | Order | Sign | Word to send |
-   |---|---|---|
-   | WHEN THEY KNOCK THREE TIMES SEND VANE | three heavy knocks on the office door | VANE |
-   | IF THE FLAME BURNS BLUE SEND ADA | the lamp's flame sinks and burns blue | ADA |
-   | WHEN THE SOUNDER SPEAKS ALONE SEND STOP | the sounder clicks by itself three times | STOP |
-   | WHEN THE CLOCK STRIKES THIRTEEN SEND HOME | the wall clock strikes thirteen | HOME |
-   | IF THE WIRES FALL SILENT SEND SEVEN | the rain and the singing wires stop dead | SEVEN |
-2. WHEN the order has been received, later the same day and before 05:00, THEN the sign SHALL come, once. On that day the sign SHALL NOT happen at any other time (the matching omen and dread event are held back).
-3. WHEN the sign has come THEN the player SHALL have 20 seconds. During them the form SHALL fade out and the order SHALL show again in VN's ink in its place; a heartbeat SHALL start slowly and speed up as the time runs out; the room SHALL dim except the key and the codebook; nothing else SHALL sound. The game clock, idling and the late drain SHALL stop, and nothing keyed or typed SHALL count as a mistake or cost a life.
-4. The player carries out the order by sending the word: keyed in Morse on the key, or typed letter by letter on the keyboard. Each right letter SHALL appear in place, and a wrong one SHALL start the word again.
-5. Sending the word SHALL only count in the 20 seconds after the sign. Before the order has arrived, or between the order and the sign, it SHALL do nothing.
-6. WHEN the word is sent in time THEN the heartbeat SHALL slow and stop, the room's light and sounds SHALL come back, the form SHALL fade back in, and the day SHALL go on where it was.
+1. WHEN Day 3 runs in Night Shift or Dead Air THEN one of its messages SHALL be the order: a received message (R4) from "VN", in Vane's hand and ink (R20.5a): "SEND WHAT IT NEVER HEARD". It counts as one of the day's messages.
+2. WHEN the order and every other message of the day are done THEN, a few seconds later and in place of the run to dawn, the sign SHALL come: the sounder starts sending by itself, in the player's own hand (R3.3), the advertisement for a night operator. The sign SHALL come once.
+3. WHEN the sign has come THEN the player SHALL have 20 seconds. During them the form SHALL fade out, and a form in the player's own handwriting SHALL take its place and fill with the advertisement, letter by letter, as the sounder taps it. The order SHALL show above it in VN's ink. A heartbeat SHALL start slowly and speed up as the time runs out, and the room SHALL dim except the key, the codebook and Vane's notes (R20.9). The game clock, idling and the late drain SHALL stop, and nothing keyed or typed SHALL count as a mistake or cost a life.
+4. The player carries out the order by sending the name of their waltz, MAUD (R20.10): keyed in Morse on the key, or typed letter by letter on the keyboard. Each right letter SHALL appear in place and make the sounder falter (a missed beat). A wrong letter SHALL start the word again.
+5. Sending the word SHALL only count in the 20 seconds after the sign. Before that it SHALL do nothing.
+6. WHEN the word is sent in time THEN the sounder SHALL stop dead in the middle of a letter, the heartbeat SHALL slow and stop, and the room's light and sounds SHALL come back. Then one last form SHALL be handed in, in Vane's ink, for the player to send: to "Mrs M. Vane", from "E. Vane": "DO NOT WAIT STOP EVER YOURS". It is not one of the day's 5 messages, it does not count in the stats, and a mistake on it SHALL cost no life. WHEN it is sent THEN the clock SHALL run on to 06:00, and the dawn (R9.9) and the epilogue (R20.11) SHALL follow.
 7. WHEN the 20 seconds pass without the word THEN the heartbeat SHALL stop dead, the figure SHALL press against the window glass, and the light SHALL go out. Then the story's newspaper slide (R17.1, slide 3) SHALL come up with a later date, the same advertisement for a night operator at Station 7, and the picture SHALL push in slowly until the advertisement fills the screen. Then the game over notice SHALL repeat the advertisement as a company telegram: "NIGHT OPERATOR WANTED / RELAY STATION LOWER MARSH / APPLY MARSH AND WESTERN TELEGRAPH CO", with the usual buttons (R5.5, R16.6). It SHALL count as losing the day.
-8. The order SHALL happen at most once per run, on Day 3 only, never in Day Shift. "Reduce flashing" SHALL soften its light as in R6.6, and captions SHALL name its sounds ("[three knocks at the door]", "[a heartbeat]").
+8. The order SHALL happen at most once per run, on Day 3 only, never in Day Shift. "Reduce flashing" SHALL soften its light as in R6.6, and captions SHALL name its sounds ("[the sounder taps by itself]", "[a heartbeat]").
 9. In Judge mode the panel SHALL offer "The order: receive it", "The order: the sign" and "The order: fail", so a judge can see the order, the 20 seconds and the ending at once.
 
 ### R19. The Day Shift story
@@ -293,8 +291,39 @@ Acceptance criteria:
 7. In the Day Shift office (R7.2a) a pile of money SHALL lie on the desk, and the pianist's records by the phonograph, as on the last slide.
 8. Now and then a rainbow SHALL shine in the window of the Day Shift office: it fades in over the marsh, stays for a while and fades away. Never with reduced motion.
 
+### R20. The story across the three nights (Night Shift)
+**User story:** As a player, I want the three nights to tell one story with an ending, so I find out what happened at Station 7 and why I was brought here.
+
+Acceptance criteria:
+1. Night Shift SHALL tell one story over its three days: through the telegrams (R20.3 to R20.5a), a morning between each two nights (R20.6 to R20.10), the order on Day 3 (R18) and an epilogue (R20.11). Day Shift SHALL tell none of it (R7.1). Dead Air SHALL keep the telegrams, Vane's notes and the order, and skip the mornings and the epilogue (R16.8).
+2. The story SHALL be this. Something in the wire at mile nine has no hand of its own. It learns an operator's hand until it can send as them, and then it has them. Vane fought it for a month and lost; now he is only a hand on the line. Vane and his wife Maud used to dance to the operator's waltz at the Excelsior Rooms. A man from a gramophone company recorded it there one night in 1899, and Vane kept the one copy: the record on the phonograph. Because Vane knew the pianist and loved their waltz, the thing sent for them: two days after Vane stopped, it wired the advertisement to the newspaper in his hand. The thing SHALL never be named or explained. Its one rule is that it can only give back what it has heard.
+3. Day 1 SHALL only hint: routine work, the small-hours telegrams, and Head Office asking Vane why he has not reported (R6.3a).
+4. Day 2 SHALL bring the line closer. It SHALL have at least one received message from "VN" (for example "DO NOT ANSWER IT" or "IT LEARNS YOUR HAND"), and a telegram from Mrs M. Vane to the night operator, Station 7: "IS HE WITH YOU".
+5. Day 3 SHALL bring it into the room. Mrs M. Vane SHALL write to the night operator that a wire came from her husband last night, and at least one form to send SHALL be written in the operator's own hand, though they never wrote it. The order (R18) ends the night and the story.
+5a. VN's messages SHALL sound in Vane's own hand on the sounder: slower and heavier than the other stations, with longer dashes and gaps. Their forms SHALL be written in a darker ink, and the forms in the operator's own hand in the ink of the letter to Ada.
+6. WHEN Day 1 or Day 2 ends in Night Shift and the player clicks "Next day" THEN the system SHALL show the morning before the next night: a title card with the date (for example "Thursday, 5 November 1903, morning"), then the office in grey morning light: low cloud, a little rain on the glass, the lamp out. No game clock, lives, horror effects or music run in the morning.
+7. In the morning the player SHALL look around the office by clicking things in it, or with Tab and Enter. Each thing SHALL open a close-up (a page, a label, a letter) with what the operator finds there. Esc or a click SHALL put it back. Things already looked at SHALL stay marked.
+8. Each morning SHALL hold one small riddle. WHEN it is solved THEN the system SHALL play a short cutscene of two or three lantern slides, in the style of the story (R17.3), with the letter to Ada going on under them, and then show the next day's intro card. A "Go back to bed" button SHALL skip the riddle and play the cutscene at once. Space and Esc SHALL work in the cutscene as in the story (R17.5).
+9. Morning 1, Vane's desk, SHALL have these things to look at:
+   - the logbook, whose entries grow strange and stop on 27 October;
+   - the coat, with an unsent letter to Maud in its pocket ("If a wire comes in my name, do not believe it");
+   - the record, with a label in Vane's hand ("Our waltz. E. & M., Excelsior Rooms, June 1899");
+   - the calendar, whose October sheet, under November's, is crossed off up to the 27th;
+   - Vane's locked drawer.
+   The riddle: the drawer's lock has four number wheels, and the logbook says the key is "the day I stopped counting": 2710. In the drawer are Vane's notes. From Day 2 on they SHALL hang on the office wall beside the codebook, in his hand:
+   - "It answers in your own hand. Do not answer it back."
+   - "It cannot make anything. It can only give back what it has heard."
+   - "If it sends in your hand, send it something it has never heard."
+   The cutscene: Vane's last page; the operator remembering the Vanes dancing to their waltz, and the night it was recorded.
+10. Morning 2, the file copies, SHALL have Vane's notes, the window with the poles running out to mile nine, and the spike of file copies: the forms Vane sent, each with its date and time. The riddle: find the one sent after he stopped on 27 October. It is the advertisement for a night operator, wired to the newspaper on 29 October at 03:12, in Vane's hand. The cutscene: the operator understanding that they were sent for; walking out along the wire to mile nine, where Vane's boots stand at the edge of a dyke and his watch, stopped at three, hangs on the pole; and the operator writing a name at the top of their waltz at last, a name never yet said aloud or sent down a wire: MAUD.
+11. WHEN Day 3 ends at dawn in Night Shift THEN the system SHALL play the epilogue before the closing notice (R8.3): three lantern slides with the end of the letter to Ada. The line has been quiet since that night. The Excelsior Rooms open again at Easter 1904, and the operator plays there. The waltz is printed at last, "Valse: Maud. For E. and M. Vane", and the first copy goes to Mrs Vane.
+12. "Always skip the story" SHALL skip the mornings and the epilogue too. What Morning 1 leaves behind SHALL stay: Vane's notes hang on the wall from Day 2.
+13. "Restart this day" SHALL restart the night and SHALL NOT play the morning before it again.
+14. The mornings and the epilogue SHALL fit 1903 and stay a slow burn: unsettling, never gory. The operator is always "they".
+
 ## Out of scope
 - Online play or a real second player (the other operator is scripted).
 - More than 3 days.
+- More than one ending to the story besides the order kept or broken (R18.6, R18.7).
 - Saving mid-day progress.
 - For now: the other three devices (push button, bare wires, signal lamp), the call-up ritual, the sound workbench, and recorded sound samples.

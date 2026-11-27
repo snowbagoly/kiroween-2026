@@ -18,6 +18,7 @@ Other Kiro files: `.kiro/steering/schedule.md` (always included, the schedule an
 ### Open work (as of 27.11.2026)
 
 - T27 (phone: touch Morse key, `input/pointer.js`), T44 (the order on Day 3, R18, `director/order.js`) and T45 (the date on the day card, R9.8) are not built yet. Design §2 marks the files that do not exist yet.
+- The story across the three nights (R20, design §21, Phase 8: T47 to T51) is specified but not built. T44 is now its ending: the order is fixed ("SEND WHAT IT NEVER HEARD", the word is MAUD). Build T47 and T44 first.
 - Phase 6 (T28–T31: test run, polish, publish, video) is still open. The `README.md` is still a stub (T30).
 
 ## Commands
