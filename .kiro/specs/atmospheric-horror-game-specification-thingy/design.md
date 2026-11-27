@@ -474,7 +474,7 @@ open -> broken (20 s pass) -> the scare, the newspaper, the game over (reason 'o
 
 The show itself is the one from R17 (`story/intro.js`): the same slide player, letter writer, fades, Space and Esc. What changes is the data and the pictures.
 
-- `story/letter.js` gets a second set of six slides, `DAY_STORY_SLIDES`, with the same scenes in the same order and their own lines and sounds. `playStory(parent, sound, { day: true })` picks it. The game passes `day` when the run is Day Shift.
+- `story/intro.js` gets a second set of six slides beside `STORY_SLIDES`, `DAY_STORY_SLIDES`, with the same scenes in the same order and their own lines and sounds. `playStory(parent, sound, { day: true })` picks it. The game passes `day` when the run is Day Shift.
 - Each slide drawing in `story/slides/*.js` takes `{ day }`. The layouts stay; by day the palette is the daylight office's (pale sky, sun, no rain layer, no fog), and each slide adds its own happy details:
 
 | Slide | By night | By day |
