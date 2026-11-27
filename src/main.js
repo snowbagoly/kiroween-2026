@@ -17,12 +17,11 @@ import { createThoughts, SHOW_MS } from './director/thoughts.js';
 import { createTutorial, HEARD_LETTER } from './core/tutorial.js';
 import { createReplayCounter, replayLabel, NEXT_LETTER_PAUSE_MS, IDLE_REPLAY_MS } from './core/receive.js';
 import { playTone, playTick, playTock, playStatic, playBell, playChurchBell, playStamp, playRustle } from './audio/voices.js';
-import { wallMinutes } from './core/day-clock.js';
+import { wallMinutes, startHourFor } from './core/day-clock.js';
 import { createPressReader, attachKeyboard } from './input/keyboard.js';
-import { mountScene, setKeyDown, setSounderDown } from './ui/scene.js';
-import { mountMorseChart } from './ui/morse-chart.js';
-import { mountGalvanometer } from './ui/galvanometer.js';
-import { mountOffice, usesOffice } from './office/room.js';
+import { mountMorseChart } from './office/codebook.js';
+import { mountOffice, setKeyDown, setSounderDown } from './office/room.js';
+import { mountBird } from './office/daylight.js';
 import { mountForm, mountTape, wordStarts, formatTime } from './office/forms.js';
 import { mountLight } from './office/light.js';
 import { playStory } from './story/intro.js';
@@ -30,7 +29,6 @@ import { createStorySound } from './story/story-sound.js';
 import { createFaults, strainLevel, CLOSING_DARK } from './director/faults.js';
 import { createDread } from './director/dread.js';
 import { robin, apparition, earRing, flameDrop, flickerBuzz, glassCrack, knock, lineFault, lineSnaps, phantomClick } from './audio/fault-sound.js';
-import { mountTextRow } from './ui/text-row.js';
 import { mountStart, showCard, hudLabel } from './ui/screens.js';
 import { mountOptions } from './ui/options.js';
 import { mountEffects } from './ui/effects-fx.js';
@@ -75,7 +73,9 @@ for (const ev of ['pointerdown', 'keydown']) window.addEventListener(ev, () => s
 app.innerHTML = '<div class="view"></div>';
 const view = app.querySelector('.view');
 let desk = null; // { mode, stage, gauge, row, hud, layer } while a run is on screen
-let office = null; // the office's parts, in Night Shift and Dead Air (office/room.js)
+let office = null; // the office's parts (office/room.js): at night in Night Shift and Dead Air, by day in Day Shift
+// The office at night: the lamp, the faults, the dread, the dying line and the dawn belong to it.
+const nightRoom = () => !!office && (desk?.mode === 'night' || desk?.mode === 'deadair');
 let startOffice = null; // the empty office behind the start card
 let tapeWords = new Set(); // letter indexes that start a new word, for gaps on the tape
 let options = null;
@@ -83,6 +83,7 @@ let deadAirBefore = data.deadAirUnlocked;
 let card = { role: 'send', stats: null, canRestart: true, totals: null, best: null, unlocked: false };
 
 // "Reduce flashing" in Options, or the computer's own reduce-motion setting.
+const reduceMotion = () => !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 const reduceFlashing = () => data.settings.reduceFlashing || !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
 function applySettings() {
@@ -115,7 +116,7 @@ const reader = createPressReader({
   onPressStart: () => {
     lastInputAt = now();
     audio.unlock();
-    tone = playTone(audio, office ? { freq: KEY_TONE_HZ } : {}); // in the office, tuned to the waltz's Eb
+    tone = playTone(audio, nightRoom() ? { freq: KEY_TONE_HZ } : {}); // in the office, tuned to the waltz's Eb
     if (desk) setKeyDown(desk.stage, true);
     startMeter();
     game.dispatch({ type: 'INPUT', t: now() });
@@ -254,7 +255,7 @@ function animateArm(schedule, end) {
 // Plays one received letter with the sounder arm. Returns the schedule, or null with no sound.
 function playReceived(letter, speed = 1) {
   audio.unlock();
-  const h = playLetter(audio, letter, office ? { speed, freq: KEY_TONE_HZ } : { speed });
+  const h = playLetter(audio, letter, nightRoom() ? { speed, freq: KEY_TONE_HZ } : { speed });
   if (h) {
     recv.busyUntil = h.end;
     animateArm(h.schedule, h.end);
@@ -458,7 +459,7 @@ function easeFaults(lives) {
 
 // One omen not yet seen today, in a quiet moment [R6.4a].
 function omen() {
-  if (!office || st().screen !== 'playing') return;
+  if (!nightRoom() || st().screen !== 'playing') return;
   playOmen(office.faults.nextOmen({ music: data.settings.music }));
 }
 
@@ -592,7 +593,7 @@ const DAWN_NOTICE_MS = 6000;
 let dawnUntil = 0;
 let dawnTimer = null;
 bus.on('DAWN', () => {
-  if (!office) return;
+  if (!nightRoom()) return;
   dawnUntil = now() + DAWN_NOTICE_MS;
   office.office.classList.add('at-dawn');
   director.stop();
@@ -605,7 +606,7 @@ bus.on('DAWN', () => {
 bus.on('DAY_STARTED', ({ max }) => {
   office?.office.classList.remove('at-dawn');
   deadTimers.forEach(clearTimeout);
-  if (!office) return;
+  if (!nightRoom()) return;
   office.faults = createFaults({ max });
   office.dread = createDread({ day: st().day, mode: st().mode });
   office.light.reset({ newDay: true });
@@ -640,6 +641,7 @@ function renderStart() {
   recv.stop();
   clearTimeout(thoughtTimer);
   desk = null;
+  office?.bird?.stop();
   office?.unmount();
   office = null;
   reader.reset();
@@ -659,38 +661,39 @@ function buildDesk(s) {
   toggleCodebook(false);
   startOffice?.unmount();
   startOffice = null;
+  office?.bird?.stop();
   office?.unmount();
   office = null;
   view.innerHTML = '<div class="play"><div class="stage"></div></div><div class="card-layer" hidden></div>';
   const stage = view.querySelector('.stage');
   const lives = s.lives ?? s.maxLives;
-  let row, gauge;
   const hud = document.createElement('p');
   hud.className = 'hud-label';
-  if (usesOffice(s.mode)) {
-    // Night Shift and Dead Air are played in the office [R11.4]; Day Shift keeps its desk [R7.2a].
-    office = mountOffice(stage, { max: s.maxLives, lives, day: s.day });
-    const chart = mountMorseChart(office.codebookSpot, s.mode);
-    if (chart) chart.addEventListener('click', () => toggleCodebook());
-    else office.codebookSpot.innerHTML = '<div class="bare-wall" aria-hidden="true"><i></i><i></i></div>'; // Dead Air [R16.5]
-    // The message is a telegram form on the desk, and each press goes onto the paper tape [R3.1, R3.4a].
-    office.tape = mountTape(office.work);
+  // Night Shift and Dead Air are played in the office at night, Day Shift in the same office by day [R11.4, R7.2].
+  const daylight = s.mode === 'day';
+  office = mountOffice(stage, { max: s.maxLives, lives, day: s.day, daylight, minutes: wallMinutes(s.clock?.minutes ?? 0, startHourFor(s.mode)) });
+  const chart = mountMorseChart(office.codebookSpot, s.mode);
+  if (chart) chart.addEventListener('click', () => toggleCodebook());
+  else office.codebookSpot.innerHTML = '<div class="bare-wall" aria-hidden="true"><i></i><i></i></div>'; // Dead Air [R16.5]
+  // The message is a telegram form on the desk, and each press goes onto the paper tape [R3.1, R3.4a].
+  office.tape = mountTape(office.work);
+  if (daylight) {
+    // Now and then a bird flies past the window; never while a letter is keyed or sounding [design 8].
+    office.bird = mountBird(office.office.querySelector('.room-window'), {
+      busy: () => reader.pressing || playingNow() || !!reader.pattern || options?.isOpen || document.hidden,
+      still: () => reduceMotion(),
+    });
+  } else {
     office.light = mountLight(stage, office.office, { calm: () => reduceFlashing() });
     office.faults = createFaults({ max: s.maxLives });
     office.dread = createDread({ day: s.day, mode: s.mode });
-    row = mountForm(office.formSpot);
-    office.hud.append(hud);
-    gauge = office.gauge;
-  } else {
-    mountScene(stage, '?mode=day'); // replaces the stage's content
-    mountMorseChart(view.querySelector('.play'), s.mode);
-    row = mountTextRow(stage);
-    stage.prepend(hud);
-    gauge = mountGalvanometer(stage, { max: s.maxLives, lives });
   }
-  (office ? office.work : stage.querySelector('.text-row-box')).insertAdjacentHTML('afterend', '<p class="replay-row" hidden><button type="button" class="replay-btn">Replay</button></p>');
+  const row = mountForm(office.formSpot);
+  office.hud.append(hud);
+  const gauge = office.gauge;
+  office.work.insertAdjacentHTML('afterend', '<p class="replay-row" hidden><button type="button" class="replay-btn">Replay</button></p>');
   // The hold meter with the learned dot/dash mark, and the player's speed, under the message [R2.3, R3.3b].
-  (office ? office.work : stage.querySelector('.text-row-box')).insertAdjacentHTML('beforeend',
+  office.work.insertAdjacentHTML('beforeend',
     '<div class="press-meter play-meter" aria-hidden="true"><div class="press-bar"></div><span class="press-mark"></span></div><p class="hand-line"></p>');
   const replay = stage.querySelector('.replay-btn');
   replay.addEventListener('click', () => { onReplay(); replay.blur(); });
@@ -730,7 +733,7 @@ function renderRun(s) {
   }
   showCard(desk.layer, s.screen, { ...card, ...notice, day: s.day, mode: s.mode, office: !!office }, onAction);
   desk.layer.classList.remove('dead-line', 'noticed');
-  if (s.screen === 'gameOver' && office) lineDies();
+  if (s.screen === 'gameOver' && nightRoom()) lineDies();
   scheduleNextMessage(s.screen);
   if (s.screen === 'playing') {
     // No button keeps focus, so Space and letters go to the game.
@@ -912,7 +915,7 @@ bus.on('LETTER_WRONG', ({ got }) => {
 bus.on('LIFE_LOST', ({ lives, kind }) => {
   desk?.gauge.set(lives);
   (office ? playTock : playTick)(audio);
-  if (office) runFaults(office.faults.lifeLost(lives, { kind: kind ?? 'letter', now: now() }));
+  if (nightRoom()) runFaults(office.faults.lifeLost(lives, { kind: kind ?? 'letter', now: now() }));
   updateNight();
 });
 bus.on('LIFE_REFILLED', ({ lives }) => { desk?.gauge.set(lives); easeFaults(lives); updateNight(); });
@@ -945,7 +948,7 @@ document.addEventListener('visibilitychange', () => {
 const DAWN_FROM = 0.6;
 bus.on('CLOCK', ({ minutes, time, progress, waiting }) => {
   runDread(progress);
-  office?.setTime(wallMinutes(minutes));
+  office?.setTime(wallMinutes(minutes, startHourFor(st().mode)));
   office?.office.querySelector('.room-window')?.style.setProperty('--dawn', Math.max(0, (progress - DAWN_FROM) / (1 - DAWN_FROM)).toFixed(3));
   if (desk) desk.hud.textContent = hudLabel(st().mode, st().day) + ` · ${time}`;
   desk?.row.setWaiting?.(waiting);
@@ -1119,5 +1122,5 @@ options = mountOptions(document.body, {
 
 applySettings();
 render();
-if (query.get('test') === '1') window.__deadAir = { game, bus, audio, night, dayMusic, director, playHorror, captions, judgeUi: () => judgeUi, store, audioBlocked: () => audioBlocked }; // hook for the browser check only
+if (query.get('test') === '1') window.__deadAir = { game, bus, audio, night, dayMusic, director, playHorror, captions, judgeUi: () => judgeUi, office: () => office, store, audioBlocked: () => audioBlocked }; // hook for the browser check only
 export { bus, game, options };

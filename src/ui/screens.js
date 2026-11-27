@@ -130,9 +130,10 @@ export function cardHtml(screen, info = {}) {
     case 'dayStats': {
       const s = info.stats;
       const last = day >= 3;
+      const [start, end] = info.mode === 'day' ? ['10:00', '18:00'] : ['22:00', '06:00'];
       return noticeHtml({
         title: `End of Day ${day}`,
-        strips: [`SHIFT ENDED ${info.time ?? '06:00'} STOP`, 'RELIEF OPERATOR ARRIVED', last ? 'REPORT TO HEAD OFFICE' : 'REPORT AGAIN 22:00 TOMORROW'],
+        strips: [`SHIFT ENDED ${info.time ?? end} STOP`, 'RELIEF OPERATOR ARRIVED', last ? 'REPORT TO HEAD OFFICE' : `REPORT AGAIN ${start} TOMORROW`],
         rank: s.rank,
         rows: statsRows(s),
         buttons: btn('next-day', last ? 'Finish' : 'Next day'),
@@ -143,7 +144,7 @@ export function cardHtml(screen, info = {}) {
       const restart = info.canRestart === false ? '' : btn('restart-day', 'Restart this day');
       const time = info.time ?? '';
       const strips = info.reason === 'time'
-        ? ['RELIEF OPERATOR ARRIVED 06:00', 'TELEGRAMS NOT SENT STOP', 'OPERATOR RELIEVED OF DUTY']
+        ? [`RELIEF OPERATOR ARRIVED ${mode === 'day' ? '18:00' : '06:00'}`, 'TELEGRAMS NOT SENT STOP', 'OPERATOR RELIEVED OF DUTY']
         : mode === 'day'
           ? [`TOO MANY ERRORS ON THE LINE AT ${time}`.trim(), 'OPERATOR RELIEVED OF DUTY']
           : [`LINE FROM STATION 7 DEAD AT ${time}`.trim(), 'OPERATOR RELIEVED OF DUTY'];

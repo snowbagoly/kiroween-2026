@@ -108,6 +108,9 @@ export function drawWindow({ id = 'window', reflection = [46, 204], dropsLayer =
         <linearGradient id="${id}-dawn" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stop-color="#2a3346"/><stop offset=".45" stop-color="#5c6270"/><stop offset=".68" stop-color="#a99a84"/>
         </linearGradient>
+        <linearGradient id="${id}-day" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#7f9fbd"/><stop offset=".45" stop-color="#b3c6d3"/><stop offset=".66" stop-color="#e2e0d0"/>
+        </linearGradient>
         <linearGradient id="${id}-morning" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stop-color="#8a96a6"/><stop offset=".5" stop-color="#c9c3b4"/><stop offset=".68" stop-color="#f0d9aa"/>
         </linearGradient>
@@ -126,6 +129,9 @@ export function drawWindow({ id = 'window', reflection = [46, 204], dropsLayer =
         <rect width="200" height="240" fill="url(#${id}-night)"/>
         <rect class="window-dawn" width="200" height="240" fill="url(#${id}-dawn)"/>
         <rect class="window-morning" width="200" height="240" fill="url(#${id}-morning)"/>
+        <!-- By day (Day Shift): a pale sky, clouds drifting across it in two copies, so the drift loops. -->
+        <rect class="day-only" width="200" height="240" fill="url(#${id}-day)"/>
+        <g class="day-only window-clouds" fill="#f4f1e8" opacity=".75"><g transform="translate(0 0)"><ellipse cx="30" cy="40" rx="26" ry="7"/><ellipse cx="44" cy="35" rx="14" ry="7"/><ellipse cx="120" cy="72" rx="34" ry="6"/><ellipse cx="134" cy="67" rx="16" ry="6"/><ellipse cx="172" cy="28" rx="20" ry="5"/><ellipse cx="78" cy="104" rx="28" ry="4"/></g><g transform="translate(200 0)"><ellipse cx="30" cy="40" rx="26" ry="7"/><ellipse cx="44" cy="35" rx="14" ry="7"/><ellipse cx="120" cy="72" rx="34" ry="6"/><ellipse cx="134" cy="67" rx="16" ry="6"/><ellipse cx="172" cy="28" rx="20" ry="5"/><ellipse cx="78" cy="104" rx="28" ry="4"/></g></g>
         <rect x="0" y="128" width="200" height="34" fill="#3a3632" opacity=".4"/>
         <g fill="#4a443c" opacity=".3"><ellipse cx="60" cy="138" rx="44" ry="2"/><ellipse cx="140" cy="146" rx="52" ry="1.6"/></g>
         <path fill="#07080a" d="M0 162 Q60 158 110 161 Q160 164 200 160 V240 H0Z"/>
@@ -136,6 +142,8 @@ export function drawWindow({ id = 'window', reflection = [46, 204], dropsLayer =
         <g fill="#07080a"><path d="M86 163 L87 62 h3 L91 163Z"/><rect x="74" y="68" width="30" height="2.5"/></g>
         <g fill="#3a3a38" opacity=".7"><rect x="76" y="65" width="2" height="3"/><rect x="87.5" y="64" width="2" height="4"/><rect x="99" y="65" width="2" height="3"/></g>
         <path fill="none" stroke="#07080a" stroke-width=".8" d="M77 68 Q70 40 74 14 M100 68 Q130 36 170 14"/>
+        <!-- By day, now and then a bird flies past (office/daylight.js). -->
+        <g class="day-only window-bird"><path class="bird-wings" fill="none" stroke="#2a2a26" stroke-width="1.8" stroke-linecap="round" d="M-10 2 Q-5 -5 0 2 Q5 -5 10 2"/></g>
         <g class="window-rain" opacity=".08"><rect x="-40" y="-140" width="300" height="420" fill="url(#${id}-rain)"/></g>
         <!-- Someone standing in the room behind the operator, reflected in the glass; hidden until the last warning shows it. -->
         <g class="window-figure" opacity="0" fill="url(#${id}-figure)" transform="translate(114 50) scale(.56)">${FIGURE_SHAPE}</g>

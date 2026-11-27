@@ -58,15 +58,13 @@ src/
     forms.js            telegram form, spike, SENT/RECEIVED stamp, paper tape, codebook card
     galvanometer.js     springy needle driven by lives
     light.js            lamp light, stutter, dim-around-the-needle, dark corners, dawn light
+    daylight.js         the office by day: the bird past the window                 [R7.2a]
+    codebook.js         the codebook card                                          [R3.1a]
   story/                the magic-lantern show                                    [R17]
     intro.js            slide player, letter writer, Space / Esc
     letter.js           the letter's lines per slide
     slides/             hall.js, room.js, advert.js, train.js, station.js, office.js
   ui/
-    scene.js            Day Shift desk SVG                                        [R7.2a]
-    galvanometer.js     Day Shift dial
-    morse-chart.js      Day Shift chart
-    text-row.js         Day Shift target text and blanks row
     screens.js          start card, story offer, dialog, title card, notices
     endings.js          game over sequence and dawn                               [R5.5, R9.9]
     options.js          Options menu and "Line Held"
@@ -96,7 +94,7 @@ tools/shots.mjs         headless Chrome screenshots (always --mute-audio)
 - `game.js` owns one state object and one function, `dispatch(event)`. Input turns into events such as `PRESS_END`, `LETTER_TYPED`, `TICK`, `NEXT_DAY`. The rules change the state and emit output events such as `LETTER_OK`, `LETTER_WRONG`, `LIFE_LOST`, `ARRIVED`, `MESSAGE_DONE`, `DAWN`, `DAY_ENDED`.
 - UI, audio and the directors only listen to output events. They never change the rules. This keeps Judge mode simple: cheats are just extra input events.
 - A tiny event bus (`on`, `emit`) connects the parts. No framework.
-- **One desk interface, two desks.** The office (Night Shift, Dead Air) and the Day Shift desk implement the same small object: `{ mount(root), unmount(), keyDown(on), sounderArm(down), showMessage(msg), markLetter(i, ok), stamp(kind, time), setWaiting(n), setLives(n, max) }`. `main.js` picks one by mode. When the office by daylight is drawn (TODO.md), Day Shift switches to the office and `ui/scene.js` goes away.
+- **One office, night and day.** Every mode is played in the office (`office/room.js`). Day Shift mounts it with `daylight: true`: the `.office.daylight` class shows the day sky, clouds, sunlight and bird (`.day-only`) and hides the lamp's flame, the rain and the drops. The lamp light, the faults, the dread, the dying line and the dawn are only mounted at night.
 - **One scope.** The bundler puts all modules in one scope, so top-level names must be unique across modules (the build checks this). The office's galvanometer class is `OfficeGalvanometer` and its sound class is `OfficeSound`, so they do not clash with the Day Shift ones.
 
 ## 4. Screens and flow [R1, R2, R5, R8, R9, R16, R17]
@@ -282,9 +280,9 @@ Below 1050 px wide the room becomes one scrolling column without the window, clo
 
 A second copy of the story's office slide (drawn with its own id prefix), dimmed, drifting sideways at one zoom (zooming made Chrome flicker on a busy graphics card). Over it, a printed company card with the roster. The mode buttons are printed lines on the card. The Options button stays in the upper right.
 
-### The Day Shift desk [R7.2a]
+### The office by day [R7.2a]
 
-`ui/scene.js`, `ui/galvanometer.js`, `ui/morse-chart.js` and `ui/text-row.js` stay as they are, with the warm palette. Waiting messages show as a small count beside the text row.
+The same room for Day Shift (`.office.daylight`). The window has a pale sky and clouds in two copies that drift and loop; the marsh is green-brown, with no rain and no drops on the glass. Sunlight comes through the panes as a beam (a clipped gradient with 14 dust motes) and a skewed patch on the desk with the cross of the window bars in it. The lamp stands unlit. `office/daylight.js` flies a bird across the window every 25 to 70 s, either way, above the marsh; if a letter is being keyed or sounding when one is due it tries again 3 s later, and with reduced motion it never flies. The wall clock and the notices use 10:00 to 18:00 (`startHourFor(mode)` in `core/day-clock.js`). On a narrow screen the sunlight is not drawn, like the window.
 
 **Palette**: CSS variables per mode. All text pairs are checked for 4.5:1 [R10.4], including the new ones (ink on the form, pencil on the tape, the notices, the letter under the slides).
 
@@ -354,7 +352,7 @@ During a run the card reads "Line Held" and the game is held: the game clock, id
 
 ## 12. Tutorial [R2]
 
-As before: 5 sheets as data. The sheet for the letter gap uses `hand.letterGap`. The hold meter is shown with the threshold mark. The sheets lie on the office desk in Night Shift and on the Day Shift desk in Day Shift. The game clock and idling do not run in the tutorial. Tutorial presses teach the hand [R2.7].
+As before: 5 sheets as data. The sheet for the letter gap uses `hand.letterGap`. The hold meter is shown with the threshold mark. The sheets lie on the office desk, at night or by day. The game clock and idling do not run in the tutorial. Tutorial presses teach the hand [R2.7].
 
 ## 13. Kiroween Judge mode [R13]
 
@@ -415,7 +413,7 @@ As before. New: the story's letter is real text with `aria-live="polite"`, so a 
 | For any run of lives lost and refilled, each omen plays at most once a day and the last warning only on reaching 1 | R6.4a, R6.4b |
 | All earlier properties, with the 300 ms rule replaced by the hand's threshold | as before |
 
-**Screenshots** (`tools/shots.mjs`): headless Chrome with `--mute-audio`, `--no-sandbox` and a fresh `--user-data-dir`. It freezes every animation at a set moment (`document.getAnimations()` paused at a set time) and shoots: the start card, each story slide, the office at Day 1 start, late at night (`?dread=0.9`), the last warning, the game over notice, the dawn, the dawn notice, the one-column layout at 360 px, and the Day Shift desk. Shots are taken before and after each visual task.
+**Screenshots** (`tools/shots.mjs`): headless Chrome with `--mute-audio`, `--no-sandbox` and a fresh `--user-data-dir`. It freezes every animation at a set moment (`document.getAnimations()` paused at a set time) and shoots: the start card, each story slide, the office at Day 1 start, late at night (`?dread=0.9`), the last warning, the game over notice, the dawn, the dawn notice, the one-column layout at 360 px, and the office by day (with the bird mid-flight, and at 360 px). Shots are taken before and after each visual task.
 
 **Manual checklist** as before, plus: the story with sound, the dawn with sound, "Reduce flashing" through the snap and the last warning, a slow day that runs out at 06:00.
 
@@ -482,7 +480,7 @@ open -> broken (20 s pass) -> the scare, the newspaper, the game over (reason 'o
 | R4 | 5 Receiving, 8 Forms, 9 Voices (sounder) |
 | R5 | 4 (checkpoint), 7 Lives, 8 Galvanometer, 18 step 7 (game over) |
 | R6 | 9 Audio, 10 Directors |
-| R7 | 3 Two desks, 8 Day Shift desk, 9 Day music |
+| R7 | 3 One office, 8 The office by day, 9 Day music |
 | R8 | 7 Stats and rank, 4 Notices |
 | R9 | 4 Day dates, 6 Messages and arrivals, 7 Game clock and idling, 8 Window sky |
 | R10 | 11 Options and Line Held, 14 Accessibility |

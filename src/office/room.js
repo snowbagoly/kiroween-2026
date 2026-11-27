@@ -1,4 +1,4 @@
-// The office at night, where Night Shift and Dead Air are played [design 3, 8, R11.4]: a left wall
+// The office, at night for Night Shift and Dead Air and by day for Day Shift [design 3, 8, R7.2, R11.4]: a left wall
 // (window, codebook, lamp), a centre (the work, the calendar, the key and the sounder on the desk) and a
 // right wall (wall clock, galvanometer). Laid out at a 900 px design height and scaled as a whole;
 // below NARROW_SCREEN it is one scrolling column without the window, clock, calendar and lamp.
@@ -11,8 +11,13 @@ export const OFFICE_WIDTH = { min: 1400, max: 1700 };
 export const NARROW_SCREEN = 1050;
 const DAY_ONE_DATE = 4; // Day 1 is Wednesday, 4 November 1903 [R9.8]
 
-// Day Shift keeps its own desk until the office by daylight is drawn [R7.2a].
-export const usesOffice = (mode) => mode === 'night' || mode === 'deadair';
+// The key's lever and the sounder's arm, down or up.
+export function setKeyDown(root, down) {
+  root.querySelector('#key .lever')?.classList.toggle('down', !!down);
+}
+export function setSounderDown(root, down) {
+  root.querySelector('#sounder .arm')?.classList.toggle('down', !!down);
+}
 
 // The calendar is crossed off up to the day before today [R9.8].
 export const crossedTo = (day) => DAY_ONE_DATE + Math.max(1, day || 1) - 2;
@@ -40,10 +45,12 @@ export function clockAngles(minutes) {
   return { hour: ((m / 60) % 12) * 30, minute: (m % 60) * 6 };
 }
 
-export function officeHtml({ max = 10 } = {}) {
-  return `<div class="office">
+export function officeHtml({ max = 10, daylight = false } = {}) {
+  return `<div class="office${daylight ? ' daylight' : ''}">
   ${PAINTS}
   <div class="lamp-glow" aria-hidden="true"></div>
+  <!-- By day: sunlight through the panes, a patch on the desk with dust in the beam. -->
+  <div class="day-only sunlight" aria-hidden="true"><div class="sun-beam">${'<i></i>'.repeat(14)}</div><div class="sun-patch"></div></div>
   <div class="wall-left">
     <div class="window-wrap"><svg class="room-window" data-draw="window" data-options='{"dropsLayer": true}' aria-hidden="true"></svg></div>
     <div class="codebook-spot"></div>
@@ -70,8 +77,8 @@ export function officeHtml({ max = 10 } = {}) {
 }
 
 // Builds the office into the stage. Returns its parts and controls.
-export function mountOffice(stage, { max = 10, lives = max, day = 1, minutes = 22 * 60 } = {}) {
-  stage.innerHTML = officeHtml({ max });
+export function mountOffice(stage, { max = 10, lives = max, day = 1, minutes = 22 * 60, daylight = false } = {}) {
+  stage.innerHTML = officeHtml({ max, daylight });
   stage.classList.add('office-stage');
   const office = stage.querySelector('.office');
   mountDrawings(office);

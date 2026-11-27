@@ -1,9 +1,10 @@
 // The office galvanometer: the lives needle on the right wall [design 8, R5.1 to R5.3, R5.7, R5.8].
-// Same controller as the Day Shift dial (set, setMax, showNumber, state), so main.js drives either.
 // Full lives: needle at the top of the scale. One life: the lowest step. Zero: flung against the stop.
 // The needle is a damped spring: it swings past its mark and settles, like a real movement.
 import { drawGalvanometer, GALVANOMETER_SWING, GALVANOMETER_PIVOT } from './drawings.js';
-import { livesLabel } from '../ui/galvanometer.js';
+
+// What a screen reader hears for the dial.
+export const livesLabel = (lives, max) => `${lives} of ${max} lives`;
 
 export const STOP_LOW = -0.02; // the stops at either end of the dial, just past 0 and the top
 export const STOP_HIGH = 1.02;

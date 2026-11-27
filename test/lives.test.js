@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createLives, maxLivesFor } from '../src/core/lives.js';
-import { needleAngle, trembleFor, livesLabel, dialSvg } from '../src/ui/galvanometer.js';
+import { livesLabel } from '../src/office/galvanometer.js';
 
 test('lives: 10 in Night and Day Shift, 5 in Dead Air', () => {
   assert.equal(maxLivesFor('night'), 10);
@@ -40,31 +40,6 @@ test('lives: reset gives full lives and clears the streak', () => {
   assert.equal(l.cleanStreak, 0);
 });
 
-test('galvanometer: needle moves one equal step per life, top at full, red zone at 0', () => {
-  for (const max of [10, 5]) {
-    assert.equal(needleAngle(max, max), 0);
-    const step = needleAngle(max - 1, max);
-    for (let l = max; l >= 1; l--) assert.ok(Math.abs(needleAngle(l, max) - (max - l) * step) < 1e-9);
-    assert.equal(needleAngle(1, max), 135);
-    assert.ok(needleAngle(0, max) > 140);
-  }
-});
-
-test('galvanometer: trembles more near the red zone, not at all near the top', () => {
-  assert.equal(trembleFor(10, 10), 0);
-  assert.equal(trembleFor(7, 10), 0);
-  let last = 0;
-  for (let l = 6; l >= 0; l--) {
-    const t = trembleFor(l, 10);
-    assert.ok(t >= last, `lives ${l}`);
-    last = t;
-  }
-  assert.ok(trembleFor(1, 10) > 0);
-});
-
-test('galvanometer: screen reader label and step marks', () => {
+test('galvanometer: screen reader label', () => {
   assert.equal(livesLabel(3, 10), '3 of 10 lives');
-  const ticks = (svg) => (svg.match(/class="g-ticks" d="([^"]*)"/)[1].match(/M/g) ?? []).length;
-  assert.equal(ticks(dialSvg(10)), 10);
-  assert.equal(ticks(dialSvg(5)), 5);
 });

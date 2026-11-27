@@ -80,17 +80,14 @@ test('strange message colour on the Night Shift background', () => {
 });
 
 test('screen reader parts are in place [R5.7, R10]', async () => {
-  const { textRowHtml } = await import('../src/ui/text-row.js');
   const { optionsHtml } = await import('../src/ui/options.js');
-  assert.match(textRowHtml('SOS'), /aria-hidden="true"/); // the visual row is hidden; a live region speaks instead
-  const src = readFileSync(resolve(root, 'src/ui/text-row.js'), 'utf8');
-  assert.match(src, /aria-live', 'polite'/);
+  const form = readFileSync(resolve(root, 'src/office/forms.js'), 'utf8');
+  assert.match(form, /tg-status" aria-live="polite"/); // the form is read out by a live region
   const main = readFileSync(resolve(root, 'src/main.js'), 'utf8');
   assert.match(main, /thought-line" role="status" aria-live="polite"/);
   const cap = readFileSync(resolve(root, 'src/audio/captions.js'), 'utf8');
   assert.match(cap, /'role', 'status'/);
-  const g = readFileSync(resolve(root, 'src/ui/galvanometer.js'), 'utf8');
-  assert.match(g, /setAttribute\('role', 'img'\)/);
+  const g = readFileSync(resolve(root, 'src/office/galvanometer.js'), 'utf8');
   assert.match(g, /setAttribute\('aria-label', livesLabel/);
   assert.match(optionsHtml(), /role="dialog" aria-modal="true"/);
 });

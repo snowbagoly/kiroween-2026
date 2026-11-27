@@ -1,10 +1,25 @@
 // The paper on the office desk [design 8, R3.1, R3.4a, R3.6, R3.7, R4.2, R4.5b]: the telegram form
 // (the message to send, or the blank form a received message is written on) and the paper tape, which
 // shows each press as a dot or a dash and pencils the decoded letter under it.
-import { layoutText, textRowStatus } from '../ui/text-row.js';
 
 export const MAX_TAPE_ITEMS = 120;
 export const STAMPS = { send: 'Sent', receive: 'Received' };
+
+// Splits a message into words of letters, keeping the letter index across words.
+export function layoutText(text) {
+  let index = 0;
+  return String(text).toUpperCase().split(/\s+/).filter(Boolean).map((word) =>
+    [...word.replace(/[^A-Z]/g, '')].map((letter) => ({ letter, index: index++ })));
+}
+
+// What a screen reader hears for the current state.
+export function textRowStatus(text, { role = 'send', pos = 0, wrongAt = null } = {}) {
+  const letters = layoutText(text).flat();
+  if (pos >= letters.length) return role === 'receive' ? 'Message received' : 'Message sent';
+  const where = `${pos + 1} of ${letters.length}`;
+  if (role === 'receive') return `${wrongAt !== null ? 'Wrong. ' : ''}Letter ${where}: listen and type it`;
+  return `${wrongAt !== null ? 'Wrong. ' : ''}Next letter ${letters[pos].letter}, ${where}`;
+}
 
 // The form's body: each word kept whole so it never breaks across lines, one span per letter.
 // Sending shows every letter; receiving shows a blank for each letter not yet typed.

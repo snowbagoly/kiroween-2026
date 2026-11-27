@@ -2,15 +2,23 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { fitOffice, usesOffice, crossedTo, clockAngles, officeHtml, OFFICE_WIDTH } from '../src/office/room.js';
+import { fitOffice, crossedTo, clockAngles, officeHtml, OFFICE_WIDTH } from '../src/office/room.js';
 import { drawCalendar, drawGalvanometer, galvanometerScale, DRAWINGS } from '../src/office/drawings.js';
 import { officeNeedleAngle } from '../src/office/galvanometer.js';
 import { buildPage, findExternalLinks } from '../build.mjs';
 
-test('office: Night Shift and Dead Air use it, Day Shift keeps its desk', () => {
-  assert.equal(usesOffice('night'), true);
-  assert.equal(usesOffice('deadair'), true);
-  assert.equal(usesOffice('day'), false);
+test('office: by day for Day Shift, with the sunlight, the clouds and the bird; none of it at night [R7.2]', () => {
+  const day = officeHtml({ daylight: true });
+  assert.match(day, /class="office daylight"/);
+  assert.match(day, /class="day-only sunlight"/);
+  assert.equal((day.match(/<i><\/i>/g) ?? []).length, 14); // dust in the beam
+  assert.doesNotMatch(officeHtml(), /class="office daylight"/);
+  const w = DRAWINGS.window({ id: 'w' }).body;
+  assert.match(w, /class="day-only window-clouds"/);
+  assert.match(w, /class="day-only window-bird"/);
+  const css = readFileSync(new URL('../src/css/office.css', import.meta.url), 'utf8');
+  assert.match(css, /\.office:not\(\.daylight\) \.day-only \{ display: none; \}/);
+  assert.match(css, /\.office\.daylight :is\(\.lamp-glow, \.desk-lamp \.lamp-flame/); // the lamp is not lit by day
 });
 
 test('office: scaled to the 900 px design height, one column on narrow screens', () => {
