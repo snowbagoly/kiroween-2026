@@ -123,7 +123,7 @@ export function welcomeHtml() {
   return `<div class="judge-welcome" role="dialog" aria-modal="true" aria-labelledby="jw-title">
   <div class="card">
     <h2 id="jw-title">Welcome, Kiroween judge</h2>
-    <p>Dead Air is a telegraph station in 1873. You send and receive Morse code while the night goes wrong.</p>
+    <p>Night Shift: a telegraph station on the marsh in 1903. You send and receive Morse code while the night goes wrong.</p>
     <p>The Judge panel on the left can jump to any day, solve messages, change lives and fire every scare. Nothing you do here is saved.</p>
     <p>Sound starts with your first click. Hold Space to send; type the letter you hear to receive.</p>
     <div class="card-buttons">${b('w-demo', 'Start demo')}${b('w-explore', 'Explore')}</div>

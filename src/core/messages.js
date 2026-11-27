@@ -1,71 +1,11 @@
 // Message pool and day builder [design 6, R6.3, R6.7, R7.2, R9.2, R12.5, R16.1].
-// Work messages read like 1870s telegrams: short, no small words, STOP for a full stop.
-// Abbreviations are period business shorthand: RECD received, YR/YRS your/yours, INST this month,
-// ULT last month, PROX next month, AMT amount, SHIPT shipment, MDSE merchandise, ADV advise, BAL balance.
+// The telegrams themselves are in message-pool.js.
+import { POOL } from './message-pool.js';
 import { shuffle, randomInt } from './rng.js';
 
-export const MESSAGES = [
-  { id: 'd1-01', day: 1, kind: 'send', text: 'ARRIVING TUESDAY NOON TRAIN', strange: false, abbreviations: false },
-  { id: 'd1-02', day: 1, kind: 'send', text: 'SEND MONEY', strange: false, abbreviations: false },
-  { id: 'd1-03', day: 1, kind: 'send', text: 'ALL IS WELL', strange: false, abbreviations: false },
-  { id: 'd1-04', day: 1, kind: 'send', text: 'MOTHER ILL COME HOME AT ONCE', strange: false, abbreviations: false },
-  { id: 'd1-05', day: 1, kind: 'send', text: 'BABY BOY BORN STOP BOTH WELL', strange: false, abbreviations: false },
-  { id: 'd1-06', day: 1, kind: 'send', text: 'CATTLE SOLD STOP HOME SATURDAY', strange: false, abbreviations: false },
-  { id: 'd1-07', day: 1, kind: 'send', text: 'RECD YRS STOP SHIPT MONDAY', strange: false, abbreviations: true },
-  { id: 'd1-08', day: 1, kind: 'send', text: 'WIRE ANSWER', strange: false, abbreviations: false },
-  { id: 'd1-09', day: 1, kind: 'send', text: 'NO ROOM AT HOTEL STOP', strange: false, abbreviations: false },
-  { id: 'd1-10', day: 1, kind: 'send', text: 'MISSED TRAIN STOP ARRIVE THURSDAY', strange: false, abbreviations: false },
-  { id: 'd1-11', day: 1, kind: 'send', text: 'AMT PAID STOP MDSE FOLLOWS', strange: false, abbreviations: true },
-  { id: 'd1-12', day: 1, kind: 'send', text: 'YES', strange: false, abbreviations: false },
-  { id: 'd1-13', day: 1, kind: 'send', text: 'WEDDING SET FOR JUNE', strange: false, abbreviations: false },
-  { id: 'd1-14', day: 1, kind: 'send', text: 'PLEASE ADVISE PRICE OF WHEAT', strange: false, abbreviations: false },
-  { id: 'd1-15', day: 1, kind: 'send', text: 'SAFE HOME', strange: false, abbreviations: false },
-  { id: 'd1-16', day: 1, kind: 'send', text: 'DO NOT ANSWER', strange: true, abbreviations: false },
-  { id: 'd1-17', day: 1, kind: 'send', text: 'WHO IS THIS', strange: true, abbreviations: false },
-  { id: 'd1-18', day: 1, kind: 'send', text: 'IT IS IN THE WIRES', strange: true, abbreviations: false },
-  { id: 'd1-19', day: 1, kind: 'send', text: 'SOMEONE IS LISTENING', strange: true, abbreviations: false },
-  { id: 'd1-20', day: 1, kind: 'send', text: 'LET ME IN', strange: true, abbreviations: false },
-  { id: 'd2-01', day: 2, kind: 'receive', text: 'FLOOD AT MILL CREEK STOP BRIDGE OUT STOP HOLD ALL TRAINS', strange: false, abbreviations: false },
-  { id: 'd2-02', day: 2, kind: 'receive', text: 'TRAIN LATE', strange: false, abbreviations: false },
-  { id: 'd2-03', day: 2, kind: 'receive', text: 'STORM COMING FROM WEST', strange: false, abbreviations: false },
-  { id: 'd2-04', day: 2, kind: 'receive', text: 'PAY OPERATOR TEN CENTS', strange: false, abbreviations: false },
-  { id: 'd2-05', day: 2, kind: 'receive', text: 'RECD YR WIRE STOP AMT SENT ULT NOT ARRIVED', strange: false, abbreviations: true },
-  { id: 'd2-06', day: 2, kind: 'receive', text: 'NEW OPERATOR ARRIVES MONDAY STOP SHOW HIM THE LINE', strange: false, abbreviations: false },
-  { id: 'd2-07', day: 2, kind: 'receive', text: 'DOCTOR NEEDED AT FARM', strange: false, abbreviations: false },
-  { id: 'd2-08', day: 2, kind: 'receive', text: 'GOLD FOUND NEAR RIVER STOP MEN LEAVING TOWN BY THE HUNDRED', strange: false, abbreviations: false },
-  { id: 'd2-09', day: 2, kind: 'receive', text: 'ALL CLEAR', strange: false, abbreviations: false },
-  { id: 'd2-10', day: 2, kind: 'receive', text: 'HOLD MAIL', strange: false, abbreviations: false },
-  { id: 'd2-11', day: 2, kind: 'receive', text: 'PRICE OF CORN RISING STOP BUY NOW', strange: false, abbreviations: false },
-  { id: 'd2-12', day: 2, kind: 'receive', text: 'MDSE RECD DAMAGED STOP ADV BY RETURN WIRE', strange: false, abbreviations: true },
-  { id: 'd2-13', day: 2, kind: 'receive', text: 'SHERIFF COMING ON EVENING STAGE', strange: false, abbreviations: false },
-  { id: 'd2-14', day: 2, kind: 'receive', text: 'NOTHING TO REPORT', strange: false, abbreviations: false },
-  { id: 'd2-15', day: 2, kind: 'receive', text: 'NO', strange: false, abbreviations: false },
-  { id: 'd2-16', day: 2, kind: 'receive', text: 'THEY NEVER LEFT THE STATION', strange: true, abbreviations: false },
-  { id: 'd2-17', day: 2, kind: 'receive', text: 'COLD HERE', strange: true, abbreviations: false },
-  { id: 'd2-18', day: 2, kind: 'receive', text: 'STOP SENDING STOP STOP SENDING', strange: true, abbreviations: false },
-  { id: 'd2-19', day: 2, kind: 'receive', text: 'THE OPERATOR BEFORE YOU DID NOT LISTEN EITHER', strange: true, abbreviations: false },
-  { id: 'd2-20', day: 2, kind: 'receive', text: 'BEHIND YOU', strange: true, abbreviations: false },
-  { id: 'd3-01', day: 3, kind: 'either', text: 'LINE DOWN NEAR PINE RIDGE STOP REPAIR CREW ON THE WAY', strange: false, abbreviations: false },
-  { id: 'd3-02', day: 3, kind: 'either', text: 'ALL TRAINS ON TIME', strange: false, abbreviations: false },
-  { id: 'd3-03', day: 3, kind: 'either', text: 'CONFIRM RECEIPT', strange: false, abbreviations: false },
-  { id: 'd3-04', day: 3, kind: 'either', text: 'SEND TWO MORE MEN FOR THE NIGHT SHIFT STOP', strange: false, abbreviations: false },
-  { id: 'd3-05', day: 3, kind: 'either', text: 'STOCK SHIPT PER YRS INST STOP BAL DUE PROX', strange: false, abbreviations: true },
-  { id: 'd3-06', day: 3, kind: 'either', text: 'STATION AGENT WANTED STOP GOOD PAY STOP APPLY IN PERSON', strange: false, abbreviations: false },
-  { id: 'd3-07', day: 3, kind: 'either', text: 'WIRE BACK', strange: false, abbreviations: false },
-  { id: 'd3-08', day: 3, kind: 'either', text: 'CANNOT COME STOP WRITING LETTER', strange: false, abbreviations: false },
-  { id: 'd3-09', day: 3, kind: 'either', text: 'STORM PASSED STOP NO DAMAGE', strange: false, abbreviations: false },
-  { id: 'd3-10', day: 3, kind: 'either', text: 'LAMP OIL LOW STOP ORDER MORE', strange: false, abbreviations: false },
-  { id: 'd3-11', day: 3, kind: 'either', text: 'GOOD NIGHT', strange: false, abbreviations: false },
-  { id: 'd3-12', day: 3, kind: 'either', text: 'RECD STOP WILL ADV', strange: false, abbreviations: true },
-  { id: 'd3-13', day: 3, kind: 'either', text: 'MEET AT CHURCH SUNDAY STOP BRING THE CHILDREN', strange: false, abbreviations: false },
-  { id: 'd3-14', day: 3, kind: 'either', text: 'HOME SOON', strange: false, abbreviations: false },
-  { id: 'd3-15', day: 3, kind: 'either', text: 'THE WIRE GOES NOWHERE', strange: true, abbreviations: false },
-  { id: 'd3-16', day: 3, kind: 'either', text: 'NO ONE IS SENDING THIS', strange: true, abbreviations: false },
-  { id: 'd3-17', day: 3, kind: 'either', text: 'YOU ARE THE LAST ONE AWAKE', strange: true, abbreviations: false },
-  { id: 'd3-18', day: 3, kind: 'either', text: 'DEAD AIR', strange: true, abbreviations: false },
-  { id: 'd3-19', day: 3, kind: 'either', text: 'WE HEAR YOU TAPPING STOP WE HAVE ALWAYS HEARD YOU', strange: true, abbreviations: false },
-  { id: 'd3-20', day: 3, kind: 'either', text: 'OPEN THE DOOR', strange: true, abbreviations: false },
-];
+export const MESSAGES = POOL;
+// Day 1's last telegram in Night Shift and Dead Air: Head Office asking Mr Vane why he has not reported [R6.3a].
+export const VANE_ID = 'd1-16';
 
 export const SHORT_MAX = 10; // letters
 export const LONG_MIN = 20; // letters
@@ -115,11 +55,16 @@ export function checkDay(list, day, mode) {
   if (isMonotonic(lens)) broken.push('sorted');
   // The day gets easier toward 06:00: no long message among the last two [R9.2].
   if (list.slice(-2).some((m) => m.length === 'long')) broken.push('late-long');
+  // A story told in parts keeps its order: a later part only after the one before it [R12.5].
+  for (const [i, m] of list.entries()) {
+    if (m.thread?.part > 1 && !list.slice(0, i).some((x) => x.thread?.id === m.thread.id && x.thread.part === m.thread.part - 1)) broken.push('thread-order');
+  }
   // The first night starts gently: a short first telegram, and none longer than two lines [R9.2a].
   if (day === 1 && list[0]?.length !== 'short') broken.push('day1-first-short');
   if (day === 1 && list.some((m) => formLines(m.text) > DAY1_MAX_LINES)) broken.push('day1-lines');
   if (strange < rule.min || strange > rule.max) broken.push('strange-count');
   if (rule.lastOnly && !list[list.length - 1]?.strange) broken.push('strange-last');
+  if (day === 1 && mode !== 'day' && list[list.length - 1]?.id !== VANE_ID) broken.push('vane-last');
   if (day === 1 && list.some((m) => m.role !== 'send')) broken.push('roles');
   if (day === 2 && list.some((m) => m.role !== 'receive')) broken.push('roles');
   if (day === 3) {
@@ -139,9 +84,13 @@ export function buildDay(day, mode, rng) {
   const rule = strangeRule(day, mode);
   for (let i = 0; i < MAX_TRIES; i++) {
     const k = rule.min + randomInt(rng, rule.max - rule.min + 1);
-    const odd = shuffle(strange, rng).slice(0, k);
+    // Day 1: the Vane telegram is the last, any other strange ones come before it.
+    const vane = day === 1 ? strange.find((x) => x.id === VANE_ID) : null;
+    const others = vane ? strange.filter((x) => x !== vane) : strange;
+    const odd = shuffle(others, rng).slice(0, vane ? k - 1 : k);
     const work = shuffle(normal, rng).slice(0, MESSAGES_PER_DAY - k);
-    const picked = rule.lastOnly ? [...shuffle(work, rng), ...odd] : shuffle([...work, ...odd], rng);
+    const picked = vane ? [...shuffle([...work, ...odd], rng), vane]
+      : rule.lastOnly ? [...shuffle(work, rng), ...odd] : shuffle([...work, ...odd], rng);
     const roles = day === 1 ? Array(MESSAGES_PER_DAY).fill('send')
       : day === 2 ? Array(MESSAGES_PER_DAY).fill('receive')
       : shuffle(['send', 'send', 'receive', 'receive', rng() < 0.5 ? 'send' : 'receive'], rng);

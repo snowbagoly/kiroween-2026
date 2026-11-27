@@ -2,7 +2,7 @@
 // If storage is blocked or full, the game keeps working with the values in memory.
 import { validHand } from './hand.js';
 
-export const STORAGE_KEY = 'deadair.v1';
+export const STORAGE_KEY = 'nightshift.v1'; // old deadair.v1 saves are not read
 export const SAVE_VERSION = 1;
 const TUTORIAL_CHOICES = ['ask', 'never'];
 const BEST_MODES = ['night', 'day', 'deadair'];
