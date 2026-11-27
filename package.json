@@ -1,8 +1,8 @@
 {
-  "name": "dead-air",
+  "name": "night-shift",
   "version": "0.1.0",
   "private": true,
-  "description": "Dead Air: a telegraph operator horror game played with Morse code.",
+  "description": "Night Shift: a telegraph operator horror game played with Morse code, 1903.",
   "type": "module",
   "license": "MIT",
   "scripts": {

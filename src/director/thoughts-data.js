@@ -1,4 +1,4 @@
-// What the new operator thinks [design 6 Thoughts, R12]. Facts about real 1870s telegraph work,
+// What the new operator thinks [design 6 Thoughts, R12]. Facts about real telegraph work around 1903,
 // in the voice of someone new to the job. One version each, the same in every mode.
 // director/thoughts.js picks and shows them, together with the message reactions.
 
@@ -32,20 +32,20 @@ export const FACTS = [
     text: 'The wire runs for miles along the railway. Strange to think someone sits at the other end.',
   },
   {
-    id: 'seventy-three',
-    text: 'Operators sign off with 73. As far as I can tell, it means best regards.',
+    id: 'marconi',
+    text: 'Two winters ago Marconi sent a signal across the Atlantic with no wire at all. Imagine that.',
   },
   {
-    id: 'thirty',
-    text: 'A 30 at the end means that is all, nothing more is coming.',
+    id: 'post-office',
+    text: 'Most telegraphs belong to the Post Office now. This line still belongs to the company.',
   },
   {
     id: 'train-orders',
-    text: 'Train orders come down this wire. One wrong letter and two trains could meet on one track.',
+    text: 'Railway messages come down this wire too. One wrong letter and two trains could meet.',
   },
   {
     id: 'ocean-cable',
-    text: 'They laid a cable under the ocean to Europe. A message gets across in minutes now.',
+    text: 'There is a cable under the ocean to America. A message gets across in minutes.',
   },
   {
     id: 'battery',
@@ -53,7 +53,7 @@ export const FACTS = [
   },
   {
     id: 'edison',
-    text: 'A young man called Edison was an operator once, they say. Now he invents things.',
+    text: 'They say Mr Edison was a telegraph operator once, before he invented the phonograph.',
   },
   {
     id: 'lightning',

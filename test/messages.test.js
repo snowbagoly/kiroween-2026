@@ -64,3 +64,33 @@ test('messages: Day 1 starts short and keeps every telegram within two lines, fo
     }
   }
 });
+
+test('messages: every telegram has a To and a From [T41, design 6]', () => {
+  for (const m of MESSAGES) assert.ok(m.to && m.from, m.id);
+});
+
+test('messages: Day 1 ends with Head Office asking Mr Vane, in Night Shift and Dead Air only [R6.3a]', async () => {
+  const { createRng } = await import('../src/core/rng.js');
+  const { buildDay, VANE_ID } = await import('../src/core/messages.js');
+  for (let seed = 1; seed <= 300; seed++) {
+    for (const mode of ['night', 'deadair']) {
+      const last = buildDay(1, mode, createRng(seed)).at(-1);
+      assert.equal(last.id, VANE_ID);
+      assert.equal(last.to, 'Mr E. Vane, Station 7');
+    }
+    assert.ok(buildDay(1, 'day', createRng(seed)).every((m) => m.id !== VANE_ID));
+  }
+});
+
+test('messages: the parts of a story keep their order [R12.5]', async () => {
+  const { createRng } = await import('../src/core/rng.js');
+  const { buildDay } = await import('../src/core/messages.js');
+  for (let seed = 1; seed <= 500; seed++) {
+    for (const day of [2, 3]) {
+      const list = buildDay(day, 'night', createRng(seed));
+      list.forEach((m, i) => {
+        if (m.thread?.part > 1) assert.ok(list.slice(0, i).some((x) => x.thread?.id === m.thread.id), `${seed} ${m.id}`);
+      });
+    }
+  }
+});
