@@ -6,7 +6,7 @@ import { createLives, maxLivesFor } from './lives.js';
 import { createStats, accuracyOf, wpmOf, finalRank, updateBest } from './stats.js';
 import { createRng } from './rng.js';
 import { defaultData } from './settings.js';
-import { createDayClock, arrivalTimes, clockTime, NIGHT_MINUTES } from './day-clock.js';
+import { createDayClock, arrivalTimes, clockTime, startHourFor, NIGHT_MINUTES } from './day-clock.js';
 import { createLifeDrain, drainsLives } from './idle.js';
 
 // `waiting`: the desk is empty, the next telegram has not been handed in yet, or the day's work is done
@@ -47,6 +47,8 @@ export function runTotals(days, livesLeft = 0) {
 // `story`: offer the story before a run [R17.6]; `skipStory()` says whether the player always skips it.
 export function createGame({ data = defaultData(), save = () => {}, seed = 1, bus = null, judge = false, timed = false, mustHear = false, story = false, skipStory = () => false, tutorialSetting = null } = {}) {
   const rng = createRng(seed);
+  // The time on the clock: 22:00 to 06:00 at night, 10:00 to 18:00 in Day Shift.
+  const shiftTime = (minutes) => clockTime(minutes, startHourFor(s.mode));
   let saved = data;
   const s = {
     screen: 'start', mode: null, day: 0, messages: [], msgIndex: 0, pos: 0, msgMistakes: 0,
@@ -190,7 +192,7 @@ export function createGame({ data = defaultData(), save = () => {}, seed = 1, bu
   }
 
   function arrived(e) {
-    emit('ARRIVED', { index: e.index, at: clockTime(e.at), waiting: Math.max(0, s.clock.arrived - s.done - (s.screen === 'waiting' ? 0 : 1)) });
+    emit('ARRIVED', { index: e.index, at: shiftTime(e.at), waiting: Math.max(0, s.clock.arrived - s.done - (s.screen === 'waiting' ? 0 : 1)) });
     if (s.screen === 'waiting' && s.msgIndex === e.index) startMessage();
   }
 
@@ -201,7 +203,7 @@ export function createGame({ data = defaultData(), save = () => {}, seed = 1, bu
     const inHand = s.screen === 'playing' || s.screen === 'messageDone';
     for (const ev of c.tick(e.ms, { inHand, done: s.done, hold: !!s.infinite })) {
       if (ev.type === 'ARRIVED') arrived(ev);
-      else if (ev.type === 'DAWN') { emit('DAWN', { at: clockTime(c.minutes) }); endDay(); return; }
+      else if (ev.type === 'DAWN') { emit('DAWN', { at: shiftTime(c.minutes) }); endDay(); return; }
       else if (ev.type === 'TIME_UP') {
         emit('GAME_OVER', { day: s.day, canRestart: s.mode !== 'deadair', reason: 'time' });
         go('gameOver');
@@ -209,7 +211,7 @@ export function createGame({ data = defaultData(), save = () => {}, seed = 1, bu
       }
     }
     const waiting = Math.max(0, c.arrived - s.done - (inHand ? 1 : 0));
-    emit('CLOCK', { minutes: c.minutes, time: clockTime(c.minutes), progress: c.progress, waiting });
+    emit('CLOCK', { minutes: c.minutes, time: shiftTime(c.minutes), progress: c.progress, waiting });
     const lost = s.drain.tick(e.ms, {
       on: drainsLives(s.mode) && c.started,
       // Listening takes the time it takes: idling only counts on messages to send [R9.7f].
@@ -337,8 +339,8 @@ export function createGame({ data = defaultData(), save = () => {}, seed = 1, bu
       s.done = s.messages.length;
       s.clock?.toDawn();
       emit('DESK_EMPTY', { allDone: true });
-      emit('CLOCK', { minutes: NIGHT_MINUTES, time: clockTime(NIGHT_MINUTES), progress: 1, waiting: 0 });
-      emit('DAWN', { at: clockTime(NIGHT_MINUTES) });
+      emit('CLOCK', { minutes: NIGHT_MINUTES, time: shiftTime(NIGHT_MINUTES), progress: 1, waiting: 0 });
+      emit('DAWN', { at: shiftTime(NIGHT_MINUTES) });
       const stats = { ...SAMPLE_STATS, livesLeft: s.lives.lives };
       s.days = s.days.filter((d) => d.day !== s.day).concat({ day: s.day, ...stats });
       emit('DAY_ENDED', { day: s.day, stats, sample: true });
@@ -442,7 +444,7 @@ export function createGame({ data = defaultData(), save = () => {}, seed = 1, bu
         lives: s.lives?.lives ?? null, maxLives: s.lives?.max ?? null,
         dayStats: s.stats?.summary(s.lives?.lives ?? 0) ?? null,
         days: s.days.map((d) => ({ ...d })), judge, infinite: !!s.infinite,
-        clock: s.clock ? { minutes: s.clock.minutes, time: clockTime(s.clock.minutes), progress: s.clock.progress, started: s.clock.started,
+        clock: s.clock ? { minutes: s.clock.minutes, time: shiftTime(s.clock.minutes), progress: s.clock.progress, started: s.clock.started,
           arrived: s.clock.arrived, waiting: Math.max(0, s.clock.arrived - s.done - (['playing', 'messageDone'].includes(s.screen) ? 1 : 0)) } : null,
         done: s.done,
       };

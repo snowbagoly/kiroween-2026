@@ -91,7 +91,7 @@ Acceptance criteria:
 3. WHEN a life is refilled THEN the system SHALL swing the needle up by one step with a short animation.
 4. WHEN the player finishes 3 messages in a row with no mistakes THEN the system SHALL refill one life, up to the maximum of the mode (10, or 5 in Dead Air).
 5. WHEN lives reach 0 in Night Shift mode THEN the line SHALL snap (about 2 seconds): a loud electrical crack and a low thump with a white flash, the room jolts, the needle is flung against its zero stop with a hard "tock", the sounder jams into one long tone, and the light stutters, each dip darker and quicker. In the last flash a tall, thin figure SHALL stand in the room in front of the key. Then the system SHALL cut all sound and light at once. In the dark and silence, the sounder SHALL tap out "THE LINE IS DEAD" in the player's own hand, each letter appearing on screen as it is tapped. Then it SHALL show a dismissal telegram (a company notice) with the day's results and two buttons: "Restart this day" and "Main menu". A key press or click during the tapping SHALL skip to the telegram.
-6. WHEN lives reach 0 in Day Shift mode THEN the system SHALL show the same dismissal telegram, calm: no snap, no flash, no figure and no dark.
+6. WHEN lives reach 0 in Day Shift mode THEN the system SHALL show a company telegram, calm: no snap, no flash, no figure and no dark. The operator is not dismissed but sent on a rest: the title is "A rest is ordered" and it reads "TOO MANY ERRORS ON THE LINE AT <time> STOP / TAKE A WEEK AT THE SEASIDE STOP / STATION 7 WILL KEEP". When 18:00 comes with telegrams left it reads "RELIEF OPERATOR ARRIVED 18:00 STOP / YOU LOOK TIRED STOP / TAKE A FEW DAYS BY THE SEA". The buttons are the same as R5.5.
 6a. Each day start is a checkpoint. WHEN the player picks "Restart this day" THEN the system SHALL start the same day again from its first message with 10 lives and that day's statistics reset. Earlier days and their statistics SHALL stay as they were. WHEN the player picks "Main menu" THEN the system SHALL return to the start screen.
 6b. The checkpoint SHALL last only while the page stays open. Reloading the page SHALL discard the run (see Out of scope).
 7. The galvanometer SHALL carry a hidden text label (for example "3 of 10 lives") that only screen readers read. It SHALL NOT be visible on screen.
@@ -120,8 +120,8 @@ Acceptance criteria:
 Acceptance criteria:
 1. WHILE in Day Shift mode THEN the system SHALL NOT play horror sounds, strange messages, flicker, or static.
 2. WHILE in Day Shift mode THEN the system SHALL use only normal work messages and a warm colour palette.
-2a. Until the office by daylight is drawn (see TODO.md), Day Shift SHALL keep its current desk scene and palette. The start screen, the company notices and the story are shared with Night Shift.
-3. WHILE in Day Shift mode THEN the system SHALL play soft, cheerful synthesized background music with birdsong, and a mute button. Night Shift and Day Shift SHALL have different music.
+2a. Day Shift SHALL be played in the same office by day: the window shows the marsh in daylight with clouds drifting, sunlight falls through the panes onto the desk with dust in the beam, and the lamp is not lit. Now and then a bird flies past the window, never while a letter is keyed or sounding and never with reduced motion. The shift runs 10:00 to 18:00 on the wall clock. The telegram form with its SENT/RECEIVED stamp, the paper tape and the codebook are the same as at night. The start screen, the company notices and the story are shared with Night Shift.
+3. WHILE in Day Shift mode THEN the system SHALL play a calm, wistful waltz on a synthesized piano, with birdsong, and a mute button. Night Shift and Day Shift SHALL have different music.
 4. WHEN a day ends in Day Shift mode THEN the system SHALL show a statistics screen (see R8).
 5. Lives SHALL work exactly as in Night Shift mode (R5): mistakes cost lives, clean streaks refill them, and 0 lives ends the game.
 
@@ -284,5 +284,4 @@ Acceptance criteria:
 - Online play or a real second player (the other operator is scripted).
 - More than 3 days.
 - Saving mid-day progress.
-- The office by daylight for Day Shift (for now; see TODO.md).
 - For now: the other three devices (push button, bare wires, signal lamp), the call-up ritual, the sound workbench, and recorded sound samples.

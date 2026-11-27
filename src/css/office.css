@@ -628,11 +628,95 @@ html.reduce-flashing .light-layers .gaze.on { transition-duration: .8s; }
   .office .station { order: 4; }
   .office .galvanometer { order: 5; width: 160px; }
   .office .codebook-spot { order: 6; padding-bottom: 2rem; }
-  .office .window-wrap, .office .room-clock, .office .desk-lamp, .office .room-calendar { display: none; }
+  .office .window-wrap, .office .room-clock, .office .desk-lamp, .office .room-calendar, .office .sunlight { display: none; }
   .office .station { margin-top: 24px; padding-bottom: 12px; }
   .office .station::before { display: none; }
   .office .office-key { width: min(400px, 62vw); }
   .office .office-sounder { width: min(200px, 30vw); }
   .office .text-row { font-size: clamp(1.2rem, 6vw, 2rem); }
   .office .morse-chart { width: min(300px, 92vw); }
+}
+
+/* ---- The office by day (Day Shift) [design 8, R7.2] ---- */
+/* The same room with the sun up: a pale sky with clouds drifting, sunlight falling through the panes
+   onto the desk with dust in the beam, the lamp unlit, no rain. Now and then a bird flies past. */
+.office:not(.daylight) .day-only { display: none; }
+/* The page around the office (above and below it on a tall screen) is the same wall. */
+html:has(.office.daylight), html:has(.office.daylight) body { background: linear-gradient(#4b3f31 50%, #2e1c11 50%); }
+.office.daylight {
+  --o-text: #f4ecd6;
+  --o-dim: #e4d8b8;
+  --glow: 255 236 196;
+  background:
+    radial-gradient(ellipse 40% 45% at 16% 20%, rgb(255 240 210 / .14), transparent 70%),
+    linear-gradient(#625443, #4b3f31 70%);
+}
+.office.daylight :is(.lamp-glow, .desk-lamp .lamp-flame, .room-window .lamp-reflection, .window-rain, .cling-layer, .room-window .cling, .room-window [data-drops]) { display: none; }
+.office.daylight .room-window [fill="#07080a"] { fill: #3b4530; }
+.office.daylight .room-window [stroke="#07080a"] { stroke: #3b4530; }
+.office.daylight .station::before {
+  background:
+    linear-gradient(#7a5434, #7a5434) top / 100% 2px no-repeat,
+    repeating-linear-gradient(178.6deg, transparent 0 9px, rgb(0 0 0 / .1) 9px 10px, transparent 10px 23px),
+    linear-gradient(#5e3f26, #43291a 45%, #2e1c11);
+  box-shadow: 0 -6px 18px rgb(0 0 0 / .35);
+}
+.office .window-clouds { animation: clouds 150s linear infinite; }
+@keyframes clouds { to { translate: -200px 0; } }
+
+.office .sunlight { position: absolute; inset: 0; z-index: 3; pointer-events: none; mix-blend-mode: screen; }
+.office .sun-beam {
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(0 0); /* set from the window's place (placeSunlight in office/room.js) */
+  background: linear-gradient(155deg, rgb(255 242 214 / .16), rgb(255 236 200 / .07) 60%, transparent 95%);
+}
+.office .sun-beam i {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgb(255 244 222 / .75);
+  animation: dust 17s ease-in-out infinite alternate;
+}
+.office .sun-beam i:nth-child(1) { left: 14%; top: 18%; }
+.office .sun-beam i:nth-child(2) { left: 17%; top: 30%; animation-duration: 21s; animation-delay: -4s; }
+.office .sun-beam i:nth-child(3) { left: 21%; top: 41%; width: 2px; height: 2px; animation-duration: 13s; }
+.office .sun-beam i:nth-child(4) { left: 25%; top: 52%; animation-delay: -9s; }
+.office .sun-beam i:nth-child(5) { left: 29%; top: 63%; width: 2px; height: 2px; animation-duration: 19s; }
+.office .sun-beam i:nth-child(6) { left: 33%; top: 72%; animation-delay: -2s; }
+.office .sun-beam i:nth-child(7) { left: 38%; top: 81%; width: 2px; height: 2px; animation-duration: 23s; }
+.office .sun-beam i:nth-child(8) { left: 19%; top: 22%; width: 2px; height: 2px; animation-delay: -12s; }
+.office .sun-beam i:nth-child(9) { left: 24%; top: 35%; animation-duration: 15s; animation-delay: -6s; }
+.office .sun-beam i:nth-child(10) { left: 28%; top: 47%; width: 2px; height: 2px; }
+.office .sun-beam i:nth-child(11) { left: 34%; top: 58%; animation-duration: 25s; }
+.office .sun-beam i:nth-child(12) { left: 39%; top: 69%; width: 2px; height: 2px; animation-delay: -15s; }
+.office .sun-beam i:nth-child(13) { left: 31%; top: 86%; animation-duration: 18s; }
+.office .sun-beam i:nth-child(14) { left: 44%; top: 84%; width: 2px; height: 2px; animation-delay: -7s; }
+@keyframes dust {
+  from { translate: 0 0; opacity: .3; }
+  50% { opacity: .9; }
+  to { translate: 14px -22px; opacity: .4; }
+}
+/* The window's light on the desk: four panes, the cross of the window bars between them. */
+.office .sun-patch {
+  position: absolute;
+  transform: skewX(-32deg); /* placed under the window by placeSunlight (office/room.js) */
+  filter: blur(3px);
+  background:
+    linear-gradient(90deg, transparent 47%, rgb(0 0 0) 47% 53%, transparent 53%),
+    linear-gradient(transparent 44%, rgb(0 0 0) 44% 56%, transparent 56%),
+    radial-gradient(ellipse at center, rgb(255 236 190 / .32), rgb(255 230 180 / .18) 65%, transparent 100%);
+}
+.office .window-bird { opacity: 0; }
+.office .window-bird.flying { animation: bird-fly 4.2s linear forwards; }
+@keyframes bird-fly {
+  0% { translate: var(--from) var(--y); opacity: 1; }
+  50% { translate: calc((var(--from) + var(--to)) / 2) calc(var(--y) + var(--dip)); }
+  100% { translate: var(--to) var(--y); opacity: 1; }
+}
+.office .bird-wings { transform-box: fill-box; transform-origin: 50% 50%; scale: var(--face, 1) 1; animation: flap .26s ease-in-out infinite alternate; }
+@keyframes flap { from { transform: scaleY(1); } to { transform: scaleY(-.5); } }
+@media (prefers-reduced-motion: reduce) {
+  .office .window-clouds, .office .sun-beam i { animation: none; }
 }

@@ -1,4 +1,4 @@
-// Morse chart: A to Z with dots and dashes, 2 columns (A to M, N to Z), on the left side during play [design 8, R3.1a].
+// The codebook card on the office wall: A to Z with dots and dashes, 2 columns (A to M, N to Z) [design 8, R3.1a].
 // Shown in Night Shift and Day Shift, never in Dead Air [R16.5].
 import { MORSE } from '../core/morse.js';
 

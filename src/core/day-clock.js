@@ -26,14 +26,18 @@ export function arrivalTimes(n, rng = Math.random) {
   return out;
 }
 
-// The clock face for minutes after 22:00, e.g. 30 -> 22:30, 480 -> 06:00.
-export function clockTime(minutes) {
-  const m = Math.round(START_HOUR * 60 + minutes) % 1440;
+// Day Shift works the same eight hours by day, 10:00 to 18:00, in the office by daylight [R7.2].
+export const DAY_SHIFT_START_HOUR = 10;
+export const startHourFor = (mode) => (mode === 'day' ? DAY_SHIFT_START_HOUR : START_HOUR);
+
+// The clock face for minutes after the shift began, e.g. 30 -> 22:30, 480 -> 06:00 (or 18:00 by day).
+export function clockTime(minutes, startHour = START_HOUR) {
+  const m = Math.round(startHour * 60 + minutes) % 1440;
   return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
 }
 
 // Minutes after midnight, for the wall clock's hands.
-export const wallMinutes = (minutes) => (START_HOUR * 60 + minutes) % 1440;
+export const wallMinutes = (minutes, startHour = START_HOUR) => (startHour * 60 + minutes) % 1440;
 
 export function createDayClock({ day = 1, arrivals = [0], realMinutes = DAY_REAL_MINUTES[day] ?? 5 } = {}) {
   const perMs = NIGHT_MINUTES / (realMinutes * 60000); // game minutes per real ms at 1x

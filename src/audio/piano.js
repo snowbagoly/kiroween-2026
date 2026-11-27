@@ -92,10 +92,12 @@ export class Piano {
   // One note: three strings a shade apart (two in the bass), overtones stretched a little sharp and
   // dying faster the higher they are, softer notes darker, a touch of the hammer, and the damper
   // coming down at until. Low notes sit a little to the left, high ones to the right.
-  playNote(note, start, velocity, until) {
+  // With `held` (Day Shift's waltz) the strings ring that many times longer and the key is pressed
+  // more softly, with no hammer knock, so a tune played legato flows from note to note.
+  playNote(note, start, velocity, until, { held = 0 } = {}) {
     const { ctx } = this;
     const freq = midiToHz(note);
-    const ring = 7 * 2 ** (-(note - 40) / 24); // seconds: long in the bass, short at the top
+    const ring = (held || 1) * 7 * 2 ** (-(note - 40) / 24); // seconds: long in the bass, short at the top
     const end = Math.min(until + .8, start + ring);
 
     const pan = ctx.createStereoPanner();
@@ -103,12 +105,12 @@ export class Piano {
     pan.connect(this.input);
     const tone = ctx.createBiquadFilter();
     tone.type = 'lowpass';
-    tone.frequency.setValueAtTime(900 + velocity * 4000, start);
-    tone.frequency.setTargetAtTime(700 + velocity * 1500, start, .6);
+    tone.frequency.setValueAtTime(held ? 800 + velocity * 3200 : 900 + velocity * 4000, start);
+    tone.frequency.setTargetAtTime(held ? 650 + velocity * 1300 : 700 + velocity * 1500, start, held ? .8 : .6);
     const env = ctx.createGain();
     env.gain.setValueAtTime(0, start);
-    env.gain.linearRampToValueAtTime(.06 * velocity, start + .004);
-    env.gain.setTargetAtTime(0, until, .12);
+    env.gain.linearRampToValueAtTime(.06 * velocity, start + (held ? .012 : .004));
+    env.gain.setTargetAtTime(0, until, held ? .15 : .12);
     tone.connect(env).connect(pan);
 
     const strings = note < 40 ? [-1, 1] : [-1.2, 0, 1.3];
@@ -126,6 +128,7 @@ export class Piano {
       }
     }
 
+    if (held) return;
     // The hammer: a soft, short thud of felt on wire.
     const hammer = ctx.createBufferSource();
     hammer.buffer = this.noise ??= this.noiseBuffer();

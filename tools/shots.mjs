@@ -40,6 +40,11 @@ const SHOTS = [
   { name: '08-dawn-notice', query: '&dawn', wait: 8000 },
   { name: '09-one-column-360', width: 360, height: 800, setup: `${g}.dispatch({ type: 'JUDGE_JUMP_DAY', day: 1, mode: 'night' })`, wait: 2000 },
   { name: '10-day-shift-desk', setup: `${g}.dispatch({ type: 'JUDGE_JUMP_DAY', day: 1, mode: 'day' })`, wait: 2000 },
+  { name: '11-day-shift-bird', setup: `${g}.dispatch({ type: 'JUDGE_JUMP_DAY', day: 2, mode: 'day' }); setTimeout(() => window.__deadAir.office().bird.fly(), 800)`, wait: 2100, pause: true },
+  { name: '13-day-shift-1920', width: 1920, height: 1080, setup: `${g}.dispatch({ type: 'JUDGE_JUMP_DAY', day: 1, mode: 'day' })`, wait: 2000 },
+  { name: '14-day-shift-1100', width: 1100, height: 900, setup: `${g}.dispatch({ type: 'JUDGE_JUMP_DAY', day: 1, mode: 'day' })`, wait: 2000 },
+  { name: '15-day-shift-rest', setup: `${g}.dispatch({ type: 'JUDGE_JUMP_DAY', day: 2, mode: 'day' }); setTimeout(() => ${g}.dispatch({ type: 'JUDGE_FORCE_GAMEOVER' }), 600)`, wait: 2500 },
+  { name: '12-day-shift-360', width: 360, height: 800, setup: `${g}.dispatch({ type: 'JUDGE_JUMP_DAY', day: 1, mode: 'day' })`, wait: 2000 },
 ];
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -87,7 +92,7 @@ async function connect() {
 }
 
 async function take({ send, evalJs }, shot) {
-  const { width = 1440, height = 900, query = '', setup = '', wait = 2000, freeze = 60000, judge = true, key = '' } = shot;
+  const { width = 1440, height = 900, query = '', setup = '', wait = 2000, freeze = 60000, judge = true, key = '', pause = false } = shot;
   await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: width < 600 });
   const search = judge ? `?judge=1&test=1${query}` : '?test=1';
   await send('Page.navigate', { url: `file://${PAGE}${search}` });
@@ -109,9 +114,9 @@ async function take({ send, evalJs }, shot) {
   }
   if (process.env.DEBUG) console.log(await evalJs(`JSON.stringify({ screen: ${g}.state.screen, layer: document.querySelector('.card-layer')?.className, anims: document.getAnimations().map((a) => a.animationName ?? a.transitionProperty).slice(0, 12) })`));
   // Freeze: a looping animation stops at the same moment every run; one that ends (a fade, a line
-  // being written) jumps to its end.
+  // being written) jumps to its end, unless the shot wants it caught mid-way (`pause`).
   await evalJs(`document.getAnimations().forEach((a) => { try {
-    if (a.effect?.getComputedTiming().iterations === Infinity) { a.pause(); a.currentTime = ${freeze}; } else a.finish();
+    if (a.effect?.getComputedTiming().iterations === Infinity) { a.pause(); a.currentTime = ${freeze}; } else if (${pause}) a.pause(); else a.finish();
   } catch {} }); true`);
   await sleep(100);
   const { data } = (await send('Page.captureScreenshot', { format: 'png' })).result;

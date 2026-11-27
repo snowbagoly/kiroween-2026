@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  createDayClock, arrivalTimes, clockTime, wallMinutes, NIGHT_MINUTES, LAST_ARRIVAL, DAY_REAL_MINUTES,
+  createDayClock, arrivalTimes, clockTime, wallMinutes, startHourFor, NIGHT_MINUTES, LAST_ARRIVAL, DAY_REAL_MINUTES,
 } from '../src/core/day-clock.js';
 import { createLifeDrain, IDLE_GRACE_MS, IDLE_EVERY_MS, LATE_EVERY_MS, LATER_EVERY_MS } from '../src/core/idle.js';
 import { createGame } from '../src/core/game.js';
@@ -183,12 +183,23 @@ test('game: idling to zero lives is a game over', () => {
   assert.equal(g.state.screen, 'gameOver');
 });
 
-test('game: restart this day starts the clock again at 22:00', () => {
-  const g = timedGame('day');
-  g.dispatch({ type: 'INPUT', t: 0 });
-  ticks(g, 30 * 60000);
-  g.dispatch({ type: 'RESTART_DAY' });
-  g.dispatch({ type: 'CONTINUE' });
-  assert.equal(g.state.clock.time, '22:00');
-  assert.equal(g.state.clock.started, false);
+test('game: restart this day starts the clock again at 22:00 (10:00 in Day Shift)', () => {
+  for (const [mode, start] of [['night', '22:00'], ['day', '10:00']]) {
+    const g = timedGame(mode);
+    g.dispatch({ type: 'INPUT', t: 0 });
+    ticks(g, 30 * 60000);
+    g.dispatch({ type: 'RESTART_DAY' });
+    g.dispatch({ type: 'CONTINUE' });
+    assert.equal(g.state.clock.time, start);
+    assert.equal(g.state.clock.started, false);
+  }
+});
+
+test('clock: Day Shift works 10:00 to 18:00, the night 22:00 to 06:00 [R7.2]', () => {
+  assert.equal(startHourFor('day'), 10);
+  assert.equal(startHourFor('night'), 22);
+  assert.equal(startHourFor('deadair'), 22);
+  assert.equal(clockTime(0, startHourFor('day')), '10:00');
+  assert.equal(clockTime(480, startHourFor('day')), '18:00');
+  assert.equal(clockTime(480), '06:00');
 });
