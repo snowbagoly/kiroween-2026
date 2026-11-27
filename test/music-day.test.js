@@ -1,38 +1,42 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { DAY_WALTZ, DAY_CHORDS, DAY_BEAT_S, barNotes, createDayMusic } from '../src/audio/music-day.js';
-import { HARMONY } from '../src/audio/scores.js';
+import { DAY_WALTZ, DAY_CHORDS, DAY_BEAT_S, barNotes, barBeat, createDayMusic } from '../src/audio/music-day.js';
 import { createAudioEngine } from '../src/audio/engine.js';
 
 const pcs = (notes) => new Set(notes.map((n) => n % 12));
 
-test('day music: a lively waltz in C major, three beats to every bar, apart from the night waltz [R7.3]', () => {
-  assert.ok(DAY_WALTZ.length === 32);
-  for (const [chord, melody] of DAY_WALTZ) {
+test('day music: a wistful waltz in Bb major, about two minutes, three beats to every bar [R7.3]', () => {
+  let seconds = 0;
+  DAY_WALTZ.forEach(([chord, melody], i) => {
     assert.ok(DAY_CHORDS[chord], chord);
-    assert.equal(melody.reduce((n, [, beats]) => n + beats, 0), 3);
-  }
+    assert.equal(melody.reduce((n, [, beats]) => n + beats, 0), 3, `bar ${i + 1}`);
+    seconds += 3 * barBeat(i);
+  });
+  assert.ok(seconds > 110 && seconds < 140, `${seconds.toFixed(0)} s`);
   const all = DAY_WALTZ.flatMap(([c, m]) => [DAY_CHORDS[c].bass, ...DAY_CHORDS[c].chord, ...m.map(([n]) => n).filter((n) => n !== null)]);
-  const cMajor = [0, 2, 4, 5, 7, 9, 11];
-  assert.ok([...pcs(all)].every((p) => cMajor.includes(p)));
-  // The night waltz is in Eb minor: its Eb, Gb and Bb are in none of the day's notes.
-  const night = pcs(Object.values(HARMONY).flatMap((h) => [h.bass, ...h.chord]));
-  assert.ok(night.has(3) && night.has(6) && night.has(10));
-  assert.ok(![3, 6, 10].some((p) => pcs(all).has(p)));
+  const bbMajor = [10, 0, 2, 3, 5, 7, 9];
+  // Only the D7 on the way to G minor steps outside the key (its F#).
+  assert.deepEqual([...pcs(all)].filter((p) => !bbMajor.includes(p)), [6]);
   const bpm = 60 / DAY_BEAT_S;
-  assert.ok(bpm >= 120 && bpm <= 170, 'a fun waltz, not a slow one');
+  assert.ok(bpm >= 90 && bpm <= 115, 'calm, not cheerful');
+  // It ends by slowing down, and each phrase end takes a breath.
+  assert.ok(barBeat(DAY_WALTZ.length - 1) > barBeat(DAY_WALTZ.length - 6));
+  assert.ok(barBeat(7) > barBeat(6));
 });
 
-test('day music: oom-pah-pah, and the tune lands on the chord on each downbeat', () => {
+test('day music: the tune is legato, each note held into the next; bass on one, the chord on two', () => {
   for (let i = 0; i < DAY_WALTZ.length; i++) {
     const [name, melody] = DAY_WALTZ[i];
     const notes = barNotes(i, 10);
-    const { chord } = DAY_CHORDS[name];
-    assert.equal(notes[0].at, 10); // the bass on one
-    assert.equal(notes.filter((n) => chord.includes(n.note)).length >= 6, true); // the chord on two and three
-    for (const b of [1, 2]) assert.ok(notes.some((n) => Math.abs(n.at - (10 + b * DAY_BEAT_S)) < 1e-9 && chord.includes(n.note)));
-    if (melody[0][0] !== null) assert.ok(pcs(chord).has(melody[0][0] % 12) || pcs([DAY_CHORDS[name].bass]).has(melody[0][0] % 12), `bar ${i + 1}`);
-    for (const n of notes) assert.ok(n.until > n.at && n.at < 10 + DAY_BEAT_S * 3);
+    const { bass, chord } = DAY_CHORDS[name];
+    const beat = barBeat(i);
+    assert.equal(notes[0].note, bass);
+    assert.equal(notes[0].at, 10);
+    for (const c of chord) assert.ok(notes.some((n) => n.note === c && Math.abs(n.at - (10 + beat)) < 1e-9));
+    const tune = notes.slice(1 + chord.length);
+    assert.equal(tune.length, melody.filter(([n]) => n !== null).length);
+    for (let k = 0; k + 1 < tune.length; k++) assert.ok(tune[k].until > tune[k + 1].at, `bar ${i + 1}: note ${k + 1} is held into the next`);
+    for (const n of notes) assert.ok(n.until > n.at && n.velocity > 0 && n.velocity < 1);
   }
 });
 

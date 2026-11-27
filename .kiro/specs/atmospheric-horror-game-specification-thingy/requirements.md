@@ -121,7 +121,7 @@ Acceptance criteria:
 1. WHILE in Day Shift mode THEN the system SHALL NOT play horror sounds, strange messages, flicker, or static.
 2. WHILE in Day Shift mode THEN the system SHALL use only normal work messages and a warm colour palette.
 2a. Day Shift SHALL be played in the same office by day: the window shows the marsh in daylight with clouds drifting, sunlight falls through the panes onto the desk with dust in the beam, and the lamp is not lit. Now and then a bird flies past the window, never while a letter is keyed or sounding and never with reduced motion. The shift runs 10:00 to 18:00 on the wall clock. The telegram form with its SENT/RECEIVED stamp, the paper tape and the codebook are the same as at night. The start screen, the company notices and the story are shared with Night Shift.
-3. WHILE in Day Shift mode THEN the system SHALL play a happy waltz on a synthesized piano, with birdsong, and a mute button. Night Shift and Day Shift SHALL have different music.
+3. WHILE in Day Shift mode THEN the system SHALL play a calm, wistful waltz on a synthesized piano, with birdsong, and a mute button. Night Shift and Day Shift SHALL have different music.
 4. WHEN a day ends in Day Shift mode THEN the system SHALL show a statistics screen (see R8).
 5. Lives SHALL work exactly as in Night Shift mode (R5): mistakes cost lives, clean streaks refill them, and 0 lives ends the game.
 

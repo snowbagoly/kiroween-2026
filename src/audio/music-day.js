@@ -1,73 +1,99 @@
-// Day Shift music [design 9, R7.3]: a happy little waltz on the piano, in C major, with birdsong
-// made of short FM chirps at random times. The left hand plays oom-pah-pah (the bass on one, the
-// chord on two and three); the right hand plays the tune. It goes round and round, with a short
-// breath between plays. All on the music bus. Kept in its own file so it can be cut on its own.
+// Day Shift music [design 9, R7.3]: a wistful waltz on the piano, in Bb major, about two minutes
+// long (A, A higher, B in G minor, A again, a slowing ending), with birdsong made of short FM chirps
+// at random times. The left hand plays the bass on one and the chord on two; the tune is played
+// legato, each note held into the next, and the notes ring on (Piano.playNote with `held`). It plays
+// round and round, with a short breath between plays. All on the music bus.
 import { Piano } from './piano.js';
 
-export const DAY_BEAT_S = 0.42; // about 143 beats a minute: a lively waltz
-export const DAY_LEVEL = 0.6; // as loud as the story's nocturne: it plays under the work
+export const DAY_BEAT_S = 0.58; // about 103 beats a minute
+export const DAY_LEVEL = 0.45; // about as loud as the story's nocturne
 export const DAY_PAUSE_S = 3; // the breath before it starts again
+export const DAY_SUSTAIN = 3; // the notes ring three times as long as the story's
+export const DAY_RIT_BARS = 5; // the ending slows over its last bars
+const LEGATO_S = 0.12; // a note is held this far into the next one
 
-// The left hand's chords: the bass, then the chord played on beats two and three.
+// The left hand's chords: the bass, then the chord played on beat two.
 export const DAY_CHORDS = {
-  C:  { bass: 48, chord: [52, 55, 60] },
-  F:  { bass: 41, chord: [53, 57, 60] },
-  G:  { bass: 43, chord: [55, 59, 62] },
-  G7: { bass: 43, chord: [53, 59, 62] },
-  Dm: { bass: 38, chord: [53, 57, 62] },
-  Am: { bass: 45, chord: [52, 57, 60] },
+  Bbmaj7: { bass: 34, chord: [41, 50, 57] },
+  Dm7: { bass: 38, chord: [45, 53, 60] },
+  Ebmaj7: { bass: 39, chord: [46, 50, 55] },
+  Fsus4: { bass: 41, chord: [46, 48, 53] },
+  F: { bass: 41, chord: [45, 48, 53] },
+  Gm7: { bass: 31, chord: [46, 50, 53] },
+  Cm7: { bass: 36, chord: [46, 51, 55] },
+  F7: { bass: 41, chord: [45, 51, 53] },
+  D7: { bass: 38, chord: [45, 48, 54] },
 };
 
 // Three beats to a bar: [chord, [[note, beats], ...]]; a rest is null.
-const DAY_A1 = [
-  ['C',  [[67, 1], [72, 1], [76, 1]]],
-  ['C',  [[79, 2], [76, 1]]],
-  ['G7', [[77, 1], [74, 1], [71, 1]]],
-  ['G7', [[74, 2], [67, 1]]],
-  ['G7', [[65, 1], [71, 1], [74, 1]]],
-  ['G7', [[77, 2], [74, 1]]],
-  ['C',  [[76, 1], [79, 1], [72, 1]]],
-  ['C',  [[72, 2], [null, 1]]],
+export const DAY_WALTZ = [
+  ['Bbmaj7', [[62, 1], [62, 1], [62, 0.5], [58, 0.5]]], ['Bbmaj7', [[60, 3]]],
+  ['Dm7', [[65, 1], [69, 1], [67, 0.5], [65, 0.5]]], ['Dm7', [[62, 3]]],
+  ['Ebmaj7', [[67, 1], [69, 1], [67, 1]]], ['Ebmaj7', [[65, 3]]],
+  ['Fsus4', [[60, 1], [58, 1], [60, 0.5], [58, 0.5]]], ['F', [[57, 3]]],
+  ['Gm7', [[62, 1], [62, 1], [62, 0.5], [60, 0.5]]], ['Gm7', [[58, 3]]],
+  ['Ebmaj7', [[67, 1], [63, 0.5], [65, 0.5], [63, 0.5], [62, 0.5]]], ['Ebmaj7', [[60, 3]]],
+  ['Cm7', [[63, 1], [60, 1], [58, 1]]], ['F7', [[57, 3]]],
+  ['Bbmaj7', [[58, 1], [62, 1], [60, 0.5], [57, 0.5]]], ['Bbmaj7', [[58, 3]]],
+  ['Bbmaj7', [[62, 1], [65, 1], [63, 0.5], [62, 0.5]]], ['Bbmaj7', [[60, 3]]],
+  ['Dm7', [[65, 1], [65, 1], [65, 1]]], ['Dm7', [[69, 3]]],
+  ['Ebmaj7', [[70, 0.5], [69, 0.5], [67, 0.5], [69, 0.5], [70, 0.5], [72, 0.5]]], ['Ebmaj7', [[74, 3]]],
+  ['Cm7', [[72, 1], [70, 1], [69, 0.5], [67, 0.5]]], ['F7', [[65, 3]]],
+  ['Gm7', [[62, 1], [62, 0.5], [62, 0.5], [65, 0.5], [63, 0.5]]], ['Gm7', [[62, 3]]],
+  ['Ebmaj7', [[63, 1], [62, 0.5], [60, 0.5], [58, 0.5], [57, 0.5]]], ['Ebmaj7', [[55, 3]]],
+  ['Cm7', [[58, 0.5], [57, 0.5], [58, 0.5], [60, 0.5], [62, 0.5], [63, 0.5]]], ['F7', [[65, 3]]],
+  ['Bbmaj7', [[62, 1], [60, 1], [58, 0.5], [57, 0.5]]], ['Bbmaj7', [[58, 3]]],
+  ['Gm7', [[67, 1], [67, 1], [67, 1]]], ['Gm7', [[70, 3]]],
+  ['Ebmaj7', [[67, 1], [69, 1], [67, 1]]], ['Ebmaj7', [[65, 3]]],
+  ['Cm7', [[63, 1], [65, 1], [67, 0.5], [65, 0.5]]], ['D7', [[66, 3]]],
+  ['Gm7', [[67, 1], [62, 1], [65, 0.5], [63, 0.5]]], ['D7', [[62, 3]]],
+  ['Ebmaj7', [[67, 0.5], [63, 0.5], [65, 0.5], [67, 0.5], [65, 0.5], [67, 0.5]]], ['Bbmaj7', [[65, 3]]],
+  ['Cm7', [[63, 1], [62, 0.5], [60, 0.5], [62, 0.5], [63, 0.5]]], ['Dm7', [[65, 3]]],
+  ['Ebmaj7', [[62, 1], [62, 1], [62, 1]]], ['Fsus4', [[65, 3]]],
+  ['F7', [[63, 1], [60, 1], [57, 0.5], [60, 0.5]]], ['F7', [[57, 3]]],
+  ['Bbmaj7', [[62, 1], [62, 1], [62, 0.5], [58, 0.5]]], ['Bbmaj7', [[60, 3]]],
+  ['Dm7', [[65, 1], [62, 1], [63, 1]]], ['Dm7', [[62, 3]]],
+  ['Ebmaj7', [[67, 1], [70, 1], [69, 0.5], [67, 0.5]]], ['Ebmaj7', [[65, 3]]],
+  ['Fsus4', [[60, 1], [60, 0.5], [60, 0.5], [57, 0.5], [58, 0.5]]], ['F', [[57, 3]]],
+  ['Gm7', [[62, 1], [65, 1], [63, 0.5], [62, 0.5]]], ['Gm7', [[58, 3]]],
+  ['Ebmaj7', [[67, 0.5], [69, 0.5], [67, 0.5], [65, 0.5], [63, 0.5], [62, 0.5]]], ['Ebmaj7', [[60, 3]]],
+  ['Cm7', [[63, 1], [60, 1], [58, 1]]], ['F7', [[57, 3]]],
+  ['Bbmaj7', [[58, 1], [62, 1], [60, 0.5], [57, 0.5]]], ['Bbmaj7', [[58, 3]]],
+  ['Ebmaj7', [[62, 1], [62, 1], [62, 1]]], ['Ebmaj7', [[60, 3]]],
+  ['Fsus4', [[58, 1], [57, 0.5], [55, 0.5], [57, 0.5], [58, 0.5]]], ['F7', [[60, 3]]],
+  ['Bbmaj7', [[62, 3]]], ['Gm7', [[58, 3]]],
+  ['F7', [[60, 2], [57, 1]]], ['Bbmaj7', [[58, 3]]],
+  ['Bbmaj7', [[null, 3]]],
 ];
-const DAY_A2 = [
-  ['C',  [[67, 1], [72, 1], [76, 1]]],
-  ['F',  [[81, 2], [77, 1]]],
-  ['F',  [[81, 1], [84, 1], [81, 1]]],
-  ['C',  [[79, 2], [76, 1]]],
-  ['Dm', [[77, 1], [74, 1], [77, 1]]],
-  ['G7', [[79, 1], [77, 1], [74, 1]]],
-  ['C',  [[72, 1], [76, 1], [74, 1]]],
-  ['C',  [[72, 2], [null, 1]]],
-];
-// The middle: a skip in the minor, then up and back down to the dominant.
-const DAY_B = [
-  ['Am', [[76, 0.5], [77, 0.5], [76, 1], [72, 1]]],
-  ['Am', [[69, 2], [72, 1]]],
-  ['F',  [[77, 0.5], [79, 0.5], [77, 1], [72, 1]]],
-  ['F',  [[69, 2], [77, 1]]],
-  ['G',  [[79, 1], [83, 1], [86, 1]]],
-  ['G',  [[86, 1], [83, 1], [81, 1]]],
-  ['G7', [[79, 1], [77, 1], [74, 1]]],
-  ['G7', [[71, 2], [67, 1]]],
-];
-export const DAY_WALTZ = [...DAY_A1, ...DAY_A2, ...DAY_B, ...DAY_A2];
 
-// Every note of one bar, starting at `start`: { note, at, velocity, until }. `wobble()` gives a
-// number from -0.5 to 0.5 for a hand's small looseness. When a chord comes twice in a row, the
-// second bar's bass goes up to the fifth, so the bass walks.
-export function barNotes(i, start, { beat = DAY_BEAT_S, wobble = () => 0 } = {}) {
-  const [name, melody] = DAY_WALTZ[i % DAY_WALTZ.length];
+// How long a beat is in bar i: a little breath at each phrase end, and slowing at the very end.
+export function barBeat(i) {
+  const n = i % DAY_WALTZ.length;
+  const left = DAY_WALTZ.length - n;
+  return DAY_BEAT_S * (n % 8 === 7 ? 1.08 : 1) * (left <= DAY_RIT_BARS ? 1 + 0.06 * (DAY_RIT_BARS - left + 1) : 1);
+}
+
+// Every note of bar i, starting at `start`: { note, at, velocity, until }. `wobble()` gives a number
+// from -0.5 to 0.5 for the hands' small looseness.
+export function barNotes(i, start, { wobble = () => 0 } = {}) {
+  const n = i % DAY_WALTZ.length;
+  const [name, melody] = DAY_WALTZ[n];
   const { bass, chord } = DAY_CHORDS[name];
-  const repeat = i > 0 && DAY_WALTZ[(i - 1) % DAY_WALTZ.length][0] === name;
+  const beat = barBeat(i);
   const loose = (t) => t + wobble() * 0.02;
-  const barEnd = start + beat * 3;
-  const notes = [{ note: repeat ? bass + 7 : bass, at: loose(start), velocity: 0.5, until: barEnd }];
-  for (const b of [1, 2]) for (const n of chord) notes.push({ note: n, at: loose(start + b * beat), velocity: 0.28, until: start + b * beat + beat * 0.55 });
+  const notes = [{ note: bass, at: loose(start), velocity: 0.34, until: start + 3 * beat + LEGATO_S }];
+  for (const c of chord) notes.push({ note: c, at: loose(start + beat), velocity: 0.16, until: start + 3 * beat + LEGATO_S });
+  const next = DAY_WALTZ[(n + 1) % DAY_WALTZ.length][1];
   let t = start;
-  for (const [note, beats] of melody) {
-    if (note !== null) notes.push({ note, at: loose(t), velocity: t === start ? 0.6 : 0.5, until: t + beats * beat * 0.9 });
+  melody.forEach(([note, beats], k) => {
+    const following = k + 1 < melody.length ? melody[k + 1][0] : next[0][0];
+    // Long notes a little stronger, quick ones lighter; the two bars of a phrase swell and fall.
+    const weight = beats >= 2 ? 0.75 : beats >= 1 ? 0.68 : 0.5;
+    const shape = 0.85 + 0.15 * Math.sin((Math.PI * ((n % 2) * 3 + (t - start) / beat)) / 6);
+    const until = following !== null ? t + beats * beat + LEGATO_S : t + beats * beat * 0.95;
+    if (note !== null) notes.push({ note, at: loose(t), velocity: weight * shape, until });
     t += beats * beat;
-  }
+  });
   return notes;
 }
 
@@ -123,10 +149,10 @@ export function createDayMusic(engine, { rng = Math.random, lookahead = 0.6, tic
     const until = now + lookahead;
     while (nextBar < until) {
       for (const n of barNotes(bar, nextBar, { wobble: () => rng() - 0.5 })) {
-        piano.playNote(n.note, n.at, n.velocity, n.until);
+        piano.playNote(n.note, n.at, n.velocity, n.until, { held: DAY_SUSTAIN });
         noteCount += 1;
       }
-      nextBar += DAY_BEAT_S * 3;
+      nextBar += barBeat(bar) * 3;
       bar += 1;
       if (bar % DAY_WALTZ.length === 0) nextBar += DAY_PAUSE_S;
     }
