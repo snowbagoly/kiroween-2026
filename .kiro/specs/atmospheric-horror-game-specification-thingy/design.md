@@ -43,7 +43,7 @@ src/
     piano.js            plain piano for the story's nocturne
     scores.js           the waltz and the nocturne as note data
     story-sound.js      each slide's sound picture
-    music-day.js        a wistful piano waltz and birdsong
+    music-day.js        the night waltz in major, and birdsong
     sequencer.js        plays a letter as tones on the audio clock
     captions.js         sound name to caption text
   director/
@@ -308,7 +308,7 @@ Every sound module takes `{ ctx, sfxBus, musicBus }` from `engine.js`, so one vo
 - `music-night.js` (drone, hoo tones, heartbeat) is removed: its notes sit around D, a half step off the waltz's E♭, and the record and the room tone fill that space.
 - The record can wobble, sag, drag flat and stick (one 0.8 s turn repeated 4 times), on calls from `dread.js` and `faults.js`.
 - Story: `piano.js` plays the nocturne from the hall to the station, then fades [R17.4].
-- Day Shift: `music-day.js` [R7.3]: a wistful waltz in Bb major, about two minutes (A, A higher, B in G minor, A, a slowing ending), at about 103 beats a minute on the story's piano. The left hand plays the bass on one and the chord on two. The tune is legato: each note is held into the next, and `Piano.playNote(..., { held: 3 })` lets the strings ring three times as long with a softer touch, so the notes flow. The rhythm changes from phrase to phrase (taaa-taaa-tara, tamm-tamm-tamm, tamm-tara-tara, tarararatarara, some with repeated notes). It plays round and round with a 3 s breath between plays, at twice the nocturne's loudness, with the birdsong chirps over it.
+- Day Shift: `music-day.js` [R7.3]: the night's waltz (scores.js) in Eb major, its Gb, Cb and Db raised, so the tune that is sad on the record at night is glad by day. Chords Eb, Ab, Bb7, Gm, Cm, Bb; AABA, 32 bars, about 80 s at 75 beats a minute, on the story's piano without the record. The left hand plays the bass on one and the chord on two. The tune is legato: each note is held into the next, and `Piano.playNote(..., { held: 3 })` lets the strings ring three times as long with a softer touch. It plays round and round with a 3 s breath between plays, with the birdsong chirps over it.
 
 **Captions** [R10.3]: each new voice gets a caption ("[the counter bell]", "[the line crackles]", "[a knock behind you]", "[a church bell strikes six]", "[the record sticks]").
 

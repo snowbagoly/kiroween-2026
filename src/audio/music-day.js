@@ -1,69 +1,38 @@
-// Day Shift music [design 9, R7.3]: a wistful waltz on the piano, in Bb major, about two minutes
-// long (A, A higher, B in G minor, A again, a slowing ending), with birdsong made of short FM chirps
-// at random times. The left hand plays the bass on one and the chord on two; the tune is played
-// legato, each note held into the next, and the notes ring on (Piano.playNote with `held`). It plays
-// round and round, with a short breath between plays. All on the music bus.
+// Day Shift music [design 9, R7.3]: the operator's waltz from the night's record, but in Eb major and
+// played plainly on the piano: the same tune with its Gb, Cb and Db raised, so the same melody that
+// sounds sad at night sounds glad by day. AABA, about 80 s. Birdsong of short FM chirps at random
+// times. The left hand plays the bass on one and the chord on two; the tune is played legato, each
+// note held into the next, and the notes ring on (Piano.playNote with `held`). It plays round and
+// round, with a short breath between plays. All on the music bus.
 import { Piano } from './piano.js';
 
-export const DAY_BEAT_S = 0.58; // about 103 beats a minute
-export const DAY_LEVEL = 0.9; // twice the story's nocturne: it has to carry over the work
+export const DAY_BEAT_S = 0.8; // 75 beats a minute, the night waltz's own pace
+export const DAY_LEVEL = 1.25; // as loud as the Bb waltz was: this slower tune has fewer notes sounding
 export const DAY_PAUSE_S = 3; // the breath before it starts again
 export const DAY_SUSTAIN = 3; // the notes ring three times as long as the story's
-export const DAY_RIT_BARS = 5; // the ending slows over its last bars
+export const DAY_RIT_BARS = 0; // it goes round, so it does not slow at the end
 const LEGATO_S = 0.12; // a note is held this far into the next one
 
 // The left hand's chords: the bass, then the chord played on beat two.
 export const DAY_CHORDS = {
-  Bbmaj7: { bass: 34, chord: [41, 50, 57] },
-  Dm7: { bass: 38, chord: [45, 53, 60] },
-  Ebmaj7: { bass: 39, chord: [46, 50, 55] },
-  Fsus4: { bass: 41, chord: [46, 48, 53] },
-  F: { bass: 41, chord: [45, 48, 53] },
-  Gm7: { bass: 31, chord: [46, 50, 53] },
-  Cm7: { bass: 36, chord: [46, 51, 55] },
-  F7: { bass: 41, chord: [45, 51, 53] },
-  D7: { bass: 38, chord: [45, 48, 54] },
+  Eb: { bass: 39, chord: [55, 58, 63] },
+  Ab: { bass: 44, chord: [56, 60, 63] },
+  Bb7: { bass: 46, chord: [56, 62, 65] },
+  Gm: { bass: 43, chord: [55, 58, 62] },
+  Cm: { bass: 48, chord: [55, 60, 63] },
+  Bb: { bass: 46, chord: [53, 58, 62] },
 };
 
 // Three beats to a bar: [chord, [[note, beats], ...]]; a rest is null.
 export const DAY_WALTZ = [
-  ['Bbmaj7', [[62, 1], [62, 1], [62, 0.5], [58, 0.5]]], ['Bbmaj7', [[60, 3]]],
-  ['Dm7', [[65, 1], [69, 1], [67, 0.5], [65, 0.5]]], ['Dm7', [[62, 3]]],
-  ['Ebmaj7', [[67, 1], [69, 1], [67, 1]]], ['Ebmaj7', [[65, 3]]],
-  ['Fsus4', [[60, 1], [58, 1], [60, 0.5], [58, 0.5]]], ['F', [[57, 3]]],
-  ['Gm7', [[62, 1], [62, 1], [62, 0.5], [60, 0.5]]], ['Gm7', [[58, 3]]],
-  ['Ebmaj7', [[67, 1], [63, 0.5], [65, 0.5], [63, 0.5], [62, 0.5]]], ['Ebmaj7', [[60, 3]]],
-  ['Cm7', [[63, 1], [60, 1], [58, 1]]], ['F7', [[57, 3]]],
-  ['Bbmaj7', [[58, 1], [62, 1], [60, 0.5], [57, 0.5]]], ['Bbmaj7', [[58, 3]]],
-  ['Bbmaj7', [[62, 1], [65, 1], [63, 0.5], [62, 0.5]]], ['Bbmaj7', [[60, 3]]],
-  ['Dm7', [[65, 1], [65, 1], [65, 1]]], ['Dm7', [[69, 3]]],
-  ['Ebmaj7', [[70, 0.5], [69, 0.5], [67, 0.5], [69, 0.5], [70, 0.5], [72, 0.5]]], ['Ebmaj7', [[74, 3]]],
-  ['Cm7', [[72, 1], [70, 1], [69, 0.5], [67, 0.5]]], ['F7', [[65, 3]]],
-  ['Gm7', [[62, 1], [62, 0.5], [62, 0.5], [65, 0.5], [63, 0.5]]], ['Gm7', [[62, 3]]],
-  ['Ebmaj7', [[63, 1], [62, 0.5], [60, 0.5], [58, 0.5], [57, 0.5]]], ['Ebmaj7', [[55, 3]]],
-  ['Cm7', [[58, 0.5], [57, 0.5], [58, 0.5], [60, 0.5], [62, 0.5], [63, 0.5]]], ['F7', [[65, 3]]],
-  ['Bbmaj7', [[62, 1], [60, 1], [58, 0.5], [57, 0.5]]], ['Bbmaj7', [[58, 3]]],
-  ['Gm7', [[67, 1], [67, 1], [67, 1]]], ['Gm7', [[70, 3]]],
-  ['Ebmaj7', [[67, 1], [69, 1], [67, 1]]], ['Ebmaj7', [[65, 3]]],
-  ['Cm7', [[63, 1], [65, 1], [67, 0.5], [65, 0.5]]], ['D7', [[66, 3]]],
-  ['Gm7', [[67, 1], [62, 1], [65, 0.5], [63, 0.5]]], ['D7', [[62, 3]]],
-  ['Ebmaj7', [[67, 0.5], [63, 0.5], [65, 0.5], [67, 0.5], [65, 0.5], [67, 0.5]]], ['Bbmaj7', [[65, 3]]],
-  ['Cm7', [[63, 1], [62, 0.5], [60, 0.5], [62, 0.5], [63, 0.5]]], ['Dm7', [[65, 3]]],
-  ['Ebmaj7', [[62, 1], [62, 1], [62, 1]]], ['Fsus4', [[65, 3]]],
-  ['F7', [[63, 1], [60, 1], [57, 0.5], [60, 0.5]]], ['F7', [[57, 3]]],
-  ['Bbmaj7', [[62, 1], [62, 1], [62, 0.5], [58, 0.5]]], ['Bbmaj7', [[60, 3]]],
-  ['Dm7', [[65, 1], [62, 1], [63, 1]]], ['Dm7', [[62, 3]]],
-  ['Ebmaj7', [[67, 1], [70, 1], [69, 0.5], [67, 0.5]]], ['Ebmaj7', [[65, 3]]],
-  ['Fsus4', [[60, 1], [60, 0.5], [60, 0.5], [57, 0.5], [58, 0.5]]], ['F', [[57, 3]]],
-  ['Gm7', [[62, 1], [65, 1], [63, 0.5], [62, 0.5]]], ['Gm7', [[58, 3]]],
-  ['Ebmaj7', [[67, 0.5], [69, 0.5], [67, 0.5], [65, 0.5], [63, 0.5], [62, 0.5]]], ['Ebmaj7', [[60, 3]]],
-  ['Cm7', [[63, 1], [60, 1], [58, 1]]], ['F7', [[57, 3]]],
-  ['Bbmaj7', [[58, 1], [62, 1], [60, 0.5], [57, 0.5]]], ['Bbmaj7', [[58, 3]]],
-  ['Ebmaj7', [[62, 1], [62, 1], [62, 1]]], ['Ebmaj7', [[60, 3]]],
-  ['Fsus4', [[58, 1], [57, 0.5], [55, 0.5], [57, 0.5], [58, 0.5]]], ['F7', [[60, 3]]],
-  ['Bbmaj7', [[62, 3]]], ['Gm7', [[58, 3]]],
-  ['F7', [[60, 2], [57, 1]]], ['Bbmaj7', [[58, 3]]],
-  ['Bbmaj7', [[null, 3]]],
+  ['Eb', [[70, 2], [67, 1]]], ['Ab', [[72, 2], [70, 0.5], [68, 0.5]]], ['Bb7', [[65, 2], [68, 1]]], ['Gm', [[67, 3]]],
+  ['Cm', [[75, 2], [74, 1]]], ['Ab', [[72, 1.5], [70, 0.5], [68, 1]]], ['Bb7', [[67, 1], [65, 1], [62, 1]]], ['Eb', [[63, 3]]],
+  ['Eb', [[70, 2], [67, 1]]], ['Ab', [[72, 2], [70, 0.5], [68, 0.5]]], ['Bb7', [[65, 2], [68, 1]]], ['Gm', [[67, 3]]],
+  ['Cm', [[75, 2], [74, 1]]], ['Ab', [[72, 1.5], [70, 0.5], [68, 1]]], ['Bb7', [[68, 1], [70, 1], [74, 1]]], ['Eb', [[75, 3]]],
+  ['Gm', [[70, 1], [74, 1], [79, 1]]], ['Bb7', [[77, 2], [75, 1]]], ['Eb', [[75, 1.5], [74, 0.5], [70, 1]]], ['Bb', [[74, 3]]],
+  ['Cm', [[75, 1], [79, 1], [75, 1]]], ['Gm', [[74, 2], [70, 1]]], ['Ab', [[72, 1], [70, 1], [68, 1]]], ['Bb7', [[65, 3]]],
+  ['Eb', [[70, 2], [67, 1]]], ['Ab', [[72, 2], [70, 0.5], [68, 0.5]]], ['Bb7', [[65, 2], [68, 1]]], ['Gm', [[67, 3]]],
+  ['Cm', [[75, 2], [74, 1]]], ['Ab', [[72, 1.5], [70, 0.5], [68, 1]]], ['Bb7', [[67, 1], [65, 1], [62, 1]]], ['Eb', [[63, 3]]],
 ];
 
 // How long a beat is in bar i: a little breath at each phrase end, and slowing at the very end.
