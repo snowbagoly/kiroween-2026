@@ -487,7 +487,7 @@ The show itself is the one from R17 (`story/intro.js`): the same slide player, l
 | office | the coat on the hook, the record on the phonograph | the office by day, a pile of money on the desk, a stack of records |
 
 - Sounds: the day slides use birdsong, the street, the train and paper; no rain and no crows. Under the show a bright piano piece plays in place of the nocturne; on the last slide the needle goes down and the Day Shift waltz starts, and carries on into Day 1.
-- The letter's lines (draft, to be approved):
+- The letter's lines:
 
 | Slide | Lines |
 |---|---|
