@@ -6,7 +6,7 @@ import { createLives, maxLivesFor } from './lives.js';
 import { createStats, accuracyOf, wpmOf, finalRank, updateBest } from './stats.js';
 import { createRng } from './rng.js';
 import { defaultData } from './settings.js';
-import { createDayClock, arrivalTimes, clockTime } from './day-clock.js';
+import { createDayClock, arrivalTimes, clockTime, NIGHT_MINUTES } from './day-clock.js';
 import { createLifeDrain, drainsLives } from './idle.js';
 
 // `waiting`: the desk is empty, the next telegram has not been handed in yet, or the day's work is done
@@ -329,6 +329,25 @@ export function createGame({ data = defaultData(), save = () => {}, seed = 1, bu
       if (!s.day) startDay(1);
       emit('GAME_OVER', { day: s.day, canRestart: s.mode !== 'deadair' });
       go('gameOver');
+    },
+    // The dawn at once [R13.3a, R9.9]: the day's work counts as done, the clock reads 06:00, the dawn
+    // plays, then the notice with sample numbers. Only while a day is on the desk.
+    JUDGE_DAWN() {
+      if (!['playing', 'messageDone', 'waiting'].includes(s.screen)) return;
+      s.done = s.messages.length;
+      s.clock?.toDawn();
+      emit('DESK_EMPTY', { allDone: true });
+      emit('CLOCK', { minutes: NIGHT_MINUTES, time: clockTime(NIGHT_MINUTES), progress: 1, waiting: 0 });
+      emit('DAWN', { at: clockTime(NIGHT_MINUTES) });
+      const stats = { ...SAMPLE_STATS, livesLeft: s.lives.lives };
+      s.days = s.days.filter((d) => d.day !== s.day).concat({ day: s.day, ...stats });
+      emit('DAY_ENDED', { day: s.day, stats, sample: true });
+      go('dayStats');
+    },
+    // The story from its first slide [R13.3g]; at its end Day 1 starts, as in a new run.
+    JUDGE_STORY() {
+      ensureRun(s.mode ?? 'night');
+      go('story');
     },
     // The statistics screen with sample numbers [R13.3f].
     JUDGE_SHOW_STATS() {

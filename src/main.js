@@ -459,7 +459,10 @@ function easeFaults(lives) {
 // One omen not yet seen today, in a quiet moment [R6.4a].
 function omen() {
   if (!office || st().screen !== 'playing') return;
-  const name = office.faults.nextOmen({ music: data.settings.music });
+  playOmen(office.faults.nextOmen({ music: data.settings.music }));
+}
+
+function playOmen(name) {
   if (name === 'blueFlame') { office.light.blueFlame(5000); flameDrop(audio); captions.show('flame'); }
   else if (name === 'heavyAir') { night.heavyAir(1.4, 1.2, 2.6); earRing(audio, 5.2); captions.show('heavy'); }
   else if (name === 'recordSticks') { night.record.stick(4); captions.show('sticks'); }
@@ -807,13 +810,18 @@ function renderStoryOffer() {
 
 // The lantern show, over everything; it leads into Day 1 (or the tutorial question) [R17].
 let story = null;
+let storyFrom = 0; // the slide to start on (Judge `?story=N` only)
 function renderStory() {
+  if (story) return; // already on screen
   startOffice?.unmount();
   startOffice = null;
   view.innerHTML = '';
   audio.unlock();
   const sound = createStorySound(audio, { music: data.settings.music });
+  const from = storyFrom;
+  storyFrom = 0;
   story = playStory(document.body, sound, {
+    from,
     onDone: () => { story = null; if (st().screen === 'story') game.dispatch({ type: 'STORY_DONE' }); },
   });
 }
@@ -1038,7 +1046,33 @@ function judgeEffect(name) {
   }
   if (name === 'static') { desk?.fx?.staticBurst(); playStatic(audio); captions.show('static'); return; }
   if (name === 'flicker') { desk?.fx?.flicker(); return; }
+  if (OMEN_NAMES.includes(name)) {
+    // The omens and the last warning belong to the office at night, on a message [R13.4c].
+    const fire = () => { if (office) name === 'lastWarning' ? lastWarning() : playOmen(name); };
+    if (st().screen === 'playing' && office) fire();
+    else { game.dispatch({ type: 'JUDGE_JUMP_DAY', day: st().day || 1 }); setTimeout(fire, 400); }
+    return;
+  }
   playHorror(name);
+}
+function judgeSetScare(v) { judgeScare = v === null ? null : Math.min(1, Math.max(0, v)); director.setOverride(judgeScare); updateNight(); }
+const OMEN_NAMES = ['blueFlame', 'heavyAir', 'recordSticks', 'lastWarning'];
+
+// "Dawn" [R13.3a]: a Night Shift day on the desk first, then the dawn and its notice.
+function judgeDawn() {
+  audio.unlock();
+  if (st().mode !== 'night' && st().mode !== 'deadair') game.dispatch({ type: 'JUDGE_SET_MODE', mode: 'night' });
+  if (['playing', 'messageDone', 'waiting'].includes(st().screen) && office) { game.dispatch({ type: 'JUDGE_DAWN' }); return; }
+  game.dispatch({ type: 'JUDGE_JUMP_DAY', day: st().day || 1 });
+  setTimeout(() => game.dispatch({ type: 'JUDGE_DAWN' }), 400);
+}
+
+// "Play the story" [R13.3g]: from slide 1, or from slide N with `?story=N`.
+function judgeStory(from = 0) {
+  if (story) return; // already playing
+  audio.unlock();
+  storyFrom = from;
+  game.dispatch({ type: 'JUDGE_STORY' });
 }
 
 if (judge) {
@@ -1049,12 +1083,19 @@ if (judge) {
     isBusy: () => solving || reader.pressing || playingNow(),
     autoSolve,
     effect: judgeEffect,
-    setScare: (v) => { judgeScare = v === null ? null : Math.min(1, Math.max(0, v)); director.setOverride(judgeScare); updateNight(); },
+    setScare: judgeSetScare,
     captionsOn: () => { data = setSetting(data, 'captions', true); store.save(data); options?.refresh(); },
     showThought: () => { if (desk) showThought(thoughts.pickAny()); },
+    dawn: judgeDawn,
+    story: () => judgeStory(0),
     exit: () => { window.location.href = window.location.pathname; }, // back to the start screen, no Judge
     get speed() { return judgeUi?.speed ?? 1; },
-  }, { welcome: true });
+  }, { welcome: !query.has('story') && !query.has('dawn') });
+  // Dev query strings for checks, Judge mode only [design 13]: `?story=5` the story from slide 5,
+  // `?dawn` the dawn of Day 1, `?dread=0.9` the late-night room at once.
+  if (query.has('dread')) judgeSetScare(Number(query.get('dread')) || 0);
+  if (query.has('story')) judgeStory(Math.max(0, (Number(query.get('story')) || 1) - 1));
+  else if (query.has('dawn')) judgeDawn();
 }
 
 options = mountOptions(document.body, {

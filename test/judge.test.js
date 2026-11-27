@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGame } from '../src/core/game.js';
-import { runDemo, DEMO_STEPS, DEMO_MS, panelHtml, welcomeHtml, EFFECT_BUTTONS } from '../src/judge/judge.js';
+import { runDemo, DEMO_STEPS, DEMO_MS, panelHtml, welcomeHtml, EFFECT_BUTTONS, OMEN_BUTTONS } from '../src/judge/judge.js';
+import { OMENS } from '../src/director/faults.js';
 import { EFFECTS } from '../src/director/horror.js';
 
 const J = () => createGame({ judge: true, seed: 5 });
@@ -21,7 +22,7 @@ test('judge: every day is one event away, straight to the first message [R13.3a,
 
 test('judge: normal play ignores every judge event [R13.8]', () => {
   const g = createGame({ seed: 5 });
-  for (const type of ['JUDGE_JUMP_DAY', 'JUDGE_SET_MODE', 'JUDGE_SET_MESSAGE', 'JUDGE_SKIP', 'JUDGE_LIVES', 'JUDGE_INFINITE', 'JUDGE_FORCE_GAMEOVER', 'JUDGE_SHOW_STATS']) {
+  for (const type of ['JUDGE_JUMP_DAY', 'JUDGE_SET_MODE', 'JUDGE_SET_MESSAGE', 'JUDGE_SKIP', 'JUDGE_LIVES', 'JUDGE_INFINITE', 'JUDGE_FORCE_GAMEOVER', 'JUDGE_SHOW_STATS', 'JUDGE_DAWN', 'JUDGE_STORY']) {
     assert.deepEqual(g.dispatch({ type, day: 3, mode: 'day', text: 'HELLO', op: '-1', on: true }), []);
   }
   assert.equal(g.state.screen, 'start');
@@ -77,7 +78,7 @@ test('judge: the panel has every control from R13.3 and R13.4, an effect button 
   const html = panelHtml();
   for (const label of ['Day 1', 'Day 2', 'Day 3', 'Closing', 'Type the letter', 'Type the message', 'Skip message', '+1 life',
     'Full galvanometer', '−1 life', 'Infinite lives', 'Force game over', 'Show stats', 'Night Shift', 'Day Shift', 'Scare',
-    'Captions on', 'Show a thought', 'Play demo', 'Auto-play', 'x1', 'x2', 'x4', 'Exit Kiroween Judge', 'Click anywhere to enable sound']) {
+    'Captions on', 'Show a thought', 'Dawn', 'Play the story', 'Blue flame', 'Heavy air', 'Record sticks', 'Last warning', 'Play demo', 'Auto-play', 'x1', 'x2', 'x4', 'Exit Kiroween Judge', 'Click anywhere to enable sound']) {
     assert.ok(html.includes(label), label);
   }
   const ids = EFFECT_BUTTONS.map(([id]) => id);
@@ -113,4 +114,51 @@ test('demo reel: stop() ends it, and a failing step stops it', () => {
   const d2 = runDemo({ setScare: () => {} }, { steps: [], setTimer: () => 1, clearTimer: () => {}, onEnd: (w) => { why = w; } });
   d2.stop();
   assert.equal(why, 'stopped');
+});
+
+const T = () => createGame({ judge: true, seed: 5, timed: true, story: true });
+
+test('judge: Dawn plays the dawn at 06:00, then the notice with sample numbers [R13.3a, R9.9]', () => {
+  const g = T();
+  assert.deepEqual(g.dispatch({ type: 'JUDGE_DAWN' }), []); // nothing on the desk yet
+  g.dispatch({ type: 'JUDGE_JUMP_DAY', day: 2 });
+  const out = g.dispatch({ type: 'JUDGE_DAWN' });
+  const types = out.map((e) => e.type);
+  assert.ok(types.indexOf('CLOCK') < types.indexOf('DAWN'));
+  assert.equal(out.find((e) => e.type === 'CLOCK').time, '06:00');
+  assert.equal(out.find((e) => e.type === 'DAWN').at, '06:00');
+  assert.equal(g.state.screen, 'dayStats');
+  assert.equal(g.state.days.at(-1).day, 2);
+  assert.equal(g.state.clock.time, '06:00');
+  g.dispatch({ type: 'NEXT_DAY' });
+  assert.equal(g.state.day, 3);
+});
+
+test('judge: Play the story starts it, and its end leads to Day 1 [R13.3g]', () => {
+  const g = T();
+  g.dispatch({ type: 'JUDGE_JUMP_DAY', day: 3 });
+  g.dispatch({ type: 'JUDGE_STORY' });
+  assert.equal(g.state.screen, 'story');
+  g.dispatch({ type: 'STORY_DONE' });
+  assert.equal(g.state.day, 1);
+  const fresh = T();
+  fresh.dispatch({ type: 'JUDGE_STORY' });
+  assert.equal(fresh.state.screen, 'story');
+});
+
+test('judge: one button per omen and one for the last warning [R13.4c]', () => {
+  const ids = OMEN_BUTTONS.map(([id]) => id);
+  for (const o of [...OMENS, 'lastWarning']) assert.ok(ids.includes(o), o);
+  const html = panelHtml();
+  for (const id of ids) assert.ok(html.includes(`data-judge="fx-${id}"`), id);
+});
+
+test('judge: infinite lives also covers idling and the late drain, and holds the clock at 06:00 [R13.3d]', () => {
+  const g = T();
+  g.dispatch({ type: 'JUDGE_JUMP_DAY', day: 1 });
+  g.dispatch({ type: 'JUDGE_INFINITE', on: true });
+  g.dispatch({ type: 'INPUT', t: 0 });
+  for (let i = 0; i < 3000; i++) g.dispatch({ type: 'TICK', ms: 1000 });
+  assert.equal(g.state.screen, 'playing');
+  assert.ok(g.state.lives >= 1);
 });
