@@ -30,7 +30,16 @@ test('screens: stats screen shows every R8.1 number and the rank, with Next day 
 test('screens: game over has two buttons, Dead Air only Main menu [R5.5, R16.6]', () => {
   assert.deepEqual(buttons(cardHtml('gameOver', { day: 2, mode: 'night', canRestart: true })), ['Restart this day', 'Main menu']);
   assert.deepEqual(buttons(cardHtml('gameOver', { day: 2, mode: 'deadair', canRestart: false })), ['Main menu']);
-  assert.match(cardHtml('gameOver', { mode: 'day' }), /Out of lives/);
+  // Day Shift sends the operator to the seaside instead of dismissing them.
+  const rest = cardHtml('gameOver', { mode: 'day', time: '14:20' });
+  assert.match(rest, /A rest is ordered/);
+  assert.match(rest, /TOO MANY ERRORS ON THE LINE AT 14:20 STOP/);
+  assert.match(rest, /TAKE A WEEK AT THE SEASIDE STOP/);
+  assert.doesNotMatch(rest, /RELIEVED OF DUTY/);
+  const late = cardHtml('gameOver', { mode: 'day', reason: 'time' });
+  assert.match(late, /RELIEF OPERATOR ARRIVED 18:00 STOP/);
+  assert.match(late, /TAKE A FEW DAYS BY THE SEA/);
+  assert.match(cardHtml('gameOver', { mode: 'night', time: '02:10' }), /OPERATOR RELIEVED OF DUTY/);
 });
 
 test('screens: closing shows the run, best stats and the unlock', () => {

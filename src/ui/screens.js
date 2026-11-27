@@ -143,15 +143,19 @@ export function cardHtml(screen, info = {}) {
       // Out of lives, or out of time: 06:00 came with telegrams left [R5.5, R5.6, R9.7g].
       const restart = info.canRestart === false ? '' : btn('restart-day', 'Restart this day');
       const time = info.time ?? '';
-      const strips = info.reason === 'time'
-        ? [`RELIEF OPERATOR ARRIVED ${mode === 'day' ? '18:00' : '06:00'}`, 'TELEGRAMS NOT SENT STOP', 'OPERATOR RELIEVED OF DUTY']
-        : mode === 'day'
-          ? [`TOO MANY ERRORS ON THE LINE AT ${time}`.trim(), 'OPERATOR RELIEVED OF DUTY']
+      // In Day Shift the company is kind: the operator is sent to the seaside for a rest.
+      const day = mode === 'day';
+      const strips = day
+        ? (info.reason === 'time'
+          ? ['RELIEF OPERATOR ARRIVED 18:00 STOP', 'YOU LOOK TIRED STOP', 'TAKE A FEW DAYS BY THE SEA']
+          : [`TOO MANY ERRORS ON THE LINE${time ? ` AT ${time}` : ''} STOP`, 'TAKE A WEEK AT THE SEASIDE STOP', 'STATION 7 WILL KEEP'])
+        : info.reason === 'time'
+          ? ['RELIEF OPERATOR ARRIVED 06:00', 'TELEGRAMS NOT SENT STOP', 'OPERATOR RELIEVED OF DUTY']
           : [`LINE FROM STATION 7 DEAD AT ${time}`.trim(), 'OPERATOR RELIEVED OF DUTY'];
       const s = info.stats;
       const rows = s ? [['Telegrams done', `${s.messages} of ${info.total ?? 5}`], ['Letters right', String(s.lettersCorrect)], ['Mistakes on the line', String(s.mistakes)]] : [];
       return noticeHtml({
-        title: info.reason === 'time' ? 'Out of time' : mode === 'day' ? 'Out of lives' : 'The line went dead',
+        title: day ? 'A rest is ordered' : info.reason === 'time' ? 'Out of time' : 'The line went dead',
         strips,
         rows,
         buttons: `${restart}${btn('main-menu', 'Main menu')}`,
