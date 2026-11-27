@@ -48,11 +48,15 @@ audio.attachUnlock(window);
 
 // The game saves what it owns (best stats, the unlock, the tutorial choice); the Options settings and
 // the learned hand are kept from main's copy, so neither side overwrites the other's changes.
+let lastGameTutorial = data.settings.tutorial;
 const saveFromGame = (d) => {
-  data = { ...data, best: d.best, deadAirUnlocked: d.deadAirUnlocked, settings: { ...data.settings, tutorial: d.settings.tutorial } };
+  // The tutorial choice is the game's only when it changed it (Never, or the tutorial done).
+  const tutorial = d.settings.tutorial !== lastGameTutorial ? d.settings.tutorial : data.settings.tutorial;
+  lastGameTutorial = d.settings.tutorial;
+  data = { ...data, best: d.best, deadAirUnlocked: d.deadAirUnlocked, settings: { ...data.settings, tutorial } };
   store.save(data);
 };
-const game = createGame({ data, save: saveFromGame, seed: Date.now() >>> 0, bus, judge, timed: true, mustHear: true, story: true, skipStory: () => data.settings.skipStory });
+const game = createGame({ data, save: saveFromGame, seed: Date.now() >>> 0, bus, judge, timed: true, mustHear: true, story: true, skipStory: () => data.settings.skipStory, tutorialSetting: () => data.settings.tutorial });
 // The player's hand: learned from every press, saved after each letter (not in Judge mode) [R3.3, R3.3a].
 const hand = createHand(data.hand);
 const saveHand = () => { data = setHand(data, hand.saved); store.save(data); };

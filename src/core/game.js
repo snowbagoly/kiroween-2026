@@ -45,7 +45,7 @@ export function runTotals(days, livesLeft = 0) {
 // `mustHear`: a received letter counts only once its signal has played (a HEARD event), so the player
 // cannot type ahead by guessing the word.
 // `story`: offer the story before a run [R17.6]; `skipStory()` says whether the player always skips it.
-export function createGame({ data = defaultData(), save = () => {}, seed = 1, bus = null, judge = false, timed = false, mustHear = false, story = false, skipStory = () => false } = {}) {
+export function createGame({ data = defaultData(), save = () => {}, seed = 1, bus = null, judge = false, timed = false, mustHear = false, story = false, skipStory = () => false, tutorialSetting = null } = {}) {
   const rng = createRng(seed);
   let saved = data;
   const s = {
@@ -99,7 +99,9 @@ export function createGame({ data = defaultData(), save = () => {}, seed = 1, bu
   }
 
   function afterStory() {
-    const ask = saved.settings.tutorial === 'ask' && s.mode !== 'deadair' && !judge;
+    // The Options menu can change the setting during the session, so read it fresh [R2.1, R2.1d].
+    const setting = tutorialSetting ? tutorialSetting() : saved.settings.tutorial;
+    const ask = setting === 'ask' && s.mode !== 'deadair' && !judge;
     if (ask) go('tutorialDialog');
     else startDay(1);
   }

@@ -167,6 +167,7 @@ export function playStory(parent, sound, { onDone = () => {}, from = 0 } = {}) {
 
   // The letter breaks off as the sounder starts clattering, and the office takes over.
   function breakOff() {
+    breaking = true;
     sound.tapOut('CQ CQ');
     root.classList.add('clatter');
     sound.clockStrikes(10); // and the shift begins: the clock strikes ten
@@ -189,7 +190,13 @@ export function playStory(parent, sound, { onDone = () => {}, from = 0 } = {}) {
     if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); finish(); return; }
     if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); e.stopImmediatePropagation(); next(); }
   }
-  const next = () => { if (!done && index < STORY_SLIDES.length - 1) play(index + 1); };
+  // On the last slide, Space goes on to the break-off and the office, like the end of the letter.
+  let breaking = false;
+  const next = () => {
+    if (done) return;
+    if (index < STORY_SLIDES.length - 1) play(index + 1);
+    else if (!breaking) { breaking = true; clear(); breakOff(); }
+  };
   window.addEventListener('keydown', onKey, true);
   root.addEventListener('click', next);
 
