@@ -257,7 +257,7 @@ Acceptance criteria:
 4. A slow piano nocturne in E♭ minor SHALL play under the story, from the hall to the station, and fade out as the office slide comes up. The record SHALL stay silent until the letter says the needle is set down.
 5. Space SHALL move on to the next slide, and Esc SHALL skip the story. The whole show SHALL take about 60 to 90 seconds.
 6. WHEN the player picks Night Shift or Day Shift and "Always skip the story" is off THEN the system SHALL offer the story first ("Read the letter" or "Go straight to the desk", with an "Always go straight to the desk" tick box). The story SHALL lead straight into Day 1 (or the tutorial dialog, R2.1a).
-7. The story SHALL be the same in Night Shift and Day Shift, with no horror effects.
+7. The story SHALL have no horror effects. Day Shift tells its own, happy story instead (R19).
 
 ### R18. The order (Day 3, Night Shift and Dead Air)
 **User story:** As a player, I want the last night to give me an order I must carry out, so I feel the station testing me.
@@ -279,6 +279,19 @@ Acceptance criteria:
 7. WHEN the 20 seconds pass without the word THEN the heartbeat SHALL stop dead, the figure SHALL press against the window glass, and the light SHALL go out. Then the story's newspaper slide (R17.1, slide 3) SHALL come up with a later date, the same advertisement for a night operator at Station 7, and the picture SHALL push in slowly until the advertisement fills the screen. Then the game over notice SHALL repeat the advertisement as a company telegram: "NIGHT OPERATOR WANTED / RELAY STATION LOWER MARSH / APPLY MARSH AND WESTERN TELEGRAPH CO", with the usual buttons (R5.5, R16.6). It SHALL count as losing the day.
 8. The order SHALL happen at most once per run, on Day 3 only, never in Day Shift. "Reduce flashing" SHALL soften its light as in R6.6, and captions SHALL name its sounds ("[three knocks at the door]", "[a heartbeat]").
 9. In Judge mode the panel SHALL offer "The order: receive it", "The order: the sign" and "The order: fail", so a judge can see the order, the 20 seconds and the ending at once.
+
+### R19. The Day Shift story
+**User story:** As a player of the calm mode, I want a happy story of my own, so the day feels like a treat and not like the night with the lights on.
+
+Acceptance criteria:
+1. WHEN the player picks Day Shift and the story is not skipped THEN the system SHALL tell the Day Shift story: the same magic-lantern show as R17, with six slides in the same style, the same layouts and the same order, but everything bright and happy. The operator is the same pianist, writing to their sister Ada.
+2. The story SHALL be this: every concert has sold out, the pianist has more money than they know what to do with, and they are a little bored. So they look for a side job, find the day shift at the telegraph station, and bring along some records of their own cheerful music, so the office is not so quiet.
+3. The slides SHALL be: (1) the Excelsior Rooms in sunshine, "SOLD OUT" pasted across the bill; (2) the pianist's fine rooms, banknotes and coins in piles on the table; (3) the same newspaper page, the advertisement now for a DAY operator, circled in pencil; (4) the train crossing the marsh in autumn sunshine; (5) the station on a clear morning, birds on the wires; (6) the office by day: the sun through the window, a pile of money on the desk, and a stack of the pianist's own records by the phonograph.
+4. The letter SHALL be cheerful and short, one or two lines per slide, in the same hand, and true to 1903. On the last slide the pianist SHALL put on one of their own records, and its music SHALL be the Day Shift waltz (R7.3).
+5. The sounds SHALL be the day's: birdsong instead of crows, no rain, the train in the sun, a busy street outside the hall. A bright piano piece SHALL play under the story instead of the nocturne.
+6. Everything else SHALL be as R17: the fades and slow push-ins, Space and Esc, about 60 to 90 seconds, offered the same way (R17.6), and skipped in Dead Air and Judge mode.
+7. In the Day Shift office (R7.2a) a pile of money SHALL lie on the desk, and the pianist's records by the phonograph, as on the last slide.
+8. Now and then a rainbow SHALL shine in the window of the Day Shift office: it fades in over the marsh, stays for a while and fades away. Never with reduced motion.
 
 ## Out of scope
 - Online play or a real second player (the other operator is scripted).

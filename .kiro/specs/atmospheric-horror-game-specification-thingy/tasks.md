@@ -179,6 +179,10 @@ Phase 7 (T32 to T42) builds the 1903 office, story and endings from design secti
   Needs: T35, T37, T38, T40. Build `director/order.js` and wire it in: one of five orders per run, received from VN on Day 3 in Night Shift and Dead Air; its sign once, before 05:00; 20 s with the form faded, the order shown again, a heartbeat and the room dimmed, the clock held; the word sent by key or keyboard. Kept: the night goes on. Broken: the figure at the window, darkness, the newspaper advert for a new operator, then the game over notice. Judge buttons for the order, the sign and the failure.
   Done when: unit and property tests for the order's states and timing pass (the word only counts after the sign, at most once a run, never in Day Shift); both outcomes play through in Chrome with sound off; screenshots of the 20 s and of the advert. [R18]
 
+- [ ] **T45. The Day Shift story**
+  Needs: T40, T43. Add `DAY_STORY_SLIDES` to `story/letter.js` and a `{ day }` version of each slide drawing: the hall sold out in the sun, the fine rooms with money on the table, the advert for a day operator, the train in sunshine, the station on a clear morning, the office by day with money and records. Day sounds and a bright piano piece under the show; the Day Shift waltz starts on the last slide. Day Shift passes `day` to the story. In the Day Shift office, draw the money and the records on the desk, and add the rainbow to the window, now and then.
+  Done when: tests for the day slide data (six slides, same scenes and order, one or two lines each, the day picked only in Day Shift) and for the rainbow's timing (never with reduced motion) pass; the story plays through in Chrome with sound off; screenshots of each day slide and of the office with the rainbow. [R19]
+
 ## Phase 6. Finish (29.11 to 01.12)
 
 - [ ] **T28. Full test run and bug fixes**
@@ -219,3 +223,4 @@ Phase 7 (T32 to T42) builds the 1903 office, story and endings from design secti
 | R16 | T19, T26, T38 |
 | R17 | T40 |
 | R18 | T44 |
+| R19 | T45 |

@@ -470,7 +470,38 @@ open -> broken (20 s pass) -> the scare, the newspaper, the game over (reason 'o
 - The scare and the ending reuse the light (`watched`, `lightsOut`), the window figure drawn close against the glass, and the story's advert slide with a later date and a slow push-in.
 
 
-## 20. Requirement coverage
+## 20. The Day Shift story [R19]
+
+The show itself is the one from R17 (`story/intro.js`): the same slide player, letter writer, fades, Space and Esc. What changes is the data and the pictures.
+
+- `story/letter.js` gets a second set of six slides, `DAY_STORY_SLIDES`, with the same scenes in the same order and their own lines and sounds. `playStory(parent, sound, { day: true })` picks it. The game passes `day` when the run is Day Shift.
+- Each slide drawing in `story/slides/*.js` takes `{ day }`. The layouts stay; by day the palette is the daylight office's (pale sky, sun, no rain layer, no fog), and each slide adds its own happy details:
+
+| Slide | By night | By day |
+|---|---|---|
+| hall | shut for the season, rain, the bill flapping | sunshine, "SOLD OUT" pasted across the bill, flower boxes |
+| room | a bare room, the last coins counted | fine rooms, banknotes and coins in piles on the table |
+| advert | "WANTED, a NIGHT OPERATOR", circled | the same page, "WANTED, a DAY OPERATOR", circled |
+| train | the dark marsh, rain on the glass | the marsh in autumn sunshine |
+| station | alone in the rain, a lamp lit, crows | a clear morning, birds on the wires, no lamp |
+| office | the coat on the hook, the record on the phonograph | the office by day, a pile of money on the desk, a stack of records |
+
+- Sounds: the day slides use birdsong, the street, the train and paper; no rain and no crows. Under the show a bright piano piece plays in place of the nocturne; on the last slide the needle goes down and the Day Shift waltz starts, and carries on into Day 1.
+- The letter's lines (draft, to be approved):
+
+| Slide | Lines |
+|---|---|
+| hall | Dearest Ada, / every night at the Excelsior Rooms has sold out again. |
+| room | I have more money than I know what to do with, / and I confess I am a little bored. |
+| advert | Then in Tuesday's paper I saw it. / A day operator wanted, and they will teach me the key. |
+| train | The line runs out past the last town and across the marshes, / and the sun came with me all the way. |
+| station | The station stands quite alone, with only the birds for company. |
+| office | It is a dear little office, but very quiet. / So I brought some of my own records. / I set the needle down, Ada. / Now the work can begin. |
+
+- The Day Shift office (`office/room.js`, daylight) draws the pile of money and the records on the desk, beside the form.
+- The rainbow (`office/daylight.js`): an arc drawn in the window's sky (`.window-rainbow`, `.day-only`), hidden by default. Like the bird, it comes now and then: every 2 to 5 minutes it fades in over 4 s, stays 20 s and fades out over 6 s. Not with reduced motion.
+
+## 21. Requirement coverage
 
 | Req | Where in this design |
 |---|---|
@@ -492,3 +523,4 @@ open -> broken (20 s pass) -> the scare, the newspaper, the game over (reason 'o
 | R16 | 4, 6, 8 (no codebook), 10 (faults for 5 lives) |
 | R17 | 4 Story states, 6 Story data, 9 Piano, 18 step 9 |
 | R18 | 19 The order |
+| R19 | 20 The Day Shift story, 8 The office by day |
