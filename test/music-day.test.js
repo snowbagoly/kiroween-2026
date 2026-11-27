@@ -5,23 +5,24 @@ import { createAudioEngine } from '../src/audio/engine.js';
 
 const pcs = (notes) => new Set(notes.map((n) => n % 12));
 
-test('day music: a wistful waltz in Bb major, about two minutes, three beats to every bar [R7.3]', () => {
+test('day music: the night waltz in Eb major, three beats to every bar, about 80 s [R7.3]', () => {
   let seconds = 0;
   DAY_WALTZ.forEach(([chord, melody], i) => {
     assert.ok(DAY_CHORDS[chord], chord);
     assert.equal(melody.reduce((n, [, beats]) => n + beats, 0), 3, `bar ${i + 1}`);
     seconds += 3 * barBeat(i);
   });
-  assert.ok(seconds > 110 && seconds < 140, `${seconds.toFixed(0)} s`);
+  assert.equal(DAY_WALTZ.length, 32);
+  assert.ok(seconds > 70 && seconds < 90, `${seconds.toFixed(0)} s`);
   const all = DAY_WALTZ.flatMap(([c, m]) => [DAY_CHORDS[c].bass, ...DAY_CHORDS[c].chord, ...m.map(([n]) => n).filter((n) => n !== null)]);
-  const bbMajor = [10, 0, 2, 3, 5, 7, 9];
-  // Only the D7 on the way to G minor steps outside the key (its F#).
-  assert.deepEqual([...pcs(all)].filter((p) => !bbMajor.includes(p)), [6]);
-  const bpm = 60 / DAY_BEAT_S;
-  assert.ok(bpm >= 90 && bpm <= 115, 'calm, not cheerful');
-  // It ends by slowing down, and each phrase end takes a breath.
-  assert.ok(barBeat(DAY_WALTZ.length - 1) > barBeat(DAY_WALTZ.length - 6));
+  const ebMajor = [3, 5, 7, 8, 10, 0, 2];
+  assert.ok([...pcs(all)].every((p) => ebMajor.includes(p)));
+  // The night's Gb, Cb and Db are gone: that is what makes it glad.
+  assert.ok(![6, 11, 1].some((p) => pcs(all).has(p)));
+  assert.equal(Math.round(60 / DAY_BEAT_S), 75);
+  // Each phrase end takes a breath; it does not slow at the end, as it goes round.
   assert.ok(barBeat(7) > barBeat(6));
+  assert.equal(barBeat(DAY_WALTZ.length - 2), barBeat(DAY_WALTZ.length - 3));
 });
 
 test('day music: the tune is legato, each note held into the next; bass on one, the chord on two', () => {
