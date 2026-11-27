@@ -5,25 +5,25 @@
 import { shuffle, randomInt } from './rng.js';
 
 export const MESSAGES = [
-  { id: 'd1-01', day: 1, kind: 'send', text: 'ARRIVING TUESDAY NOON TRAIN STOP MEET ME AT DEPOT', strange: false, abbreviations: false },
+  { id: 'd1-01', day: 1, kind: 'send', text: 'ARRIVING TUESDAY NOON TRAIN', strange: false, abbreviations: false },
   { id: 'd1-02', day: 1, kind: 'send', text: 'SEND MONEY', strange: false, abbreviations: false },
   { id: 'd1-03', day: 1, kind: 'send', text: 'ALL IS WELL', strange: false, abbreviations: false },
   { id: 'd1-04', day: 1, kind: 'send', text: 'MOTHER ILL COME HOME AT ONCE', strange: false, abbreviations: false },
-  { id: 'd1-05', day: 1, kind: 'send', text: 'BABY BOY BORN TODAY STOP BOTH WELL', strange: false, abbreviations: false },
-  { id: 'd1-06', day: 1, kind: 'send', text: 'CATTLE SOLD GOOD PRICE STOP HOME SATURDAY', strange: false, abbreviations: false },
-  { id: 'd1-07', day: 1, kind: 'send', text: 'RECD YRS OF TENTH INST STOP SHIPT GOES MONDAY', strange: false, abbreviations: true },
+  { id: 'd1-05', day: 1, kind: 'send', text: 'BABY BOY BORN STOP BOTH WELL', strange: false, abbreviations: false },
+  { id: 'd1-06', day: 1, kind: 'send', text: 'CATTLE SOLD STOP HOME SATURDAY', strange: false, abbreviations: false },
+  { id: 'd1-07', day: 1, kind: 'send', text: 'RECD YRS STOP SHIPT MONDAY', strange: false, abbreviations: true },
   { id: 'd1-08', day: 1, kind: 'send', text: 'WIRE ANSWER', strange: false, abbreviations: false },
-  { id: 'd1-09', day: 1, kind: 'send', text: 'NO ROOM AT HOTEL STOP FIND OTHER LODGING', strange: false, abbreviations: false },
+  { id: 'd1-09', day: 1, kind: 'send', text: 'NO ROOM AT HOTEL STOP', strange: false, abbreviations: false },
   { id: 'd1-10', day: 1, kind: 'send', text: 'MISSED TRAIN STOP ARRIVE THURSDAY', strange: false, abbreviations: false },
-  { id: 'd1-11', day: 1, kind: 'send', text: 'AMT DUE PAID STOP MDSE FOLLOWS PROX', strange: false, abbreviations: true },
+  { id: 'd1-11', day: 1, kind: 'send', text: 'AMT PAID STOP MDSE FOLLOWS', strange: false, abbreviations: true },
   { id: 'd1-12', day: 1, kind: 'send', text: 'YES', strange: false, abbreviations: false },
-  { id: 'd1-13', day: 1, kind: 'send', text: 'WEDDING SET FOR JUNE STOP BRING YOUR BEST COAT', strange: false, abbreviations: false },
+  { id: 'd1-13', day: 1, kind: 'send', text: 'WEDDING SET FOR JUNE', strange: false, abbreviations: false },
   { id: 'd1-14', day: 1, kind: 'send', text: 'PLEASE ADVISE PRICE OF WHEAT', strange: false, abbreviations: false },
   { id: 'd1-15', day: 1, kind: 'send', text: 'SAFE HOME', strange: false, abbreviations: false },
   { id: 'd1-16', day: 1, kind: 'send', text: 'DO NOT ANSWER', strange: true, abbreviations: false },
   { id: 'd1-17', day: 1, kind: 'send', text: 'WHO IS THIS', strange: true, abbreviations: false },
   { id: 'd1-18', day: 1, kind: 'send', text: 'IT IS IN THE WIRES', strange: true, abbreviations: false },
-  { id: 'd1-19', day: 1, kind: 'send', text: 'THE LINE IS COLD TONIGHT STOP SOMEONE ELSE IS LISTENING', strange: true, abbreviations: false },
+  { id: 'd1-19', day: 1, kind: 'send', text: 'SOMEONE IS LISTENING', strange: true, abbreviations: false },
   { id: 'd1-20', day: 1, kind: 'send', text: 'LET ME IN', strange: true, abbreviations: false },
   { id: 'd2-01', day: 2, kind: 'receive', text: 'FLOOD AT MILL CREEK STOP BRIDGE OUT STOP HOLD ALL TRAINS', strange: false, abbreviations: false },
   { id: 'd2-02', day: 2, kind: 'receive', text: 'TRAIN LATE', strange: false, abbreviations: false },
@@ -70,7 +70,21 @@ export const MESSAGES = [
 export const SHORT_MAX = 10; // letters
 export const LONG_MIN = 20; // letters
 export const MESSAGES_PER_DAY = 5;
-const MAX_TRIES = 200;
+// Day 1 is the first night: every telegram fits two lines on the form [R9.2a]. Measured in Chrome,
+// a line of the form holds 17 characters or more.
+export const FORM_LINE_CHARS = 17;
+export const DAY1_MAX_LINES = 2;
+
+// How many lines a text takes on the form, words kept whole.
+export function formLines(text, perLine = FORM_LINE_CHARS) {
+  let lines = 0;
+  let used = Infinity;
+  for (const w of String(text).split(/\s+/).filter(Boolean)) {
+    if (used + 1 + w.length > perLine) { lines += 1; used = w.length; } else used += 1 + w.length;
+  }
+  return lines;
+}
+const MAX_TRIES = 5000; // cheap: a day is five messages, and Day 1 has tight rules
 
 export const lettersOf = (text) => text.replace(/[^A-Z]/g, '');
 
@@ -101,6 +115,9 @@ export function checkDay(list, day, mode) {
   if (isMonotonic(lens)) broken.push('sorted');
   // The day gets easier toward 06:00: no long message among the last two [R9.2].
   if (list.slice(-2).some((m) => m.length === 'long')) broken.push('late-long');
+  // The first night starts gently: a short first telegram, and none longer than two lines [R9.2a].
+  if (day === 1 && list[0]?.length !== 'short') broken.push('day1-first-short');
+  if (day === 1 && list.some((m) => formLines(m.text) > DAY1_MAX_LINES)) broken.push('day1-lines');
   if (strange < rule.min || strange > rule.max) broken.push('strange-count');
   if (rule.lastOnly && !list[list.length - 1]?.strange) broken.push('strange-last');
   if (day === 1 && list.some((m) => m.role !== 'send')) broken.push('roles');

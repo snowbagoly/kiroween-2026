@@ -49,3 +49,18 @@ test('messages: no long message among the last two of any day, for 1000 seeds [R
     }
   }
 });
+
+test('messages: Day 1 starts short and keeps every telegram within two lines, for 1000 seeds [R9.2a]', async () => {
+  const { createRng } = await import('../src/core/rng.js');
+  const { buildDay, formLines, MESSAGES } = await import('../src/core/messages.js');
+  assert.equal(formLines('MISSED TRAIN STOP ARRIVE THURSDAY'), 2);
+  assert.equal(formLines('YES'), 1);
+  assert.ok(MESSAGES.filter((m) => m.day === 1).every((m) => formLines(m.text) <= 2));
+  for (let seed = 1; seed <= 1000; seed++) {
+    for (const mode of ['night', 'day', 'deadair']) {
+      const list = buildDay(1, mode, createRng(seed));
+      assert.equal(list[0].length, 'short', `${seed} ${mode}`);
+      assert.ok(list.every((m) => formLines(m.text) <= 2), `${seed} ${mode}`);
+    }
+  }
+});
