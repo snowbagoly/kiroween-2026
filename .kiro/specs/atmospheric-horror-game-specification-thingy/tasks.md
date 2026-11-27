@@ -189,6 +189,10 @@ Phase 7 (T32 to T42) builds the 1903 office, story and endings from design secti
   Needs: T41. The `dayIntro` card shows only "Day N" and that day's line. Add the date, for example "Day 1 · Wednesday, 4 November 1903", in every mode.
   Done when: the card for Day 1, 2 and 3 shows the right date (Wednesday 4, Thursday 5, Friday 6 November 1903), and a test checks it. [R9.8, design 4]
 
+- [ ] **T46. The Day Shift story**
+  Needs: T40, T43. Add `DAY_STORY_SLIDES` to `story/intro.js` and a `{ day }` version of each slide drawing: the hall sold out in the sun, the fine rooms with money on the table, the advert for a day operator, the train in sunshine, the station on a clear morning, the office by day with money and records. Day sounds and a bright piano piece under the show; the Day Shift waltz starts on the last slide. Day Shift passes `day` to the story. In the Day Shift office, draw the money and the records on the desk, and add the rainbow to the window, now and then.
+  Done when: tests for the day slide data (six slides, same scenes and order, one or two lines each, the day picked only in Day Shift) and for the rainbow's timing (never with reduced motion) pass; the story plays through in Chrome with sound off; screenshots of each day slide and of the office with the rainbow. [R19]
+
 ## Phase 6. Finish (29.11 to 01.12)
 
 - [ ] **T28. Full test run and bug fixes**
@@ -229,3 +233,4 @@ Phase 7 (T32 to T42) builds the 1903 office, story and endings from design secti
 | R16 | T19, T26, T38 |
 | R17 | T40 |
 | R18 | T44 |
+| R19 | T46 |
