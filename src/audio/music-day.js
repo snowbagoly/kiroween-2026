@@ -6,7 +6,7 @@
 import { Piano } from './piano.js';
 
 export const DAY_BEAT_S = 0.58; // about 103 beats a minute
-export const DAY_LEVEL = 0.45; // about as loud as the story's nocturne
+export const DAY_LEVEL = 0.9; // twice the story's nocturne: it has to carry over the work
 export const DAY_PAUSE_S = 3; // the breath before it starts again
 export const DAY_SUSTAIN = 3; // the notes ring three times as long as the story's
 export const DAY_RIT_BARS = 5; // the ending slows over its last bars
