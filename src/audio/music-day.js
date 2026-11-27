@@ -1,33 +1,86 @@
-// Day Shift music [design 9, R7.3]: soft plucked notes from a pentatonic scale over a slow pad,
-// with birdsong made of short FM chirps at random times. Calm, in G major. All on the music bus.
-// Kept in its own file so it can be cut without touching the rest.
+// Day Shift music [design 9, R7.3]: a happy little waltz on the piano, in C major, with birdsong
+// made of short FM chirps at random times. The left hand plays oom-pah-pah (the bass on one, the
+// chord on two and three); the right hand plays the tune. It goes round and round, with a short
+// breath between plays. All on the music bus. Kept in its own file so it can be cut on its own.
+import { Piano } from './piano.js';
 
-const hz = (midi) => 440 * 2 ** ((midi - 69) / 12);
-// G major pentatonic: G A B D E.
-export const PENTATONIC = [55, 57, 59, 62, 64, 67, 69, 71, 74, 76].map(hz);
-// Four calm chords, one every 4 beats: G, E minor, C, D.
-export const CHORDS = [[43, 55, 59, 62], [40, 52, 55, 59], [36, 48, 52, 55], [38, 50, 54, 57]].map((c) => c.map(hz));
-export const BPM = 76;
-export const BEAT_S = 60 / BPM;
+export const DAY_BEAT_S = 0.42; // about 143 beats a minute: a lively waltz
+export const DAY_LEVEL = 0.6; // as loud as the story's nocturne: it plays under the work
+export const DAY_PAUSE_S = 3; // the breath before it starts again
 
-// Which pentatonic notes fit a chord (share a pitch class with it), so plucks never clash.
-export function notesFor(chord) {
-  const pc = (f) => Math.round(12 * Math.log2(f / 440) + 69) % 12;
-  const inChord = new Set(chord.map(pc));
-  return PENTATONIC.filter((f) => inChord.has(pc(f)) || pc(f) === 9 || pc(f) === 4);
+// The left hand's chords: the bass, then the chord played on beats two and three.
+export const DAY_CHORDS = {
+  C:  { bass: 48, chord: [52, 55, 60] },
+  F:  { bass: 41, chord: [53, 57, 60] },
+  G:  { bass: 43, chord: [55, 59, 62] },
+  G7: { bass: 43, chord: [53, 59, 62] },
+  Dm: { bass: 38, chord: [53, 57, 62] },
+  Am: { bass: 45, chord: [52, 57, 60] },
+};
+
+// Three beats to a bar: [chord, [[note, beats], ...]]; a rest is null.
+const DAY_A1 = [
+  ['C',  [[67, 1], [72, 1], [76, 1]]],
+  ['C',  [[79, 2], [76, 1]]],
+  ['G7', [[77, 1], [74, 1], [71, 1]]],
+  ['G7', [[74, 2], [67, 1]]],
+  ['G7', [[65, 1], [71, 1], [74, 1]]],
+  ['G7', [[77, 2], [74, 1]]],
+  ['C',  [[76, 1], [79, 1], [72, 1]]],
+  ['C',  [[72, 2], [null, 1]]],
+];
+const DAY_A2 = [
+  ['C',  [[67, 1], [72, 1], [76, 1]]],
+  ['F',  [[81, 2], [77, 1]]],
+  ['F',  [[81, 1], [84, 1], [81, 1]]],
+  ['C',  [[79, 2], [76, 1]]],
+  ['Dm', [[77, 1], [74, 1], [77, 1]]],
+  ['G7', [[79, 1], [77, 1], [74, 1]]],
+  ['C',  [[72, 1], [76, 1], [74, 1]]],
+  ['C',  [[72, 2], [null, 1]]],
+];
+// The middle: a skip in the minor, then up and back down to the dominant.
+const DAY_B = [
+  ['Am', [[76, 0.5], [77, 0.5], [76, 1], [72, 1]]],
+  ['Am', [[69, 2], [72, 1]]],
+  ['F',  [[77, 0.5], [79, 0.5], [77, 1], [72, 1]]],
+  ['F',  [[69, 2], [77, 1]]],
+  ['G',  [[79, 1], [83, 1], [86, 1]]],
+  ['G',  [[86, 1], [83, 1], [81, 1]]],
+  ['G7', [[79, 1], [77, 1], [74, 1]]],
+  ['G7', [[71, 2], [67, 1]]],
+];
+export const DAY_WALTZ = [...DAY_A1, ...DAY_A2, ...DAY_B, ...DAY_A2];
+
+// Every note of one bar, starting at `start`: { note, at, velocity, until }. `wobble()` gives a
+// number from -0.5 to 0.5 for a hand's small looseness. When a chord comes twice in a row, the
+// second bar's bass goes up to the fifth, so the bass walks.
+export function barNotes(i, start, { beat = DAY_BEAT_S, wobble = () => 0 } = {}) {
+  const [name, melody] = DAY_WALTZ[i % DAY_WALTZ.length];
+  const { bass, chord } = DAY_CHORDS[name];
+  const repeat = i > 0 && DAY_WALTZ[(i - 1) % DAY_WALTZ.length][0] === name;
+  const loose = (t) => t + wobble() * 0.02;
+  const barEnd = start + beat * 3;
+  const notes = [{ note: repeat ? bass + 7 : bass, at: loose(start), velocity: 0.5, until: barEnd }];
+  for (const b of [1, 2]) for (const n of chord) notes.push({ note: n, at: loose(start + b * beat), velocity: 0.28, until: start + b * beat + beat * 0.55 });
+  let t = start;
+  for (const [note, beats] of melody) {
+    if (note !== null) notes.push({ note, at: loose(t), velocity: t === start ? 0.6 : 0.5, until: t + beats * beat * 0.9 });
+    t += beats * beat;
+  }
+  return notes;
 }
 
-export function createDayMusic(engine, { rng = Math.random, lookahead = 0.4, tickMs = 100 } = {}) {
+export function createDayMusic(engine, { rng = Math.random, lookahead = 0.6, tickMs = 100 } = {}) {
   let ctx = null;
   let out = null;
+  let piano = null;
   let timer = null;
-  let nodes = [];
   let shots = new Set();
-  let nextBeat = 0;
-  let beat = 0;
+  let nextBar = 0;
+  let bar = 0;
   let nextBird = 0;
-  let pad = null;
-  let pluckCount = 0;
+  let noteCount = 0;
   let chirpCount = 0;
 
   function oneShot(src, extra, stopAt) {
@@ -35,50 +88,6 @@ export function createDayMusic(engine, { rng = Math.random, lookahead = 0.4, tic
     shots.add(all);
     src.onended = () => { shots.delete(all); for (const n of all) n.disconnect(); };
     src.stop(stopAt);
-  }
-
-  function pluck(at, f, vel) {
-    const osc = ctx.createOscillator();
-    osc.type = 'triangle';
-    osc.frequency.value = f;
-    const lp = ctx.createBiquadFilter();
-    lp.type = 'lowpass';
-    lp.frequency.setValueAtTime(3200, at);
-    lp.frequency.exponentialRampToValueAtTime(700, at + 0.5);
-    const g = ctx.createGain();
-    g.gain.setValueAtTime(0, at);
-    g.gain.linearRampToValueAtTime(0.09 * vel, at + 0.006);
-    g.gain.exponentialRampToValueAtTime(0.0008, at + 1.4);
-    osc.connect(lp); lp.connect(g); g.connect(out);
-    osc.start(at);
-    oneShot(osc, [lp, g], at + 1.45);
-    pluckCount += 1;
-  }
-
-  // A slow pad: soft sines on the chord tones, each gliding to the next chord.
-  function startPad() {
-    const lp = ctx.createBiquadFilter();
-    lp.type = 'lowpass';
-    lp.frequency.value = 900;
-    const g = ctx.createGain();
-    g.gain.value = 0;
-    g.gain.setTargetAtTime(0.05, ctx.currentTime, 2);
-    lp.connect(g); g.connect(out);
-    const voices = CHORDS[0].map((f, i) => {
-      const o = ctx.createOscillator();
-      o.type = 'sine';
-      o.frequency.value = f;
-      o.detune.value = i % 2 ? 4 : -4;
-      o.connect(lp);
-      o.start();
-      return o;
-    });
-    nodes.push(lp, g, ...voices);
-    pad = { voices };
-  }
-
-  function chord(at, c) {
-    pad?.voices.forEach((o, i) => o.frequency.setTargetAtTime(c[i], at, 0.6));
   }
 
   // Birdsong: a few quick chirps, a sine carrier swept up with a fast FM wobble.
@@ -98,7 +107,7 @@ export function createDayMusic(engine, { rng = Math.random, lookahead = 0.4, tic
       mod.connect(modAmt); modAmt.connect(car.frequency);
       const g = ctx.createGain();
       g.gain.setValueAtTime(0, t);
-      g.gain.linearRampToValueAtTime(0.035, t + 0.01);
+      g.gain.linearRampToValueAtTime(0.03, t + 0.01);
       g.gain.linearRampToValueAtTime(0, t + len);
       car.connect(g); g.connect(out);
       car.start(t); mod.start(t); mod.stop(t + len + 0.02);
@@ -109,24 +118,24 @@ export function createDayMusic(engine, { rng = Math.random, lookahead = 0.4, tic
   }
 
   function tick() {
-    const until = ctx.currentTime + lookahead;
-    while (nextBeat < until) {
-      const bar = Math.floor(beat / 4) % CHORDS.length;
-      const c = CHORDS[bar];
-      if (beat % 4 === 0) chord(nextBeat, c);
-      // Not every beat has a note, and some have two, so it never sounds like a metronome.
-      const notes = notesFor(c);
-      if (rng() < 0.7) pluck(nextBeat, notes[Math.floor(rng() * notes.length)], 0.7 + 0.3 * rng());
-      if (rng() < 0.25) pluck(nextBeat + BEAT_S / 2, notes[Math.floor(rng() * notes.length)], 0.5);
-      beat += 1;
-      nextBeat += BEAT_S;
+    const now = ctx.currentTime;
+    nextBar = Math.max(nextBar, now); // a throttled tab skips ahead rather than catching up
+    const until = now + lookahead;
+    while (nextBar < until) {
+      for (const n of barNotes(bar, nextBar, { wobble: () => rng() - 0.5 })) {
+        piano.playNote(n.note, n.at, n.velocity, n.until);
+        noteCount += 1;
+      }
+      nextBar += DAY_BEAT_S * 3;
+      bar += 1;
+      if (bar % DAY_WALTZ.length === 0) nextBar += DAY_PAUSE_S;
     }
-    if (nextBird < until) { bird(Math.max(nextBird, ctx.currentTime)); nextBird += 4 + rng() * 9; }
+    if (nextBird < until) { bird(Math.max(nextBird, now)); nextBird += 5 + rng() * 10; }
   }
 
   return {
     get running() { return timer !== null; },
-    get plucks() { return pluckCount; },
+    get notes() { return noteCount; },
     get chirps() { return chirpCount; },
     start() {
       if (timer !== null || !engine.ready) return false;
@@ -134,11 +143,11 @@ export function createDayMusic(engine, { rng = Math.random, lookahead = 0.4, tic
       out = ctx.createGain();
       out.gain.value = 1;
       out.connect(engine.musicBus);
-      nodes = [out];
-      startPad();
-      nextBeat = ctx.currentTime + 0.8;
-      beat = 0;
-      nextBird = ctx.currentTime + 2 + rng() * 3;
+      piano = new Piano(ctx, out, { on: true });
+      piano.out.gain.value = DAY_LEVEL;
+      nextBar = ctx.currentTime + 0.8;
+      bar = 0;
+      nextBird = ctx.currentTime + 3 + rng() * 4;
       tick();
       timer = setInterval(tick, tickMs);
       return true;
@@ -148,13 +157,14 @@ export function createDayMusic(engine, { rng = Math.random, lookahead = 0.4, tic
       clearInterval(timer);
       timer = null;
       out.gain.setTargetAtTime(0, ctx.currentTime, fade / 4);
-      const old = nodes;
+      const old = out;
+      const oldPiano = piano;
       const oldShots = [...shots];
-      nodes = [];
       shots = new Set();
-      pad = null;
+      piano = null;
       setTimeout(() => {
-        for (const n of old) { try { n.stop?.(); } catch { /* already stopped */ } n.disconnect(); }
+        oldPiano.out.disconnect();
+        old.disconnect();
         for (const s of oldShots) for (const n of s) n.disconnect();
       }, fade * 1000 + 50);
     },

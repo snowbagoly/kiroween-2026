@@ -91,3 +91,18 @@ test('fonts: each font has its licence beside it', () => {
     assert.ok(readFileSync(new URL(`../fonts/${f}`, import.meta.url), 'utf8').length > 1000, f);
   }
 });
+
+test('office by day: the sun patch lies under the window and to the right, and the beam holds both [R7.2a]', async () => {
+  const { sunPatch, beamOutline } = await import('../src/office/room.js');
+  for (const win of [{ left: 130, top: 45, right: 305, bottom: 260 }, { left: 400, top: 60, right: 560, bottom: 250 }]) {
+    const patch = sunPatch(win, 790);
+    assert.ok(patch.top >= 790);
+    assert.ok((patch.left + patch.right) / 2 > (win.left + win.right) / 2);
+    const hull = beamOutline(win, patch);
+    const xs = hull.map(([x]) => x);
+    const ys = hull.map(([, y]) => y);
+    assert.ok(Math.min(...ys) === win.top && Math.max(...ys) === patch.bottom);
+    assert.ok(Math.min(...xs) <= win.left && Math.max(...xs) >= patch.right);
+    assert.ok(hull.length >= 4 && hull.length <= 8);
+  }
+});

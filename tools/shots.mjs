@@ -41,6 +41,8 @@ const SHOTS = [
   { name: '09-one-column-360', width: 360, height: 800, setup: `${g}.dispatch({ type: 'JUDGE_JUMP_DAY', day: 1, mode: 'night' })`, wait: 2000 },
   { name: '10-day-shift-desk', setup: `${g}.dispatch({ type: 'JUDGE_JUMP_DAY', day: 1, mode: 'day' })`, wait: 2000 },
   { name: '11-day-shift-bird', setup: `${g}.dispatch({ type: 'JUDGE_JUMP_DAY', day: 2, mode: 'day' }); setTimeout(() => window.__deadAir.office().bird.fly(), 800)`, wait: 2100, pause: true },
+  { name: '13-day-shift-1920', width: 1920, height: 1080, setup: `${g}.dispatch({ type: 'JUDGE_JUMP_DAY', day: 1, mode: 'day' })`, wait: 2000 },
+  { name: '14-day-shift-1100', width: 1100, height: 900, setup: `${g}.dispatch({ type: 'JUDGE_JUMP_DAY', day: 1, mode: 'day' })`, wait: 2000 },
   { name: '12-day-shift-360', width: 360, height: 800, setup: `${g}.dispatch({ type: 'JUDGE_JUMP_DAY', day: 1, mode: 'day' })`, wait: 2000 },
 ];
 

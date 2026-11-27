@@ -641,6 +641,8 @@ html.reduce-flashing .light-layers .gaze.on { transition-duration: .8s; }
 /* The same room with the sun up: a pale sky with clouds drifting, sunlight falling through the panes
    onto the desk with dust in the beam, the lamp unlit, no rain. Now and then a bird flies past. */
 .office:not(.daylight) .day-only { display: none; }
+/* The page around the office (above and below it on a tall screen) is the same wall. */
+html:has(.office.daylight), html:has(.office.daylight) body { background: linear-gradient(#4b3f31 50%, #2e1c11 50%); }
 .office.daylight {
   --o-text: #f4ecd6;
   --o-dim: #e4d8b8;
@@ -666,8 +668,8 @@ html.reduce-flashing .light-layers .gaze.on { transition-duration: .8s; }
 .office .sun-beam {
   position: absolute;
   inset: 0;
-  clip-path: polygon(8% 5%, 21% 5%, 50% 93%, 24% 93%);
-  background: linear-gradient(165deg, rgb(255 242 214 / .16), rgb(255 236 200 / .07) 60%, transparent 95%);
+  clip-path: polygon(0 0); /* set from the window's place (placeSunlight in office/room.js) */
+  background: linear-gradient(155deg, rgb(255 242 214 / .16), rgb(255 236 200 / .07) 60%, transparent 95%);
 }
 .office .sun-beam i {
   position: absolute;
@@ -699,11 +701,7 @@ html.reduce-flashing .light-layers .gaze.on { transition-duration: .8s; }
 /* The window's light on the desk: four panes, the cross of the window bars between them. */
 .office .sun-patch {
   position: absolute;
-  left: 23%;
-  bottom: 3%;
-  width: 26%;
-  height: 10%;
-  transform: skewX(-32deg);
+  transform: skewX(-32deg); /* placed under the window by placeSunlight (office/room.js) */
   filter: blur(3px);
   background:
     linear-gradient(90deg, transparent 47%, rgb(0 0 0) 47% 53%, transparent 53%),
